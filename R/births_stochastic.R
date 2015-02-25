@@ -1,33 +1,20 @@
-make_births_stochastic_naive <- function(control) {
+community_new_types_stochastic <- function(sys, control) {
   vcv <- control$vcv
   if (is.null(vcv) || !is.matrix(vcv)) {
     stop("A vcv must be provided")
   }
   mutation    <- make_mutation_stochastic_naive(control$n_mutants, vcv)
   immigration <- make_immigration_stochastic_naive(control$n_immigrants)
-  function(sys) {
-    to_add <- rbind(mutation(sys), immigration(sys))
-    if (control$check_positive && nrow(to_add) > 0) {
-      fitness <- community_make_fitness(test)
-      w <- fitness(to_add)
-      keep <- w >= 0.0
-      to_add <- to_add[keep, , drop=FALSE]
-      attr(to_add, "fitness") <- w[keep]
-    }
-    to_add
-  }
-}
 
-make_deaths_stochastic_naive <- function(control) {
-  eps <- control$dead_seed_rain
-  check_inviable <- control$check_inviable
-  function(sys) {
-    sys <- community_drop(sys, sys$seed_rain < eps)
-    if (check_inviable) {
-      sys <- community_drop_inviable(sys)
-    }
-    sys
+  to_add <- rbind(mutation(sys), immigration(sys))
+  if (control$check_positive && nrow(to_add) > 0) {
+    fitness <- community_make_fitness(sys)
+    w <- fitness(to_add)
+    keep <- w >= 0.0
+    to_add <- to_add[keep, , drop=FALSE]
+    attr(to_add, "fitness") <- w[keep]
   }
+  to_add
 }
 
 ## Mutation: Draw (on average) n_mutants from the population with a

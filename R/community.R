@@ -25,7 +25,8 @@ make_community <- function(traits, seed_rain, parameters,
 
 community_parameters <- function(obj) {
   p <- obj$parameters
-  p$strategies <- strategy_list(obj$traits)
+  hyper <- ff_parameters
+  p$strategies <- strategy_list(hyper(obj$traits))
   p$seed_rain <- obj$seed_rain
 
   if (!is.null(obj$cohort_schedule_times)) {
@@ -35,7 +36,6 @@ community_parameters <- function(obj) {
     p$cohort_schedule_ode_times <- obj$cohort_schedule_ode_times
   }
 
-  ## TODO: copy cohort times across
   p
 }
 
@@ -67,30 +67,15 @@ community_add <- function(obj, traits, seed_rain=NULL) {
       !identical(colnames(traits), obj$trait_names)) {
     stop("Incorrect traits")
   }
-  obj$traits <- rbind(obj$traits, traits)
-  obj$seed_rain <- c(obj$seed_rain, seed_rain)
-  ## Need to deal with cohort times here.  I think what we should do
-  ## here is to retain the times as best we can?  For now though,
-  ## we'll just nuke the times.
-  obj <- community_clear_times(obj)
-  obj
-}
-
-## First order seed rain approximation based on fitness.
-initial_seed_rain <- function(fitness, community) {
-  ## This magic number is not great, but needed to prevent suggesting
-  ## adding 1e8 as the seed rain (can happen!).  This should be "quite
-  ## large", but obviously that number depends on the situation.
-  max_seed_rain_initial <- 500
-  min_seed_rain_initial <-
-    community$parameters$control$equilibrium_extinct_seed_rain
-  if (is.null(fitness)) {
-    seed_rain <- NULL
-  } else {
-    seed_rain <- pmin(exp(fitness), max_seed_rain_initial)
-    seed_rain <- pmax(seed_rain, min_seed_rain_initial)
+  if (nrow(traits) > 0L) {
+    obj$traits <- rbind(obj$traits, traits)
+    obj$seed_rain <- c(obj$seed_rain, seed_rain)
+    ## Need to deal with cohort times here.  I think what we should do
+    ## here is to retain the times as best we can?  For now though,
+    ## we'll just nuke the times.
+    obj <- community_clear_times(obj)
   }
-  seed_rain
+  obj
 }
 
 community_drop <- function(obj, which) {
@@ -130,7 +115,7 @@ community_run <- function(obj) {
     p <- build_schedule(community_parameters(obj))
     obj$seed_rain <- attr(p, "seed_rain_out")
     obj$cohort_schedule_times <- p$cohort_schedule_times
-    obj$cohort_schedule_ode_times <- p$cohort_schedule_cohort_schedule_ode_times
+    obj$cohort_schedule_ode_times <- p$cohort_schedule_ode_times
   }
   obj
 }
@@ -147,15 +132,6 @@ community_run_to_equilibrium <- function(obj) {
 
 community_fitness <- function(obj, traits) {
   community_make_fitness(obj)(traits)
-}
-
-community_drop_inviable <- function(obj) {
-  if (length(obj) > 1L) {
-    res <- tree2::check_inviable(community_parameters(obj))
-    obj$seed_rain <- as.numeric(res)
-    obj <- community_drop(obj, attr(res, "drop"))
-  }
-  obj
 }
 
 ##' @export

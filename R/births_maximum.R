@@ -1,4 +1,4 @@
-make_births_maximum_fitness <- function(control) {
+community_new_types_maximum_fitness <- function(sys, control) {
   ## This bit of weirdness exists so that extra information from the
   ## fitness search, such as approxiate fitness points, gets copied
   ## back so we can work with it.
@@ -9,32 +9,30 @@ make_births_maximum_fitness <- function(control) {
     ret
   }
   eps_too_close <- control$eps_too_close
+  eps_equilibrium <- sys$parameters$control$equilibrium_eps
+  eps_positive_fitness <- eps_equilibrium
 
-  function(sys) {
-    if (is.null(sys$bounds)) {
-      return(empty(sys))
-    }
+  if (is.null(sys$bounds)) {
+    return(empty(sys))
+  }
 
-    eps_equilibrium <- sys$parameters$control$equilibrium_eps
-    eps_positive_fitness <- eps_equilibrium
-    ret <- find_max_fitness(sys, eps_too_close)
+  ret <- find_max_fitness(sys, eps_too_close)
 
-    if (attr(ret, "fitness") < eps_positive_fitness) {
-      message("births[max]> Best point had nonpositive fitness: ",
-              attr(ret, "fitness"))
+  if (attr(ret, "fitness") < eps_positive_fitness) {
+    message("births[max]> Best point had nonpositive fitness: ",
+            attr(ret, "fitness"))
+    return(empty(sys, ret))
+  }
+
+  if (length(sys) > 0L) {
+    i <- closest_log(drop(ret), sys$traits, sys$bounds)
+    if (attr(i, "distance") < eps_too_close) {
+      message("births[max]> Best point too close to existing")
       return(empty(sys, ret))
     }
-
-    if (length(sys) > 0L) {
-      i <- closest_log(drop(ret), sys$traits, sys$bounds)
-      if (attr(i, "distance") < eps_too_close) {
-        message("births[max]> Best point too close to existing")
-        return(empty(sys, ret))
-      }
-    }
-
-    ret
   }
+
+  ret
 }
 
 ## This is fundamentally a really hard problem because we want to

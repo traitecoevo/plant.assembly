@@ -30,7 +30,7 @@ community_prepare_fitness <- function(community) {
       res <- build_schedule(community_parameters(community))
       community$cohort_schedule_times <- res$cohort_schedule_times
       community$cohort_schedule_ode_times <-
-        res$cohort_schedule_cohort_schedule_ode_times
+        res$cohort_schedule_ode_times
     } else if (is.null(community$cohort_schedule_ode_times)) {
       res <- run_ebt(community_parameters(community))
       community$cohort_schedule_ode_times <- res$ode_times
@@ -77,8 +77,9 @@ community_assert_fitness_prepared <- function(community, approximate) {
 community_make_fitness <- function(community) {
   community_assert_fitness_prepared(community, FALSE)
   p <- community_parameters(community)
+  hyper <- ff_parameters
   fitness <- function(x) {
-    fitness_landscape(x, p)
+    fitness_landscape(hyper(x), p)
   }
   fitness
 }
