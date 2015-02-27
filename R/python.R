@@ -36,8 +36,8 @@ for_python_equilibrium <- function(time_disturbance, slope,
 ##' @rdname for_python
 for_python_evolve <- function(time_disturbance, slope, nsteps,
                               lma=NULL, seed_rain=NULL,
-                              equilibrium_nsteps=20L,
                               verbose=FALSE) {
+  equilibrium_nsteps <- 20L
   sys0 <- python_base_community(time_disturbance, slope,
                                 verbose, equilibrium_nsteps)
   obj <- assembler(sys0, list(birth_type="maximum", birth_move_tol=1))
