@@ -27,29 +27,23 @@ assembler_births <- function(obj) {
 assembler_births_try_move <- function(obj, to_add, i) {
   community <- obj$community
   message("assembler[births]> Trying to move resident ", i)
+  x_prev <- community$traits[i, , drop=FALSE]
+
   test <- community
-  prev <- test$traits
-  test$traits[i,] <- to_add
+  test$traits[i, ] <- to_add
   test <- community_run_to_equilibrium(test)
 
   ## Now, try adding the previous case back in.  First, check
   ## the fitness:
-  fitness <- community_make_fitness(test)
-  ## TODO: extract times from this.
-  w <- fitness(test$traits[i, , drop=FALSE])
-  if (w > 0) {
+  w_prev <- community_fitness(test, x_prev)
+  if (w_prev > 0) {
     ## Here, there is no need to run anything: the original
     ## resident has positive fitness and will increase
     message("assembler[births]> Adding original resident back")
-    community <-
-      community_add(test, test$traits[i, , drop=FALSE],
-                    initial_seed_rain(w, obj))
+    community <- community_add(test, x_prev, initial_seed_rain(w_prev, obj))
   } else {
     message("assembler[births]> Move was successful")
     community <- test
-    ## Most times are fine, but the approximate points are going to be
-    ## broken.
-    community$fitness_approximate_points <- NULL
   }
   obj$community <- community
   obj
@@ -85,4 +79,12 @@ initial_seed_rain <- function(fitness, obj) {
     seed_rain <- pmax(seed_rain, min_seed_rain_initial)
   }
   seed_rain
+}
+
+message_new_types <- function(to_add) {
+  header <- "*** Proposed new type(s):"
+  prefix <- "assembler[births]> "
+  str <- format_community_state(to_add, NA, prefix)
+  message(paste0(prefix, header))
+  message(paste(str, collapse="\n"))
 }

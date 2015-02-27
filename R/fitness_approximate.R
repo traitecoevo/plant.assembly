@@ -77,9 +77,8 @@ community_assert_fitness_prepared <- function(community, approximate) {
 community_make_fitness <- function(community) {
   community_assert_fitness_prepared(community, FALSE)
   p <- community_parameters(community)
-  hyper <- ff_parameters
   fitness <- function(x) {
-    fitness_landscape(hyper(x), p)
+    fitness_landscape(x, p)
   }
   fitness
 }

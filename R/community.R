@@ -25,8 +25,7 @@ make_community <- function(traits, seed_rain, parameters,
 
 community_parameters <- function(obj) {
   p <- obj$parameters
-  hyper <- ff_parameters
-  p$strategies <- strategy_list(hyper(obj$traits))
+  p$strategies <- strategy_list(obj$traits, p)
   p$seed_rain <- obj$seed_rain
 
   if (!is.null(obj$cohort_schedule_times)) {
@@ -116,6 +115,7 @@ community_run <- function(obj) {
     obj$seed_rain <- attr(p, "seed_rain_out")
     obj$cohort_schedule_times <- p$cohort_schedule_times
     obj$cohort_schedule_ode_times <- p$cohort_schedule_ode_times
+    obj$fitness_approximate_points <- NULL
   }
   obj
 }
@@ -126,6 +126,7 @@ community_run_to_equilibrium <- function(obj) {
     obj$seed_rain <- attr(p, "seed_rain_out")
     obj$cohort_schedule_times <- p$cohort_schedule_times
     obj$cohort_schedule_ode_times <- p$cohort_schedule_ode_times
+    obj$fitness_approximate_points <- NULL
   }
   obj
 }

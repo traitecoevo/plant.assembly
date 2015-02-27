@@ -120,6 +120,19 @@ assembler_step <- function(obj) {
   obj
 }
 
+assembler_set_traits <- function(obj, traits, seed_rain=NULL) {
+  if (length(obj$community) > 0L) {
+    stop("This is for an empty community only")
+  }
+  message("assembler> Setting traits")
+  obj$community <- community_add(obj$community, traits, seed_rain)
+  message_community_state(obj$community)
+  obj <- assembler_run_model(obj)
+  obj <- assembler_deaths(obj)
+  obj <- assembler_append_history(obj)
+  obj
+}
+
 assembler_run <- function(obj, nsteps) {
   for (i in seq_len(nsteps)) {
     if (obj$done) {
@@ -156,14 +169,6 @@ message_community_state <- function(community, prefix="assembler> ",
   str <- format_community_state(community$traits,
                                 community$seed_rain,
                                 prefix)
-  message(paste0(prefix, header))
-  message(paste(str, collapse="\n"))
-}
-
-message_new_types <- function(to_add) {
-  header <- "*** Proposed new type(s):"
-  prefix <- "assembler[births]> "
-  str <- format_community_state(to_add, NA, prefix)
   message(paste0(prefix, header))
   message(paste(str, collapse="\n"))
 }

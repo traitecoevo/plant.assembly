@@ -42,7 +42,7 @@ points(res_lma, res_w1, col=cols[-1], pch=19)
 p <- ebt_base_parameters()
 p$disturbance_mean_interval <- 7.0
 sys0 <- community(p, bounds_infinite("lma"))
-max_bounds <- rbind(lma=c(0.01, 10))
+max_bounds <- bounds(lma=c(0.01, 10))
 vcv <- mutational_vcv_proportion(max_bounds, 0.001)
 obj_s0 <- assembler(sys0,
                     list(birth_type="stochastic",
