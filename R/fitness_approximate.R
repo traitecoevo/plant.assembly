@@ -25,15 +25,17 @@
 
 ## Same but for community:
 community_prepare_fitness <- function(community) {
-  if (length(community) > 0L) {
-    if (is.null(community$cohort_schedule_times)) {
-      res <- build_schedule(community_parameters(community))
-      community$cohort_schedule_times <- res$cohort_schedule_times
-      community$cohort_schedule_ode_times <-
-        res$cohort_schedule_ode_times
-    } else if (is.null(community$cohort_schedule_ode_times)) {
-      res <- run_ebt(community_parameters(community))
-      community$cohort_schedule_ode_times <- res$ode_times
+  if (!is.null(community$bounds)) {
+    if (length(community) > 0L) {
+      if (is.null(community$cohort_schedule_times)) {
+        res <- build_schedule(community_parameters(community))
+        community$cohort_schedule_times <- res$cohort_schedule_times
+        community$cohort_schedule_ode_times <-
+          res$cohort_schedule_ode_times
+      } else if (is.null(community$cohort_schedule_ode_times)) {
+        res <- run_ebt(community_parameters(community))
+        community$cohort_schedule_ode_times <- res$ode_times
+      }
     }
   }
   community
@@ -43,8 +45,10 @@ community_prepare_approximate_fitness <- function(community) {
   community <- community_prepare_fitness(community)
   if (length(community$trait_names) == 1L) { # 1d
     if (is.null(community$fitness_approximate_points)) {
-      community$fitness_approximate_points <-
-        fitness_approximate_points(community)
+      if (!is.null(community$bounds)) {
+        community$fitness_approximate_points <-
+          fitness_approximate_points(community)
+      }
     }
   } else {
     stop("Not yet implemented") # this is the gradient info thing

@@ -6,13 +6,16 @@
 \alias{for_python_fitness}
 \alias{for_python_fitness_approximate}
 \alias{for_python_fitness_prepare}
+\alias{for_python_simulate}
 \title{Wrapper code for Python}
 \usage{
 for_python_equilibrium(time_disturbance, slope, lma, seed_rain,
   equilibrium_nsteps = 20L, verbose = FALSE)
 
 for_python_evolve(time_disturbance, slope, nsteps, lma = NULL,
-  seed_rain = NULL, equilibrium_nsteps = 20L, verbose = FALSE)
+  seed_rain = NULL, verbose = FALSE)
+
+for_python_simulate(time_disturbance, slope, traits, nsteps = 100)
 
 for_python_fitness(sys, lma)
 

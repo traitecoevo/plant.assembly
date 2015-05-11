@@ -40,12 +40,25 @@ for_python_evolve <- function(time_disturbance, slope, nsteps,
   equilibrium_nsteps <- 20L
   sys0 <- python_base_community(time_disturbance, slope,
                                 verbose, equilibrium_nsteps)
+  max_bounds <- sys0$bounds
   obj <- assembler(sys0, list(birth_type="maximum", birth_move_tol=1))
   if (!is.null(lma)) {
     obj <- assembler_set_traits(obj, trait_matrix(lma, "lma"), seed_rain)
   }
   obj <- assembler_run(obj, nsteps)
+  if (is.null(obj$community$bounds)) {
+    obj$community$bounds <- max_bounds
+  }
+
   obj$community
+}
+
+##' @export
+##' @rdname for_python
+for_python_simulate <- function(time_disturbance, slope, traits,
+                                nsteps=100) {
+  sys <- for_python_evolve(time_disturbance, slope, nsteps)
+  for_python_fitness(sys, traits)
 }
 
 python_base_community <- function(time_disturbance, slope,
@@ -68,9 +81,8 @@ python_base_community <- function(time_disturbance, slope,
 
   control <- list(type="gp", cost=grail::cost_mean_2sd)
 
-  sys0 <- community(p0, bounds_infinite("lma"),
+  sys0 <- community(p0, bounds(lma=10^c(-4, 2)),
                     fitness_approximate_control=control)
-  sys0 <- community_viable_bounds(sys0)
 
   sys0
 }
