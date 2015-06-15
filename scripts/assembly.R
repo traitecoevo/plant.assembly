@@ -1,6 +1,6 @@
 devtools::load_all("..")
 library(testthat)
-library(tree2)
+library(plant)
 
 p <- ebt_base_parameters()
 p$disturbance_mean_interval <- 7.0

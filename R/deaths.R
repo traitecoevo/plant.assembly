@@ -14,7 +14,7 @@ community_deaths <- function(community, control) {
     community <- community_drop(community, to_drop)
   }
   if (check_inviable && length(community) > 1L) {
-    res <- tree2::check_inviable(community_parameters(community))
+    res <- plant::check_inviable(community_parameters(community))
     community$seed_rain <- as.numeric(res)
     to_drop2 <- attr(res, "drop")
     if (any(to_drop2)) {

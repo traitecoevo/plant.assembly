@@ -2,7 +2,7 @@
 ## There are a few things here:
 devtools::load_all("..")
 library(testthat)
-library(tree2)
+library(plant)
 
 p <- ebt_base_parameters()
 sys0 <- community(p, bounds_infinite("lma"))

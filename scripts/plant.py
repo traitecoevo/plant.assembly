@@ -1,6 +1,6 @@
 import rpy2.robjects as robjects
-robjects.r("library(tree2)")
-robjects.r("library(tree2.assembly)")
+robjects.r("library(plant)")
+robjects.r("library(plant.assembly)")
 
 class TreeModel():
     def __init__(self, time_disturbance, slope):

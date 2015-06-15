@@ -1,2 +1,2 @@
-##' @import tree2
+##' @import plant
 NULL

@@ -1,6 +1,6 @@
 ## This is the R version of the python code in tree_use.py
-library(tree2)
-library(tree2.assembly)
+library(plant)
+library(plant.assembly)
 
 time_disturbance <- 11.3
 slope <- 1.3

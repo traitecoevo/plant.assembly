@@ -1,4 +1,4 @@
-Package: tree2.assembly
+Package: plant.assembly
 Title: Code for assembling communities
 Version: 0.1
 Author: Richard G. FitzJohn and Daniel S. Falster
@@ -8,7 +8,7 @@ Depends: R (>= 3.1.0)
 License: BSD_2_clause + file LICENSE
 LazyData: true
 Imports:
-    tree2,
+    plant,
     lhs
 Suggests:
     testthat,
