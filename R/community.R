@@ -6,7 +6,7 @@ community <- function(parameters, bounds, seed_rain_initial=1e-3,
     bounds <- bounds_infinite(bounds)
   }
   ## TODO: Check parameters is empty.
-  ret <- list(parameters=parameters,
+  ret <- list(parameters=validate(parameters),
               bounds=check_bounds(bounds),
               seed_rain_initial=seed_rain_initial)
   ret$trait_names <- rownames(bounds)
