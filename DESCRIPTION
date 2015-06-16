@@ -10,8 +10,8 @@ LazyData: true
 Imports:
     plant,
     lhs,
-    grail
-Suggests:
-    testthat,
+    grail,
     mvtnorm,
     dfoptim
+Suggests:
+    testthat
