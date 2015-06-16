@@ -174,7 +174,8 @@ message_community_state <- function(community, prefix="assembler> ",
 }
 
 format_community_state <- function(traits, seed_rain, prefix=NULL) {
-  m <- cbind(as.data.frame(traits), seed_rain=prettyNum(seed_rain))
+  m <- cbind(as.data.frame(traits, stringsAsFactors=FALSE),
+             seed_rain=I(prettyNum(seed_rain)))
   if (nrow(m) == 0) {
     m[1,] <- rep("<empty>", ncol(m))
     rownames(m) <- ""
