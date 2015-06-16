@@ -41,6 +41,7 @@ segments(res_lma, res_w0, res_lma, res_w1, col=cols[-1])
 points(res_lma, res_w1, col=cols[-1], pch=19)
 
 ## And stochastic:
+set.seed(1)
 p <- ebt_base_parameters()
 p$disturbance_mean_interval <- 7.0
 sys0 <- community(p, bounds_infinite("lma"))
@@ -51,5 +52,10 @@ obj_s0 <- assembler(sys0,
                          run_type="single",
                          vcv=vcv))
 
-set.seed(1)
-obj_s <- assembler_run(obj_s0, 10)
+obj_s <- assembler_run(obj_s0, 30)
+
+tmp <- community_prepare_approximate_fitness(obj_s$community)
+ff <- community_fitness_approximate(tmp)
+w <- ff(lma)
+plot(lma, w, log="x", ylim=c(-1, max(w)), type="l")
+points(obj_s$community$traits, rep(0, length(obj_s$community$traits)))
