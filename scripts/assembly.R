@@ -23,6 +23,8 @@ res_w1 <- sapply(seq_along(res_lma), function(i) ff[[i+1]](res_lma[[i]]))
 matplot(lma, w, type="l", col=cols, lty=1, ylim=c(-1, max(w)),
         log="x")
 abline(h=0, col="grey")
+
+# Following lines do not work for multi species solutions
 segments(res_lma, res_w0, res_lma, res_w1, col=cols[-1])
 points(res_lma, res_w1, col=cols[-1], pch=19)
 
