@@ -1,3 +1,4 @@
+##' @export
 assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
   control <- assembler_control(control)
 
@@ -15,6 +16,7 @@ assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
   ret
 }
 
+##' @export
 assembler_control <- function(control=NULL) {
   defaults <- list(run_type="to_equilibrium",
                    birth_type="maximum",
@@ -133,6 +135,7 @@ assembler_set_traits <- function(obj, traits, seed_rain=NULL) {
   obj
 }
 
+##' @export
 assembler_run <- function(obj, nsteps) {
   for (i in seq_len(nsteps)) {
     if (obj$done) {

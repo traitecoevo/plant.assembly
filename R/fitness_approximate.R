@@ -94,6 +94,7 @@ community_make_fitness <- function(community) {
 ## stop branch will be replaced by a call to the generation function
 ## but I want to make sure we pass around the points as much as
 ## possible.
+##' @export
 community_fitness_approximate <- function(community) {
   community_assert_fitness_prepared(community, TRUE)
 

@@ -1,5 +1,6 @@
 ## TODO: Put seed_rain_initial into parameters and set up
 ## appropriately?  We use 1 in a couple of places, no?
+##' @export
 community <- function(parameters, bounds, seed_rain_initial=1e-3,
                       fitness_approximate_control=NULL) {
   if (is.character(bounds)) {
