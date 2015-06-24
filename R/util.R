@@ -76,3 +76,11 @@ maximize_logspace <- function(f, x, bounds, tol) {
 has_attr <- function(x, which) {
   !is.null(attr(x, which, exact=TRUE))
 }
+
+norm2 <- function(x) {
+  sqrt(sum(x^2))
+}
+
+vnapply <- function(X, FUN, ...) {
+  vapply(X, FUN, numeric(1), ...)
+}

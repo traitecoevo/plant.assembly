@@ -106,6 +106,7 @@ community_clear_times <- function(obj) {
   obj$cohort_schedule_ode_times <- NULL
   obj$cohort_schedule_times <- NULL
   obj$fitness_approximate_points <- NULL
+  obj$fitness_approximate_slopes <- NULL
   obj
 }
 

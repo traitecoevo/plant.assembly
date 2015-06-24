@@ -19,15 +19,15 @@ community_new_types_maximum_fitness <- function(sys, control) {
   ret <- find_max_fitness(sys, eps_too_close)
 
   if (attr(ret, "fitness") < eps_positive_fitness) {
-    message("births[max]> Best point had nonpositive fitness: ",
-            attr(ret, "fitness"))
+    plant_log_max_fitness(paste0("Best point had nonpositive fitness: ",
+                                 attr(ret, "fitness")))
     return(empty(sys, ret))
   }
 
   if (length(sys) > 0L) {
     i <- closest_log(drop(ret), sys$traits, sys$bounds)
     if (attr(i, "distance") < eps_too_close) {
-      message("births[max]> Best point too close to existing")
+      plant_log_max_fitness("Best point too close to existing")
       return(empty(sys, ret))
     }
   }
@@ -78,5 +78,53 @@ find_max_fitness_1d <- function(sys, eps_too_close) {
 }
 
 find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
-  stop("Not yet implemented")
+  do_fit <- function(p) {
+    f <- function(x) {
+      community_fitness(sys, trait_matrix(x, sys$trait_names))
+    }
+    fit <- maximize_logspace(f, p, sys$bounds, tol)
+    ret <- trait_matrix(fit$par, sys$trait_names)
+    attr(ret, "fitness") <- fit$value
+    ret
+  }
+  check <- function(fit, X) {
+    j <- closest(log(drop(fit)), log(X), log(sys$bounds))
+    w <- attr(fit, "fitness")
+    d <- attr(j, "distance")
+    plant_log_max_fitness(sprintf("\t...fitness: %s, distance: %s from %d",
+                                  prettyNum(w), prettyNum(d), j))
+    d > eps_too_close && w > 0.0
+  }
+
+  if (length(sys) == 0L) {
+    p0 <- exp(rowMeans(log(sys$bounds)))
+    ret <- do_fit(p0)
+  } else {
+    ret <- NULL
+    X <- sys$traits
+    gr_norm <- vnapply(sys$fitness_approximate_slopes, function(x) norm2(x$gr))
+    idx <- order(gr_norm, decreasing=TRUE)
+    attempts <- list()
+
+    for (i in idx) {
+      plant_log_max_fitness(paste0("Searching from species ", i))
+      fit <- do_fit(X[i, ])
+      attempts <- c(attempts, list(fit))
+      if (check(fit, X)) {
+        ret <- fit
+        break
+      }
+    }
+    if (is.null(ret)) {
+      ## For want of a better thing to try:
+      plant_log_max_fitness("Searching from the middle of occupied space")
+      p0 <- exp(rowMeans(log(sys$bounds)))
+      ret <- do_fit(p0)
+      ## Note that we don't check this point: we'll do that in the
+      ## make_births_maximum_fitness.
+    }
+
+    attr(ret, "attempts") <- ret
+  }
+  ret
 }

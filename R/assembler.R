@@ -53,10 +53,10 @@ assembler_initialise <- function(obj, community) {
   if (!inherits(community, "community")) {
     stop("Expecting a community object")
   }
-  message("assembler> Starting empty assembler")
+  plant_log_assembler("Starting empty assembler")
   obj$community <- community
   if (isTRUE(obj$control$compute_viable_fitness)) {
-    message("assembler> Computing viable bounds")
+    plant_log_assembler("Computing viable bounds")
     obj$community <- community_viable_bounds(obj$community)
   }
   obj$done <- is.null(obj$community$bounds)
@@ -66,8 +66,8 @@ assembler_initialise <- function(obj, community) {
 
 assembler_run_model <- function(obj) {
   run_type <- obj$control$run_type
-  message(sprintf("assembler> Running model (%s)", run_type))
-  message_community_state(obj$community)
+  plant_log_assembler(sprintf("Running model (%s)", run_type))
+  plant_log_assembler_state(obj$community)
   run <- switch(run_type,
                 single=community_run,
                 to_equilibrium=community_run_to_equilibrium,
@@ -77,7 +77,7 @@ assembler_run_model <- function(obj) {
 }
 
 assembler_restore <- function(obj, prev) {
-  message("assembler> Restoring previous community and history")
+  plant_log_assembler("Restoring previous community and history")
   obj$history <- prev
   obj$community <- restore_community(last(obj$history), recompute=TRUE)
   obj$done <- is.null(obj$community$bounds)
@@ -85,10 +85,10 @@ assembler_restore <- function(obj, prev) {
 }
 
 assembler_prepare_fitness <- function(obj) {
-  message("assembler> Computing ode times")
+  plant_log_assembler("Computing ode times")
   obj$community <- community_prepare_fitness(obj$community)
   if (obj$control$birth_type == "maximum") {
-    message("assembler> Computing approximate fitness")
+    plant_log_assembler("Computing approximate fitness")
     obj$community <- community_prepare_approximate_fitness(obj$community)
   }
   obj
@@ -109,10 +109,10 @@ assembler_append_history <- function(obj) {
 }
 
 assembler_step <- function(obj) {
-  message(sprintf("assembler> *** Assembler: step %d, (%d strategies), %s",
+  plant_log_assembler(sprintf("step %d, (%d strategies), %s",
                   length(obj$history), length(obj$community),
                   obj$control$run_type))
-  message_community_state(obj$community)
+  plant_log_assembler_state(obj$community)
   if (!obj$done) obj <- assembler_births(obj)
   if (!obj$done) obj <- assembler_run_model(obj)
   if (!obj$done) obj <- assembler_deaths(obj)
@@ -124,9 +124,9 @@ assembler_set_traits <- function(obj, traits, seed_rain=NULL) {
   if (length(obj$community) > 0L) {
     stop("This is for an empty community only")
   }
-  message("assembler> Setting traits")
+  plant_log_assembler("Setting traits")
   obj$community <- community_add(obj$community, traits, seed_rain)
-  message_community_state(obj$community)
+  plant_log_assembler_state(obj$community)
   obj <- assembler_run_model(obj)
   obj <- assembler_deaths(obj)
   obj <- assembler_append_history(obj)
@@ -136,7 +136,7 @@ assembler_set_traits <- function(obj, traits, seed_rain=NULL) {
 assembler_run <- function(obj, nsteps) {
   for (i in seq_len(nsteps)) {
     if (obj$done) {
-      message(sprintf("assembler> Assembly completed after %d steps", i))
+      plant_log_assembler(sprintf("Assembly completed after %d steps", i))
       break
     }
     obj <- assembler_step(obj)
@@ -164,13 +164,18 @@ should_move <- function(obj, to_add) {
 }
 
 ## Helper function for printing community state.  Not fast!
-message_community_state <- function(community, prefix="assembler> ",
-                                    header="*** Traits: ") {
+##
+## TODO: This might need a trailing newline added after?  I'm getting
+## no trailing newline.  That's a bit surprsing and possibly a bug in
+## loggr.
+plant_log_assembler_state <- function(community) {
   str <- format_community_state(community$traits,
                                 community$seed_rain,
-                                prefix)
-  message(paste0(prefix, header))
-  message(paste(str, collapse="\n"))
+                                NULL)
+  msg <- paste(c("*** Traits:", str), collapse="\n")
+  plant_log_assembler(msg,
+                      traits=community$traits,
+                      seed_rain=community$seed_rain)
 }
 
 format_community_state <- function(traits, seed_rain, prefix=NULL) {

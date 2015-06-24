@@ -1,6 +1,7 @@
 devtools::load_all("..")
 library(testthat)
 library(plant)
+plant_log_console()
 
 p <- ebt_base_parameters()
 p$disturbance_mean_interval <- 7.0

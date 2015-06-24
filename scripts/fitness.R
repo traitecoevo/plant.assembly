@@ -3,6 +3,7 @@
 devtools::load_all("..")
 library(testthat)
 library(plant)
+plant_log_console()
 
 p <- ebt_base_parameters()
 sys0 <- community(p, bounds_infinite("lma"))

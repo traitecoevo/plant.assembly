@@ -3,7 +3,7 @@ assembler_births <- function(obj) {
 
   ## Now we add things:
   if (nrow(to_add) > 0) {
-    message_new_types(to_add)
+    plant_log_births_new_types(to_add)
     i <- should_move(obj, to_add)
     if (length(i) == 1L) {
       obj <- assembler_births_try_move(obj, to_add, i)
@@ -26,7 +26,7 @@ assembler_births <- function(obj) {
 
 assembler_births_try_move <- function(obj, to_add, i) {
   community <- obj$community
-  message("assembler[births]> Trying to move resident ", i)
+  plant_log_births(paste0("Trying to move resident ", i))
   x_prev <- community$traits[i, , drop=FALSE]
 
   test <- community
@@ -39,10 +39,10 @@ assembler_births_try_move <- function(obj, to_add, i) {
   if (w_prev > 0) {
     ## Here, there is no need to run anything: the original
     ## resident has positive fitness and will increase
-    message("assembler[births]> Adding original resident back")
+    plant_log_births("Adding original resident back")
     community <- community_add(test, x_prev, initial_seed_rain(w_prev, obj))
   } else {
-    message("assembler[births]> Move was successful")
+    plant_log_births("Move was successful")
     community <- test
   }
   obj$community <- community
@@ -81,10 +81,8 @@ initial_seed_rain <- function(fitness, obj) {
   seed_rain
 }
 
-message_new_types <- function(to_add) {
-  header <- "*** Proposed new type(s):"
-  prefix <- "assembler[births]> "
-  str <- format_community_state(to_add, NA, prefix)
-  message(paste0(prefix, header))
-  message(paste(str, collapse="\n"))
+plant_log_births_new_types <- function(to_add) {
+  str <- format_community_state(to_add, NA, "births> ")
+  plant_log_births(paste(c("*** Proposed new type(s):", str), collapse="\n"),
+                   to_add=to_add)
 }
