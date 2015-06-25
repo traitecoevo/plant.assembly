@@ -205,6 +205,16 @@ make_fitness_approximate_function <- function(pts, type) {
   }
 }
 
+##' List of parameters controlling
+##' how approximate fitness landscapes are generated.
+##'
+##' @title Control how fitness landscapes are constructed
+##' @param control List of values to change from default.
+##' @return List with elements type, n, finite_only,
+##' n_initial,, n_each, n_predict, lower_limit, cost,
+##' x_seed.
+##' @author Rich FitzJohn, Daniel Falster
+##' @export
 fitness_approximate_control <- function(control=NULL) {
   defaults <- list(type="grid",
                    n=50, # total number of points

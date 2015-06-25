@@ -1,3 +1,15 @@
+##' Initialise a community assembly object
+##'
+##' Control options affect how the assembly proceeds.
+##'
+##' @title start community assembly process.
+##' @param community A \code{community} object.
+##' @param control A control object affecting how the assembly proceeds,
+##' see \code{assembler_control} for details,
+##' @param filename Location to save results (currently does nothing).
+##' @param prev History from previously run assembly, used to restart.
+##' @return An \code{assembler} object.
+##' @author Rich FitzJohn, Daniel Falster
 ##' @export
 assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
   control <- assembler_control(control)
@@ -16,6 +28,33 @@ assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
   ret
 }
 
+##' Controls how community assembly works.
+##'
+##' Returns a list. Passing in a list of value via \code{
+##' control} will override the defaults. Options include
+##' run_type determines whether population is stepped to
+##' demographic equilibrium ("to_equilibrium") or not ("single").
+##' "birth_type" determines sampling of new types -- "stochastic" or
+##' "maximum" (on fitness peak). With "stochastic" births,
+##' "n_mutants" and "n_immigrants" determine the frequency of
+##' resident mutations and immigrations from global pool.
+##' "vcv" is variance-covariance matrix for mutations.
+##' If "birth_move_tol" is trait distance
+##' within which we attempt to move an existing resident rather introduce
+##' a new type (this helps reduce the number of types).
+##' "compute_viable_fitness" asks whether to check bounds of viable
+##' trait space. "check_positive" determines whether the fitness of an
+##' invader is checked before it is introduced. If
+##' "check_inviable" causes dead residents to be removed when seed rain
+##' drops below "dead_seed_rain".
+##' "eps_too_close" is tolerance in trait values when searching for maxima.
+##'
+##' @title Options controllings community assembly process.
+##' @param control A list of values to modify from defaults.
+##' @return A list with elements run_type, birth_type, birth_move_tol,
+##' compute_viable_fitness, n_mutants, n_immigrants, check_positive,
+##' vcv, check_inviable, dead_seed_rain, eps_too_close
+##' @author Rich FitzJohn, Daniel Falster
 ##' @export
 assembler_control <- function(control=NULL) {
   defaults <- list(run_type="to_equilibrium",
@@ -135,6 +174,14 @@ assembler_set_traits <- function(obj, traits, seed_rain=NULL) {
   obj
 }
 
+##' Take specified number of steps with assembler.
+##'
+##'
+##' @title Take specified number of steps with assembler.
+##' @param obj An  \code{assembler} object.
+##' @param nsteps Number of steps
+##' @return An \code{assembler} object.
+##' @author Rich FitzJohn, Daniel Falster
 ##' @export
 assembler_run <- function(obj, nsteps) {
   for (i in seq_len(nsteps)) {
@@ -147,6 +194,13 @@ assembler_run <- function(obj, nsteps) {
   obj
 }
 
+##' Returns number taken by an assembler object
+##'
+##'
+##' @title Returns number taken by an \code{assembler} object
+##' @param x An  \code{assembler} object.
+##' @return Length of history in assembler object.
+##' @author Rich FitzJohn, Daniel Falster
 ##' @export
 length.assembler <- function(x) {
   length(x$history)
@@ -169,7 +223,7 @@ should_move <- function(obj, to_add) {
 ## Helper function for printing community state.  Not fast!
 ##
 ## TODO: This might need a trailing newline added after?  I'm getting
-## no trailing newline.  That's a bit surprsing and possibly a bug in
+## no trailing newline.  That's a bit surprising and possibly a bug in
 ## loggr.
 plant_log_assembler_state <- function(community) {
   str <- format_community_state(community$traits,

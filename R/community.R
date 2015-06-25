@@ -1,6 +1,22 @@
+##' Initialise a community object
+##'
+##' Used to store full description of community. Is a list
+##' with elements parameters, bounds, seed_rain_initial,
+##' trait_names, traits, seed_rain, fitness_approximate_control.
+##'
+##' @title Initialise a community object
+##' @param parameters A \code{parameters} object, as specified
+##' in \code{plant}..
+##' @param bounds A set of bounds, as specified in \code{plant}.
+##' @param seed_rain_initial A vector of seed rains.
+##' @param fitness_approximate_control List of parameters controlling
+##' how approximate fitness landscapes are generated. See function
+##' \code{fitness_approximate_control} for an example.
+##' @return An \code{community} object.
+##' @author Rich FitzJohn, Daniel Falster
+##' @export
 ## TODO: Put seed_rain_initial into parameters and set up
 ## appropriately?  We use 1 in a couple of places, no?
-##' @export
 community <- function(parameters, bounds, seed_rain_initial=1e-3,
                       fitness_approximate_control=NULL) {
   if (is.character(bounds)) {
@@ -137,6 +153,12 @@ community_fitness <- function(obj, traits) {
   community_make_fitness(obj)(traits)
 }
 
+##' Returns number of types in community
+##'
+##' @title Returns number of types in \code{community}
+##' @param x A \code{community} object.
+##' @return number of rows in trait matrix.
+##' @author Rich FitzJohn, Daniel Falster
 ##' @export
 length.community <- function(x) {
   nrow(x$traits)
