@@ -94,6 +94,7 @@ community_make_fitness <- function(community) {
 ## stop branch will be replaced by a call to the generation function
 ## but I want to make sure we pass around the points as much as
 ## possible.
+##' @export
 community_fitness_approximate <- function(community) {
   community_assert_fitness_prepared(community, TRUE)
 
@@ -204,6 +205,16 @@ make_fitness_approximate_function <- function(pts, type) {
   }
 }
 
+##' List of parameters controlling
+##' how approximate fitness landscapes are generated.
+##'
+##' @title Control how fitness landscapes are constructed
+##' @param control List of values to change from default.
+##' @return List with elements type, n, finite_only,
+##' n_initial,, n_each, n_predict, lower_limit, cost,
+##' x_seed.
+##' @author Rich FitzJohn, Daniel Falster
+##' @export
 fitness_approximate_control <- function(control=NULL) {
   defaults <- list(type="grid",
                    n=50, # total number of points
