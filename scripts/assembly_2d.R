@@ -20,4 +20,23 @@ bounds <- bounds(lma=c(0.0703621360996001, 0.938239530095711),
 
 sys0 <- community(p, bounds)
 obj_m0 <- assembler(sys0, list(birth_move_tol=1, compute_viable_fitness=FALSE))
-obj_m <- assembler_run(obj_m0, 20)
+if (file.exists("obj_m.rds")) {
+  obj_m <- readRDS("obj_m.rds")
+  saveRDS(obj_m, "obj_m.rds")
+} else {
+  obj_m <- assembler_run(obj_m0, 20)
+}
+
+lscape <- parallel::mclapply(obj_m$history[-1], local_landscape)
+
+zmin <- -.5
+zmax <- 5
+xlim <- range(sapply(lscape, function(x) range(x$x)))
+ylim <- range(sapply(lscape, function(x) range(x$y)))
+zlim <- c(-zmax, zmax)
+
+pdf("assembly_2d.pdf")
+for (i in lscape) {
+  plot(i, xlim=xlim, ylim=ylim, zlim=zlim, zmin=zmin, zmax=zmax)
+}
+dev.off()
