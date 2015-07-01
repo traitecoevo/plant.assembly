@@ -16,7 +16,8 @@ assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
 
   ret <- list(history=list(),
               done=FALSE,
-              control=control)
+              control=control,
+              filename=filename)
 
   if (is.null(prev)) {
     ret <- assembler_initialise(ret, community)

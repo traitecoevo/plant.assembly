@@ -55,33 +55,6 @@ local_landscape <- function(sys, xlim=NULL, ylim=NULL, scal=.25,
   ret
 }
 
-##' @export
-plot.local_landscape <- function(x, xlim=NULL, ylim=NULL, zlim=NULL,
-                                 zmin=-.5, zmax=5, ...) {
-  if (is.null(xlim)) {
-    xlim <- range(x$x)
-  }
-  if (is.null(ylim)) {
-    ylim <- range(x$y)
-  }
-  x$z[x$z < zmin] <- NA
-  x$z[x$z > zmax] <- zmax
-  if (is.null(zlim)) {
-    zlim <- c(-1, 1) * max(abs(x$z), na.rm=TRUE)
-  }
-
-  cols <- rev(c("#9e0142", "#d53e4f", "#f46d43", "#fdae61", "#fee08b",
-                "#ffffbf", "#e6f598", "#abdda4", "#66c2a5", "#3288bd",
-                "#5e4fa2"))
-
-  nms <- colnames(x$resident)
-
-  image(x, log="xy", xlim=xlim, ylim=ylim, col=cols, zlim=zlim,
-        las=1, xlab=nms[[1]], ylab=nms[[2]], ...)
-  contour(x, levels=0, add=TRUE, labels="")
-  points(x$resident, pch=19)
-}
-
 local_landscape_matrix <- function(sys, ...) {
   n <- length(sys$trait_names)
   m <- vector("list", n^2)
@@ -94,6 +67,7 @@ local_landscape_matrix <- function(sys, ...) {
                         xy=lscape$xy[,2:1,drop=FALSE],
                         z=t(lscape$z),
                         resident=lscape$resident[,2:1,drop=FALSE])
+      class(m[[i, j]]) <- class(m[[j, i]])
     }
   }
 
@@ -105,6 +79,7 @@ local_landscape_matrix <- function(sys, ...) {
     }
   }
   rownames(m) <- colnames(m) <- sys$trait_names
+  class(m) <- c("local_landscape_matrix", "matrix")
   m
 }
 
@@ -146,4 +121,78 @@ make_approximate_fitness_slopes <- function(sys, combine=max, i=NULL) {
 
 local_landscape_zlim <- function(x, zmin, zmax) {
   c(-1, 1) * max(abs(pmin(pmax(x$z, zmin), zmax)))
+}
+
+##' @export
+plot.local_landscape <- function(x, xlim=NULL, ylim=NULL, zlim=NULL,
+                                 zmin=-.5, zmax=5, ...) {
+  if (is.null(xlim)) {
+    xlim <- range(x$x)
+  }
+  if (is.null(ylim)) {
+    ylim <- range(x$y)
+  }
+  x$z[x$z < zmin] <- NA
+  x$z[x$z > zmax] <- zmax
+  if (is.null(zlim)) {
+    zlim <- c(-1, 1) * max(abs(x$z), na.rm=TRUE)
+  }
+
+  cols <- rev(c("#9e0142", "#d53e4f", "#f46d43", "#fdae61", "#fee08b",
+                "#ffffbf", "#e6f598", "#abdda4", "#66c2a5", "#3288bd",
+                "#5e4fa2"))
+
+  nms <- colnames(x$resident)
+
+  image(x, log="xy", xlim=xlim, ylim=ylim, col=cols, zlim=zlim,
+        las=1, xlab=nms[[1]], ylab=nms[[2]], ...)
+  contour(x, levels=0, add=TRUE, labels="")
+  points(x$resident, pch=19)
+}
+
+##' @export
+plot.local_landscape_matrix <- function(m, lim, ..., gap=1, log=TRUE) {
+  n <- ncol(m)
+  labels <- colnames(m)
+
+  opar <- par(mfrow=c(n, n), mar=rep.int(gap/2, 4), oma=rep(4, 4))
+  on.exit(par(opar))
+
+  xl <- yl <- logical(n)
+  if (is.numeric(log)) {
+    xl[log] <- yl[log] <- TRUE
+  } else if (is.logical(log)) {
+    xl[] <- yl[] <- rep(log, length.out=n)
+  } else {
+    xl[] <- grepl("x", log)
+    yl[] <- grepl("y", log)
+  }
+
+  for (i in seq_len(n)) {
+    for (j in seq_len(n)) {
+      l <- paste0(ifelse(xl[j], "x", ""), ifelse(yl[i], "y", ""))
+      plot(NA, type="n", xlim=lim[j,], ylim=lim[i,],
+           xlab="", ylab="", axes=FALSE, log=l)
+      if (i == 1 && j %% 2L == 0) {
+        axis(3L)
+      } else if (i == n && j %% 2L != 0) {
+        axis(1L)
+      }
+      if (j == 1 && i %% 2L == 0) {
+        axis(2L)
+      } else if (j == n && i %% 2L != 0) {
+        axis(4L)
+      }
+      if (i == j) {
+        par(usr=c(0, 1, 0, 1))
+        xlp <- if (xl[i]) 10^0.5 else 0.5
+        ylp <- if (yl[j]) 10^0.5 else 0.5
+        cex_labels <- max(0.8, min(2, 0.9 / max(strwidth(labels, "user"))))
+        text(xlp, ylp, labels[i], cex=cex_labels)
+      } else {
+        plot(m[[j, i]], add=TRUE, ...)
+      }
+      box()
+    }
+  }
 }

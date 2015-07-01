@@ -3,6 +3,7 @@
 S3method(length,assembler)
 S3method(length,community)
 S3method(plot,local_landscape)
+S3method(plot,local_landscape_matrix)
 export(assembler)
 export(assembler_control)
 export(assembler_run)
