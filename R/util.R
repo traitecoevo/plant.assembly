@@ -84,3 +84,7 @@ norm2 <- function(x) {
 vnapply <- function(X, FUN, ...) {
   vapply(X, FUN, numeric(1), ...)
 }
+
+last <- function(x) {
+  x[[length(x)]]
+}

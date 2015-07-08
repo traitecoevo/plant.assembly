@@ -4,18 +4,16 @@
 ##' @param sys Single community with element
 ##'   \code{fitness_approximate_slopes}
 ##' @param xlim,ylim Optional x and y limits (otherwise resident range
-##'   will be expanded by \code{scal})
-##' @param scal Scaling parameter when creating \code{xlim} and
-##'   \code{ylim}.
-##' @param n Number of points to compute fitness for (in each of x and
-##'   y, so \code{n^2} points total are used)
-##' @param combine Leave this be.
+##'   will be expanded by \code{control$scal})
+##' @param control Set of control parameters, passed to
+##'   \code{local_landscape_control}
 ##' @param traits Which traits to compute the matrix for.  Not
 ##'   required with two traits, but for more than two traits, you must
 ##'   indicate which pair of traits to compute the landscape for.
 ##' @export
-local_landscape <- function(sys, xlim=NULL, ylim=NULL, scal=.25,
-                            n=101, combine="closest", traits=NULL) {
+local_landscape <- function(sys, xlim=NULL, ylim=NULL, control=NULL,
+                            traits=NULL) {
+  control <- local_landscape_control(control)
   X <- sys$traits
   if (ncol(X) < 2L) {
     stop("This requires at least two dimensions")
@@ -36,7 +34,7 @@ local_landscape <- function(sys, xlim=NULL, ylim=NULL, scal=.25,
     stop("Expected two traits")
   }
 
-  scal <- 1 + scal
+  scal <- 1 + control$scal
   if (is.null(xlim)) {
     xlim <- range(X[, traits[[1]]]) * c(1/scal, scal)
   }
@@ -44,13 +42,22 @@ local_landscape <- function(sys, xlim=NULL, ylim=NULL, scal=.25,
     ylim <- range(X[, traits[[2]]]) * c(1/scal, scal)
   }
 
-  f <- make_approximate_fitness_slopes(sys, combine, traits)
+  n <- control$n
   x <- seq_log_range(xlim, n)
   y <- seq_log_range(ylim, n)
   xy <- as.matrix(expand.grid(x, y))
   colnames(xy) <- sys$trait_names[traits]
-  z <- matrix(apply(xy, 1, f), n, n)
-  ret <- list(x=x, y=y, xy=xy, z=z, resident=X[, traits, drop=FALSE])
+  resident <- X[, traits, drop=FALSE]
+
+  ## Roll method, zlim, combine etc together into one control object.
+  if (control$method == "slopes") {
+    z <- local_landscape_slopes(sys, xy, n, control)
+  } else if (control$method == "real") {
+    z <- local_landscape_true(sys, xy, n, control)
+  } else {
+    stop("Unknown method: ", control$method)
+  }
+  ret <- list(x=x, y=y, xy=xy, z=z, resident=resident)
   class(ret) <- "local_landscape"
   ret
 }
@@ -138,14 +145,10 @@ plot.local_landscape <- function(x, xlim=NULL, ylim=NULL, zlim=NULL,
     zlim <- c(-1, 1) * max(abs(x$z), na.rm=TRUE)
   }
 
-  cols <- rev(c("#9e0142", "#d53e4f", "#f46d43", "#fdae61", "#fee08b",
-                "#ffffbf", "#e6f598", "#abdda4", "#66c2a5", "#3288bd",
-                "#5e4fa2"))
-
   nms <- colnames(x$resident)
 
-  image(x, log="xy", xlim=xlim, ylim=ylim, col=cols, zlim=zlim,
-        las=1, xlab=nms[[1]], ylab=nms[[2]], ...)
+  image(x, log="xy", xlim=xlim, ylim=ylim, col=cols_landscape(),
+        zlim=zlim, las=1, xlab=nms[[1]], ylab=nms[[2]], ...)
   contour(x, levels=0, add=TRUE, labels="")
   points(x$resident, pch=19)
 }
@@ -195,4 +198,120 @@ plot.local_landscape_matrix <- function(m, lim, ..., gap=1, log=TRUE) {
       box()
     }
   }
+}
+
+local_landscape_slopes <- function(sys, xy, n, control) {
+  traits <- colnames(xy)
+  f <- make_approximate_fitness_slopes(sys, "closest", traits)
+  matrix(apply(xy, 1, f), n, n)
+}
+
+## It might make sense to compute this the way I am currently doing it
+## and then resample using something like akima::interp or
+## fields::interp.surface; that would allow a lower true data
+## computing overhead while giving nice looking plots.
+##' @importFrom progress progress_bar
+local_landscape_true <- function(sys, xy, n, control) {
+  zmin <- control$zmin
+  n_batch <- control$n_batch
+  traits <- colnames(xy)
+  browser()
+  ## Convert dimensions onto 0..1:
+  lim <- log(t(apply(xy, 2, range)))
+  resident <- rescale(log(sys$traits[, traits, drop=FALSE]), lim)
+  xy_orig <- xy
+  xy <- rescale(log(xy), lim)
+
+  ## Identify the resident that the points are closest to (this
+  ## actually takes a little while and would be much more efficient
+  ## using a triangulation approach), which I think I actually have
+  ## implemented somewhere.
+  k <- apply(xy, 1, closest, resident)
+
+  d <- sqrt(rowSums((xy - resident[k, , drop=FALSE])^2))
+
+  ## Various indices we'll track:
+  ord <- order(d)
+  excl <- done <- integer(0)
+  w <- matrix(NA_real_, n, n)
+
+  make_traits <- function(i) {
+    ret <- sys$traits[k[i], , drop=FALSE]
+    ret[, traits] <- xy_orig[i, , drop=FALSE]
+    ret
+  }
+
+  drop_ray <- function(i) {
+    x0 <- resident[k[i], ]
+    x1 <- xy[i, ]
+    pos <- intersect(ord, which(k == k[i]))
+
+    if (length(pos) > 0L) {
+      theta <- atan2(x1[2] - x0[2],          x1[1] - x0[1])
+      alpha <- atan2(sqrt(2) / (n - 1L) / 2, sqrt(sum((x1 - x0)^2))) * 1.01
+      angle <- atan2(xy[pos, 2] - x0[2],     xy[pos, 1] - x0[1])
+
+      if (theta + alpha > pi) {
+        angle[angle < - pi / 2] <- angle[angle < - pi / 2] + 2 * pi
+      } else if (theta - alpha < -pi) {
+        angle[angle > pi / 2]   <- angle[angle >   pi / 2] - 2 * pi
+      }
+
+      pos <- pos[angle > (theta - alpha) & angle < (theta + alpha)]
+    }
+    pos
+  }
+
+  p <- progress::progress_bar$new(total=length(ord))$tick
+  p(0)
+
+  f <- community_make_fitness(sys)
+  while (length(ord) > 0L) {
+    idx <- ord[seq_len(min(n_batch, length(ord)))]
+
+    w[idx] <- wi <- f(make_traits(idx))
+    done <- c(done, idx)
+    ord <- setdiff(ord, idx)
+    p(length(idx))
+
+    if (any(wi < zmin)) {
+      for (idx2 in idx[wi < zmin]) {
+        drop <- drop_ray(idx2)
+        ord <- setdiff(ord, drop)
+        p(length(drop))
+        excl <- c(excl, drop)
+      }
+    }
+  }
+
+  w
+}
+
+cols_landscape <- function() {
+  rev(c("#9e0142", "#d53e4f", "#f46d43", "#fdae61", "#fee08b",
+        "#ffffbf", "#e6f598", "#abdda4", "#66c2a5", "#3288bd",
+        "#5e4fa2"))
+}
+
+##' @export
+##' @rdname local_landscape
+local_landscape_control <- function(control) {
+  defaults <- list(scal=0.25,   # limit expansion factor
+                   n=101L,      # grid size
+                   method="slopes",
+                   ## For _real:
+                   n_batch=20L, # batch size
+                   zmin=-1)     # z axis cut off
+  if (length(control) > 0L && is.null(names(control))) {
+    stop("control must be named")
+  }
+  extra <- setdiff(names(control), names(defaults))
+  if (length(extra) > 0L) {
+    stop("Unknown entries in control: ", paste(extra, collapse=", "))
+  }
+  ret <- modifyList(defaults, as.list(control))
+  if (!(ret$method %in% c("slopes", "real"))) {
+    stop("Unknown method: ", ret$method)
+  }
+  ret
 }

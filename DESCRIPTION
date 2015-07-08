@@ -12,6 +12,7 @@ Imports:
     lhs,
     grail,
     mvtnorm,
-    dfoptim
+    dfoptim,
+    progress
 Suggests:
     testthat

@@ -2,25 +2,23 @@
 % Please edit documentation in R/local_landscape.R
 \name{local_landscape}
 \alias{local_landscape}
+\alias{local_landscape_control}
 \title{Generate local landscape}
 \usage{
-local_landscape(sys, xlim = NULL, ylim = NULL, scal = 0.25, n = 101,
-  combine = "closest", traits = NULL)
+local_landscape(sys, xlim = NULL, ylim = NULL, control = NULL,
+  traits = NULL)
+
+local_landscape_control(control)
 }
 \arguments{
 \item{sys}{Single community with element
 \code{fitness_approximate_slopes}}
 
 \item{xlim,ylim}{Optional x and y limits (otherwise resident range
-will be expanded by \code{scal})}
+will be expanded by \code{control$scal})}
 
-\item{scal}{Scaling parameter when creating \code{xlim} and
-\code{ylim}.}
-
-\item{n}{Number of points to compute fitness for (in each of x and
-y, so \code{n^2} points total are used)}
-
-\item{combine}{Leave this be.}
+\item{control}{Set of control parameters, passed to
+\code{local_landscape_control}}
 
 \item{traits}{Which traits to compute the matrix for.  Not
 required with two traits, but for more than two traits, you must
