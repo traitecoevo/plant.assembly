@@ -42,7 +42,13 @@ local_landscape <- function(sys, xlim=NULL, ylim=NULL, control=NULL,
     ylim <- range(X[, traits[[2]]]) * c(1/scal, scal)
   }
 
+  resample <- control$method == "real" && !is.null(control$n_real)
+  if (resample) {
+    n_resample <- control$n
+    control$n <- control$n_real
+  }
   n <- control$n
+
   x <- seq_log_range(xlim, n)
   y <- seq_log_range(ylim, n)
   xy <- as.matrix(expand.grid(x, y))
@@ -50,15 +56,18 @@ local_landscape <- function(sys, xlim=NULL, ylim=NULL, control=NULL,
   resident <- X[, traits, drop=FALSE]
 
   ## Roll method, zlim, combine etc together into one control object.
-  if (control$method == "slopes") {
-    z <- local_landscape_slopes(sys, xy, n, control)
-  } else if (control$method == "real") {
-    z <- local_landscape_true(sys, xy, n, control)
-  } else {
-    stop("Unknown method: ", control$method)
-  }
+  ll <- switch(control$method,
+               slopes=local_landscape_slopes,
+               real=local_landscape_real,
+               stop("Unknown method: ", control$method))
+  z <- ll(sys, xy, control)
   ret <- list(x=x, y=y, xy=xy, z=z, resident=resident)
   class(ret) <- "local_landscape"
+
+  if (resample) {
+    ret <- local_landscape_resample(ret, n_resample)
+  }
+
   ret
 }
 
@@ -70,11 +79,7 @@ local_landscape_matrix <- function(sys, ...) {
     for (j in seq_len(i - 1L)) {
       lscape <- local_landscape(sys, traits=c(j, i), ...)
       m[[j, i]] <- lscape
-      m[[i, j]] <- list(x=lscape$y, y=lscape$x,
-                        xy=lscape$xy[,2:1,drop=FALSE],
-                        z=t(lscape$z),
-                        resident=lscape$resident[,2:1,drop=FALSE])
-      class(m[[i, j]]) <- class(m[[j, i]])
+      m[[i, j]] <- t(lscape)
     }
   }
 
@@ -133,6 +138,7 @@ local_landscape_zlim <- function(x, zmin, zmax) {
 ##' @export
 plot.local_landscape <- function(x, xlim=NULL, ylim=NULL, zlim=NULL,
                                  zmin=-.5, zmax=5, ...) {
+  ## TODO: increase limits by c(-1, 1) * (1 / (n - 1) / 2)
   if (is.null(xlim)) {
     xlim <- range(x$x)
   }
@@ -149,12 +155,15 @@ plot.local_landscape <- function(x, xlim=NULL, ylim=NULL, zlim=NULL,
 
   image(x, log="xy", xlim=xlim, ylim=ylim, col=cols_landscape(),
         zlim=zlim, las=1, xlab=nms[[1]], ylab=nms[[2]], ...)
-  contour(x, levels=0, add=TRUE, labels="")
+  contour(x, levels=0, add=TRUE, drawlabels=FALSE)
   points(x$resident, pch=19)
 }
 
 ##' @export
-plot.local_landscape_matrix <- function(m, lim, ..., gap=1, log=TRUE) {
+plot.local_landscape_matrix <- function(m, lim=NULL, ..., gap=1, log=TRUE) {
+  if (is.null(lim)) {
+    lim <- do.call("rbind", diag(m))
+  }
   n <- ncol(m)
   labels <- colnames(m)
 
@@ -200,22 +209,20 @@ plot.local_landscape_matrix <- function(m, lim, ..., gap=1, log=TRUE) {
   }
 }
 
-local_landscape_slopes <- function(sys, xy, n, control) {
+local_landscape_slopes <- function(sys, xy, control) {
   traits <- colnames(xy)
+  n <- control$n
   f <- make_approximate_fitness_slopes(sys, "closest", traits)
   matrix(apply(xy, 1, f), n, n)
 }
 
-## It might make sense to compute this the way I am currently doing it
-## and then resample using something like akima::interp or
-## fields::interp.surface; that would allow a lower true data
-## computing overhead while giving nice looking plots.
 ##' @importFrom progress progress_bar
-local_landscape_true <- function(sys, xy, n, control) {
+local_landscape_real <- function(sys, xy, control) {
+  traits <- colnames(xy)
+  n <- control$n
+
   zmin <- control$zmin
   n_batch <- control$n_batch
-  traits <- colnames(xy)
-  browser()
   ## Convert dimensions onto 0..1:
   lim <- log(t(apply(xy, 2, range)))
   resident <- rescale(log(sys$traits[, traits, drop=FALSE]), lim)
@@ -233,7 +240,7 @@ local_landscape_true <- function(sys, xy, n, control) {
   ## Various indices we'll track:
   ord <- order(d)
   excl <- done <- integer(0)
-  w <- matrix(NA_real_, n, n)
+  z <- matrix(NA_real_, n, n)
 
   make_traits <- function(i) {
     ret <- sys$traits[k[i], , drop=FALSE]
@@ -269,13 +276,13 @@ local_landscape_true <- function(sys, xy, n, control) {
   while (length(ord) > 0L) {
     idx <- ord[seq_len(min(n_batch, length(ord)))]
 
-    w[idx] <- wi <- f(make_traits(idx))
+    z[idx] <- zi <- f(make_traits(idx))
     done <- c(done, idx)
     ord <- setdiff(ord, idx)
     p(length(idx))
 
-    if (any(wi < zmin)) {
-      for (idx2 in idx[wi < zmin]) {
+    if (any(zi < zmin)) {
+      for (idx2 in idx[zi < zmin]) {
         drop <- drop_ray(idx2)
         ord <- setdiff(ord, drop)
         p(length(drop))
@@ -284,7 +291,7 @@ local_landscape_true <- function(sys, xy, n, control) {
     }
   }
 
-  w
+  z
 }
 
 cols_landscape <- function() {
@@ -295,13 +302,14 @@ cols_landscape <- function() {
 
 ##' @export
 ##' @rdname local_landscape
-local_landscape_control <- function(control) {
+local_landscape_control <- function(control=NULL) {
   defaults <- list(scal=0.25,   # limit expansion factor
                    n=101L,      # grid size
                    method="slopes",
                    ## For _real:
                    n_batch=20L, # batch size
-                   zmin=-1)     # z axis cut off
+                   zmin=-1,     # z axis cut off
+                   n_real=NULL)  # grid size really used for calculation
   if (length(control) > 0L && is.null(names(control))) {
     stop("control must be named")
   }
@@ -313,5 +321,53 @@ local_landscape_control <- function(control) {
   if (!(ret$method %in% c("slopes", "real"))) {
     stop("Unknown method: ", ret$method)
   }
+
   ret
+}
+
+##' @export
+t.local_landscape <- function(x, ...) {
+  ret <- list(x = x$y,
+              y = x$x,
+              xy = x$xy[, 2:1, drop=FALSE],
+              z = t(x$z),
+              resident = x$resident[, 2:1, drop=FALSE])
+  if (!is.null(x$real)) {
+    ret$real <- t(x$real)
+  }
+  class(ret) <- class(x)
+  ret
+}
+
+##' @importFrom akima interp
+local_landscape_resample <- function(obj, n) {
+  if (!is.null(obj$real)) {
+    return(local_landscape_resample(obj$real, n))
+  }
+
+  x <- seq_range(log(range(obj$x)), n)
+  y <- seq_range(log(range(obj$y)), n)
+  z <- obj$z
+  i <- is.finite(obj$z)
+
+  ret <- akima::interp(log(obj$xy[i, 1L]), log(obj$xy[i, 2L]), z[i],
+                       xo=x, yo=y)
+  ret$x <- exp(ret$x)
+  ret$y <- exp(ret$y)
+  ret$xy <- as.matrix(expand.grid(x, y))
+  colnames(ret$xy) <- colnames(obj$xy)
+  ret$resident <- obj$resident
+  ret$real <- obj
+  class(ret) <- class(obj)
+  ret
+}
+
+local_landscape_matrix_resample <- function(obj, n) {
+  for (i in seq_len(nrow(obj))) {
+    for (j in seq_len(i - 1L)) {
+      obj[[j, i]] <- local_landscape_resample(obj[[j, i]], n)
+      obj[[i, j]] <- t(obj[[j, i]])
+    }
+  }
+  obj
 }
