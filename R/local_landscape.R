@@ -51,8 +51,7 @@ local_landscape <- function(sys, xlim=NULL, ylim=NULL, control=NULL,
 
   x <- seq_log_range(xlim, n)
   y <- seq_log_range(ylim, n)
-  xy <- as.matrix(expand.grid(x, y))
-  colnames(xy) <- sys$trait_names[traits]
+  xy <- expand_grid_local_landscape(x, y, traits)
   resident <- X[, traits, drop=FALSE]
 
   ## Roll method, zlim, combine etc together into one control object.
@@ -210,7 +209,7 @@ plot.local_landscape_matrix <- function(m, lim=NULL, ..., gap=1, log=TRUE) {
 }
 
 local_landscape_slopes <- function(sys, xy, control) {
-  traits <- colnames(xy)
+  traits <- match(colnames(xy), sys$trait_names)
   n <- control$n
   f <- make_approximate_fitness_slopes(sys, "closest", traits)
   matrix(apply(xy, 1, f), n, n)
@@ -327,11 +326,13 @@ local_landscape_control <- function(control=NULL) {
 
 ##' @export
 t.local_landscape <- function(x, ...) {
+  ## TODO: xy needs more work than this; it needs regenerating completely.
   ret <- list(x = x$y,
               y = x$x,
-              xy = x$xy[, 2:1, drop=FALSE],
+              xy = x$xy,
               z = t(x$z),
               resident = x$resident[, 2:1, drop=FALSE])
+  ret$xy <- expand_grid_local_landscape(ret$x, ret$y, colnames(x$xy)[2:1])
   if (!is.null(x$real)) {
     ret$real <- t(x$real)
   }
@@ -354,8 +355,7 @@ local_landscape_resample <- function(obj, n) {
                        xo=x, yo=y)
   ret$x <- exp(ret$x)
   ret$y <- exp(ret$y)
-  ret$xy <- as.matrix(expand.grid(x, y))
-  colnames(ret$xy) <- colnames(obj$xy)
+  ret$xy <- expand_grid_local_landscape(x, y, colnames(obj$xy))
   ret$resident <- obj$resident
   ret$real <- obj
   class(ret) <- class(obj)
@@ -370,4 +370,10 @@ local_landscape_matrix_resample <- function(obj, n) {
     }
   }
   obj
+}
+
+expand_grid_local_landscape <- function(x, y, traits) {
+  xy <- as.matrix(expand.grid(x, y))
+  colnames(xy) <- traits
+  xy
 }

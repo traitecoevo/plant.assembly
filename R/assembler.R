@@ -19,10 +19,17 @@ assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
               control=control,
               filename=filename)
 
+  if (file.exists(filename)) {
+    if (!is.null(prev)) {
+      stop("filename present and prev given: don't know what do!")
+    }
+    prev <- readRDS(filename)
+  }
+
   if (is.null(prev)) {
     ret <- assembler_initialise(ret, community)
   } else {
-    ret <- assembler_restore(ret, prev)
+    ret <- assembler_restore(ret, community, prev)
   }
 
   class(ret) <- "assembler"
@@ -118,11 +125,25 @@ assembler_run_model <- function(obj) {
   obj
 }
 
-assembler_restore <- function(obj, prev) {
+assembler_restore <- function(obj, community, prev) {
   plant_log_assembler("Restoring previous community and history")
+
+  if (length(community) > 0L) {
+    stop("community must be an empty placeholder")
+  }
+  ## Check that this looks legit:
+  x <- last(prev)
+  if (!isTRUE(all.equal(community$parameters, x$parameters))) {
+    stop("Restoring community: parameters don't match")
+  }
+  if (!all(x$bounds[, "lower"] >= community$bounds[, "lower"] &
+           x$bounds[, "upper"] <= community$bounds[, "upper"])) {
+    stop("Restoring community: incompatible bounds")
+  }
+
   obj$history <- prev
-  obj$community <- restore_community(last(obj$history), recompute=TRUE)
-  obj$done <- is.null(obj$community$bounds)
+  obj$community <- x
+  obj$done <- is.null(x$bounds) || isTRUE(attr(prev, "done", exact=TRUE))
   obj
 }
 
@@ -139,6 +160,9 @@ assembler_prepare_fitness <- function(obj) {
 assembler_append_history <- function(obj) {
   obj <- assembler_prepare_fitness(obj)
   obj$history <- c(obj$history, list(obj$community))
+  if (isTRUE(obj$done)) {
+    attr(obj$history, "done") <- TRUE
+  }
   filename <- obj$filename
   if (!is.null(filename)) {
     ok <- try(saveRDS(obj$history, filename))
@@ -158,8 +182,7 @@ assembler_step <- function(obj) {
   if (!obj$done) obj <- assembler_births(obj)
   if (!obj$done) obj <- assembler_run_model(obj)
   if (!obj$done) obj <- assembler_deaths(obj)
-  if (!obj$done) obj <- assembler_append_history(obj)
-  obj
+  assembler_append_history(obj)
 }
 
 assembler_set_traits <- function(obj, traits, seed_rain=NULL) {

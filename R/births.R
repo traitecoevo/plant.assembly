@@ -20,6 +20,7 @@ assembler_births <- function(obj) {
   if (has_attr(to_add, "done")) {
     obj$done <- (obj$control$run_type == "to_equilibrium" &&
                  attr(to_add, "done"))
+    obj$community$done <- TRUE
   }
   obj
 }
