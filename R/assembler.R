@@ -20,10 +20,11 @@ assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
               filename=filename)
 
   if (file.exists(filename)) {
-    if (!is.null(prev)) {
-      stop("filename present and prev given: don't know what do!")
+    if (is.null(prev)) {
+      prev <- readRDS(filename)
+    } else if (!isTRUE(all.equal(readRDS(filename), prev))) {
+      stop("filename present and prev given, but don't agree!")
     }
-    prev <- readRDS(filename)
   }
 
   if (is.null(prev)) {

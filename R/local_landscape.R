@@ -51,7 +51,7 @@ local_landscape <- function(sys, xlim=NULL, ylim=NULL, control=NULL,
 
   x <- seq_log_range(xlim, n)
   y <- seq_log_range(ylim, n)
-  xy <- expand_grid_local_landscape(x, y, traits)
+  xy <- expand_grid_local_landscape(x, y, sys$trait_names[traits])
   resident <- X[, traits, drop=FALSE]
 
   ## Roll method, zlim, combine etc together into one control object.
