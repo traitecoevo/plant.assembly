@@ -19,7 +19,7 @@ assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
               control=control,
               filename=filename)
 
-  if (file.exists(filename)) {
+  if (!is.null(filename) && file.exists(filename)) {
     if (is.null(prev)) {
       prev <- readRDS(filename)
     } else if (!isTRUE(all.equal(readRDS(filename), prev))) {
