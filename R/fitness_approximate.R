@@ -182,8 +182,8 @@ fitness_approximate_points_gp <- function(fitness,
   cbind(exp(t(gp$X)), t(gp$y), deparse.level=0)
 }
 
+##' @importFrom grader slope_info
 community_fitness_slopes <- function(sys) {
-  requireNamespace("grader")
   fitness <- community_make_fitness(sys)
   f_logspace <- function(x) {
     fitness(trait_matrix(exp(x), sys$trait_names))

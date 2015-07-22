@@ -8,7 +8,7 @@
 local_landscape(sys, xlim = NULL, ylim = NULL, control = NULL,
   traits = NULL)
 
-local_landscape_control(control)
+local_landscape_control(control = NULL)
 }
 \arguments{
 \item{sys}{Single community with element

@@ -13,6 +13,7 @@ Imports:
     grail,
     mvtnorm,
     dfoptim,
-    progress
+    progress,
+    grader
 Suggests:
     testthat
