@@ -12,7 +12,7 @@ assembler(community, control = NULL, filename = NULL, prev = NULL)
 \item{control}{A control object affecting how the assembly proceeds,
 see \code{assembler_control} for details,}
 
-\item{filename}{Location to save results (currently does nothing).}
+\item{filename}{Location to save results.}
 
 \item{prev}{History from previously run assembly, used to restart.}
 }

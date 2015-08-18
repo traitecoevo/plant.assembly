@@ -6,7 +6,7 @@
 ##' @param community A \code{community} object.
 ##' @param control A control object affecting how the assembly proceeds,
 ##' see \code{assembler_control} for details,
-##' @param filename Location to save results (currently does nothing).
+##' @param filename Location to save results.
 ##' @param prev History from previously run assembly, used to restart.
 ##' @return An \code{assembler} object.
 ##' @author Rich FitzJohn, Daniel Falster
