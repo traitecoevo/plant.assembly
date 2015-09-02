@@ -166,7 +166,7 @@ assembler_append_history <- function(obj) {
   }
   filename <- obj$filename
   if (!is.null(filename)) {
-    ok <- try(saveRDS(obj$history, filename))
+    ok <- try(saveRDS(obj, filename))
     if (inherits(ok, "try-error")) {
       warning("History saving has failed",
               immediate.=TRUE, call.=FALSE)
