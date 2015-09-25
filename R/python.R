@@ -75,7 +75,7 @@ python_base_community <- function(time_disturbance, slope,
 
   p0$strategy_default$c_r1 <- 0.5
   p0$strategy_default$c_r2 <- 0
-  p0$hyperpar <- make_FFW16_hyperpar(B4=slope)
+  p0$hyperpar <- make_FFW16_hyperpar(B_kl2=slope)
 
   p0$disturbance_mean_interval <- time_disturbance
 
