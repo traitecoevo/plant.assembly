@@ -35,13 +35,14 @@ for_python_equilibrium <- function(time_disturbance, slope,
 ##' @export
 ##' @rdname for_python
 for_python_evolve <- function(time_disturbance, slope, nsteps,
-                              lma=NULL, seed_rain=NULL,
+                              filename=NULL, lma=NULL, seed_rain=NULL,
                               verbose=FALSE) {
   equilibrium_nsteps <- 20L
   sys0 <- python_base_community(time_disturbance, slope,
                                 verbose, equilibrium_nsteps)
   max_bounds <- sys0$bounds
-  obj <- assembler(sys0, list(birth_type="maximum", birth_move_tol=1))
+  obj <- assembler(sys0, list(birth_type="maximum", birth_move_tol=1),
+                   filename=filename)
   if (!is.null(lma)) {
     obj <- assembler_set_traits(obj, trait_matrix(lma, "lma"), seed_rain)
   }
@@ -54,10 +55,12 @@ for_python_evolve <- function(time_disturbance, slope, nsteps,
 }
 
 ##' @export
+##' @param filename Optional filename to save results in (as for
+##'   \code{\link{assembler}}).
 ##' @rdname for_python
 for_python_simulate <- function(time_disturbance, slope, traits,
-                                nsteps=100) {
-  sys <- for_python_evolve(time_disturbance, slope, nsteps)
+                                nsteps=100, filename=NULL) {
+  sys <- for_python_evolve(time_disturbance, slope, nsteps, filename)
   for_python_fitness(sys, traits)
 }
 

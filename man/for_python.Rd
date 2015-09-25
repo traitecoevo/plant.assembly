@@ -12,10 +12,11 @@
 for_python_equilibrium(time_disturbance, slope, lma, seed_rain,
   equilibrium_nsteps = 20L, verbose = FALSE)
 
-for_python_evolve(time_disturbance, slope, nsteps, lma = NULL,
-  seed_rain = NULL, verbose = FALSE)
+for_python_evolve(time_disturbance, slope, nsteps, filename = NULL,
+  lma = NULL, seed_rain = NULL, verbose = FALSE)
 
-for_python_simulate(time_disturbance, slope, traits, nsteps = 100)
+for_python_simulate(time_disturbance, slope, traits, nsteps = 100,
+  filename = NULL)
 
 for_python_fitness(sys, lma)
 
@@ -39,6 +40,9 @@ equilibrium rain for}
 rain.}
 
 \item{nsteps}{Number of evolutionary steps to run for}
+
+\item{filename}{Optional filename to save results in (as for
+\code{\link{assembler}}).}
 
 \item{sys}{Result of running \code{for_python} or
 \code{for_python_evolve}}
