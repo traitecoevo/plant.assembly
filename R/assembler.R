@@ -133,7 +133,7 @@ assembler_restore <- function(obj, community, prev) {
     stop("community must be an empty placeholder")
   }
   ## Check that this looks legit:
-  x <- last(prev)
+  x <- last(prev$history)
   if (!isTRUE(all.equal(community$parameters, x$parameters))) {
     stop("Restoring community: parameters don't match")
   }
@@ -141,11 +141,9 @@ assembler_restore <- function(obj, community, prev) {
            x$bounds[, "upper"] <= community$bounds[, "upper"])) {
     stop("Restoring community: incompatible bounds")
   }
-
-  obj$history <- prev
-  obj$community <- x
-  obj$done <- is.null(x$bounds) || isTRUE(attr(prev, "done", exact=TRUE))
-  obj
+  plant_log_assembler(sprintf("...restored %d steps of history",
+                              length(prev$history)))
+  prev
 }
 
 assembler_prepare_fitness <- function(obj) {
@@ -211,7 +209,8 @@ assembler_set_traits <- function(obj, traits, seed_rain=NULL) {
 assembler_run <- function(obj, nsteps) {
   for (i in seq_len(nsteps)) {
     if (obj$done) {
-      plant_log_assembler(sprintf("Assembly completed after %d steps", i))
+      plant_log_assembler(sprintf("Assembly completed after %d steps",
+                                  length(obj$history)))
       break
     }
     obj <- assembler_step(obj)
