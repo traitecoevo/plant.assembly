@@ -33,7 +33,7 @@ community_prepare_fitness <- function(community) {
         community$cohort_schedule_ode_times <-
           res$cohort_schedule_ode_times
       } else if (is.null(community$cohort_schedule_ode_times)) {
-        res <- run_ebt(community_parameters(community))
+        res <- run_scm(community_parameters(community))
         community$cohort_schedule_ode_times <- res$ode_times
       }
     }

@@ -67,7 +67,7 @@ for_python_simulate <- function(time_disturbance, slope, traits,
 python_base_community <- function(time_disturbance, slope,
                                   verbose=FALSE,
                                   equilibrium_nsteps=20) {
-  p0 <- ebt_base_parameters()
+  p0 <- scm_base_parameters()
   if (verbose) {
     p0$control <- equilibrium_verbose(p0$control)
   } else {
@@ -78,7 +78,7 @@ python_base_community <- function(time_disturbance, slope,
 
   p0$strategy_default$c_r1 <- 0.5
   p0$strategy_default$c_r2 <- 0
-  p0$hyperpar <- make_FFW16_hyperpar(B_kl2=slope)
+  p0$hyperpar <- make_FF16_hyperpar(B_kl2=slope)
 
   p0$disturbance_mean_interval <- time_disturbance
 

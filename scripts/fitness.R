@@ -5,7 +5,7 @@ library(testthat)
 library(plant)
 plant_log_console()
 
-p <- ebt_base_parameters()
+p <- scm_base_parameters()
 sys0 <- community(p, bounds_infinite("lma"))
 sys0 <- community_viable_bounds(sys0)
 

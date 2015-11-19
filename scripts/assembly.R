@@ -3,7 +3,7 @@ library(testthat)
 library(plant)
 plant_log_console()
 
-p <- ebt_base_parameters()
+p <- scm_base_parameters()
 p$disturbance_mean_interval <- 7.0
 sys0 <- community(p, bounds_infinite("lma"))
 
@@ -43,7 +43,7 @@ points(res_lma, res_w1, col=cols[-1], pch=19)
 
 ## And stochastic:
 set.seed(1)
-p <- ebt_base_parameters()
+p <- scm_base_parameters()
 p$disturbance_mean_interval <- 7.0
 sys0 <- community(p, bounds_infinite("lma"))
 max_bounds <- bounds(lma=c(0.01, 10))

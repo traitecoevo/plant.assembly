@@ -4,9 +4,9 @@ library(plant)
 plant_log_console()
 
 assembler_parameters <- function(time_disturbance, B4=2.0, B5=2.0) {
-  p <- ebt_base_parameters()
+  p <- scm_base_parameters()
   p$disturbance_mean_interval <- time_disturbance
-  p$hyperpar <- make_FFW16_hyperpar(B4=B4, B5=B5)
+  p$hyperpar <- make_FF16_hyperpar(B4=B4, B5=B5)
   p
 }
 

@@ -18,9 +18,9 @@ dir.create(path, FALSE, TRUE)
 ## NOTE: This is not using the "hybrid" equilibrium solver, but I
 ## think that it should be.
 assembler_parameters <- function(time_disturbance, B4=2.0, B5=2.0) {
-  p <- ebt_base_parameters()
+  p <- scm_base_parameters()
   p$disturbance_mean_interval <- time_disturbance
-  p$hyperpar <- make_FFW16_hyperpar(B4=B4, B5=B5)
+  p$hyperpar <- make_FF16_hyperpar(B4=B4, B5=B5)
   p$control$equilibrium_solver_name <- "hybrid"
   p
 }
