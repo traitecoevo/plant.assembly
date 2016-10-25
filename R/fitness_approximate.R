@@ -123,7 +123,8 @@ fitness_approximate_points <- function(community, bounds=NULL) {
   fitness <- community_make_fitness(community)
   if (control$type == "grid") {
     m <- fitness_approximate_points_grid(fitness, community, bounds, control)
-  } else if (control$type == "gp") {
+  }
+   else if (control$type == "gp") {
     m <- fitness_approximate_points_gp(fitness, community, bounds, control)
   } else {
     stop("Unknown approximate type ", control$type)
@@ -136,10 +137,20 @@ fitness_approximate_points <- function(community, bounds=NULL) {
   m
 }
 
-fitness_approximate_points_grid <- function(fitness, community,
-                                            bounds, control) {
-  trait <- trait_matrix(seq_log_range(bounds, control$n),
-                        community$trait_names)
+fitness_approximate_points_grid <- function(fitness, community, bounds, control) {
+
+  if(length(community$trait_names) > 1) {
+     stop("Fitness_approximate_points_grid only works for single trait:", community$trait_names)
+  }
+
+  x <- seq_log_range(bounds, control$n)
+
+  if(!is.null(control$grid_include_residents) && control$grid_include_residents) {
+    x <- sort(unique(c(x, community$traits)))
+  }
+
+  trait <- trait_matrix(x, community$trait_names)
+
   w <- fitness(trait)
   cbind(trait, w, deparse.level=0)
 }
@@ -225,6 +236,7 @@ fitness_approximate_control <- function(control=NULL) {
                    n_predict=500,
                    lower_limit=NULL,
                    cost=grail::cost_var_scaled_capped,
-                   x_seed=NULL)
+                   x_seed=NULL,
+                   grid_include_residents=FALSE)
   modifyList(defaults, as.list(control))
 }
