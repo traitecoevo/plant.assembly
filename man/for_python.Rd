@@ -9,11 +9,11 @@
 \alias{for_python_simulate}
 \title{Wrapper code for Python}
 \usage{
-for_python_equilibrium(time_disturbance, slope, lma, seed_rain,
+for_python_equilibrium(time_disturbance, slope, lma, birth_rate,
   equilibrium_nsteps = 20L, verbose = FALSE)
 
 for_python_evolve(time_disturbance, slope, nsteps, filename = NULL,
-  lma = NULL, seed_rain = NULL, verbose = FALSE)
+  lma = NULL, birth_rate = NULL, verbose = FALSE)
 
 for_python_simulate(time_disturbance, slope, traits, nsteps = 100,
   filename = NULL)
@@ -31,7 +31,7 @@ for_python_fitness_prepare(sys)
 
 \item{lma}{Vector of species traits}
 
-\item{seed_rain}{Vector of species abundances}
+\item{birth_rate}{Vector of species abundances}
 
 \item{equilibrium_nsteps}{Maximum number of steps to run the
 equilibrium rain for}

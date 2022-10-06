@@ -5,9 +5,9 @@ assembler_deaths <- function(obj) {
 
 ## Really simple deaths.
 community_deaths <- function(community, control) {
-  eps <- control$dead_seed_rain
+  eps <- control$dead_birth_rate
   check_inviable <- control$check_inviable
-  to_drop <- community$seed_rain < eps
+  to_drop <- community$birth_rate < eps
   if (any(to_drop)) {
     plant_log_deaths(paste0("Dropping species ",
                             paste(which(to_drop), collapse=", ")))
@@ -15,7 +15,7 @@ community_deaths <- function(community, control) {
   }
   if (check_inviable && length(community) > 1L) {
     res <- plant::check_inviable(community_parameters(community))
-    community$seed_rain <- as.numeric(res)
+    community$birth_rate <- as.numeric(res)
     to_drop2 <- attr(res, "drop")
     if (any(to_drop2)) {
       plant_log_deaths(paste0("Dropping inviable species ",

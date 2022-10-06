@@ -55,14 +55,14 @@ assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
 ##' trait space. "check_positive" determines whether the fitness of an
 ##' invader is checked before it is introduced. If
 ##' "check_inviable" causes dead residents to be removed when seed rain
-##' drops below "dead_seed_rain".
+##' drops below "dead_birth_rate".
 ##' "eps_too_close" is tolerance in trait values when searching for maxima.
 ##'
 ##' @title Options controllings community assembly process.
 ##' @param control A list of values to modify from defaults.
 ##' @return A list with elements run_type, birth_type, birth_move_tol,
 ##' compute_viable_fitness, n_mutants, n_immigrants, check_positive,
-##' vcv, check_inviable, dead_seed_rain, eps_too_close
+##' vcv, check_inviable, dead_birth_rate, eps_too_close
 ##' @author Rich FitzJohn, Daniel Falster
 ##' @export
 assembler_control <- function(control=NULL) {
@@ -77,7 +77,7 @@ assembler_control <- function(control=NULL) {
                    vcv=NULL, # will be needed...
                    ## community_deaths:
                    check_inviable=TRUE,
-                   dead_seed_rain=1e-3,
+                   dead_birth_rate=1e-3,
                    ## births_maximum_fitness:
                    eps_too_close=1e-3)
   if (identical(control[["birth_type"]], "stochastic")) {
@@ -184,12 +184,12 @@ assembler_step <- function(obj) {
   assembler_append_history(obj)
 }
 
-assembler_set_traits <- function(obj, traits, seed_rain=NULL) {
+assembler_set_traits <- function(obj, traits, birth_rate=NULL) {
   if (length(obj$community) > 0L) {
     stop("This is for an empty community only")
   }
   plant_log_assembler("Setting traits")
-  obj$community <- community_add(obj$community, traits, seed_rain)
+  obj$community <- community_add(obj$community, traits, birth_rate)
   plant_log_assembler_state(obj$community)
   obj <- assembler_run_model(obj)
   obj <- assembler_deaths(obj)
@@ -251,17 +251,17 @@ should_move <- function(obj, to_add) {
 ## loggr.
 plant_log_assembler_state <- function(community) {
   str <- format_community_state(community$traits,
-                                community$seed_rain,
+                                community$birth_rate,
                                 NULL)
   msg <- paste(c("*** Traits:", str), collapse="\n")
   plant_log_assembler(msg,
                       traits=community$traits,
-                      seed_rain=community$seed_rain)
+                      birth_rate=community$birth_rate)
 }
 
-format_community_state <- function(traits, seed_rain, prefix=NULL) {
+format_community_state <- function(traits, birth_rate, prefix=NULL) {
   m <- cbind(as.data.frame(traits, stringsAsFactors=FALSE),
-             seed_rain=I(prettyNum(seed_rain)))
+             birth_rate=I(prettyNum(birth_rate)))
   if (nrow(m) == 0) {
     m[1,] <- rep("<empty>", ncol(m))
     rownames(m) <- ""

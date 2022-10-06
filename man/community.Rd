@@ -4,7 +4,7 @@
 \alias{community}
 \title{Initialise a community object}
 \usage{
-community(parameters, bounds, seed_rain_initial = 0.001,
+community(parameters, bounds, birth_rate_initial = 0.001,
   fitness_approximate_control = NULL)
 }
 \arguments{
@@ -13,7 +13,7 @@ in \code{plant}..}
 
 \item{bounds}{A set of bounds, as specified in \code{plant}.}
 
-\item{seed_rain_initial}{A vector of seed rains.}
+\item{birth_rate_initial}{A vector of seed rains.}
 
 \item{fitness_approximate_control}{List of parameters controlling
 how approximate fitness landscapes are generated. See function
@@ -27,8 +27,8 @@ Initialise a community object
 }
 \details{
 Used to store full description of community. Is a list
-with elements parameters, bounds, seed_rain_initial,
-trait_names, traits, seed_rain, fitness_approximate_control.
+with elements parameters, bounds, birth_rate_initial,
+trait_names, traits, birth_rate, fitness_approximate_control.
 }
 \author{
 Rich FitzJohn, Daniel Falster

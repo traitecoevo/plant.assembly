@@ -8,9 +8,9 @@ slope <- 1.3
 ## These are the 'X' values:
 lma <- c(0.018, 0.09485587)
 ## These are the 'Y' values that happen to be quite good:
-seed_rain <- c(450.587114143259, 1.31521896285294)
+birth_rate <- c(450.587114143259, 1.31521896285294)
 
-sys <- for_python_equilibrium(time_disturbance, slope, lma, seed_rain,
+sys <- for_python_equilibrium(time_disturbance, slope, lma, birth_rate,
                               verbose=TRUE)
 
 w <- for_python_fitness(sys, lma)
@@ -27,7 +27,7 @@ rug(sys$fitness_approximate_points[, "lma"])
 
 ## Then, try evolution from this point:
 sys2 <- for_python_evolve(time_disturbance, slope, 20,
-                          sys$traits, sys$seed_rain, verbose=TRUE)
+                          sys$traits, sys$birth_rate, verbose=TRUE)
 
 ww2 <- for_python_fitness_approximate(sys2, lma2)
 
