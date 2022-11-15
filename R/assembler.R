@@ -11,7 +11,7 @@
 ##' @return An \code{assembler} object.
 ##' @author Rich FitzJohn, Daniel Falster
 ##' @export
-assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
+assembler_start <- function(community, control=NULL, filename=NULL, prev=NULL) {
   control <- assembler_control(control)
 
   ret <- list(history=list(),
@@ -79,7 +79,16 @@ assembler_control <- function(control=NULL) {
                    check_inviable=TRUE,
                    dead_birth_rate=1e-3,
                    ## births_maximum_fitness:
-                   eps_too_close=1e-3)
+                   eps_too_close=1e-3,
+                   min_birth_rate_initial = 1e-3,
+                   max_birth_rate_initial = 500,
+                  ## This magic number is not great, but needed to 
+                  ## prevent suggesting adding 1e8 as the birth 
+                  ## rate (can happen!).  This should be "quite 
+                  ## large", but obviously that number depends on
+                  ## the situation.
+                  equilibrium_eps = 0.001
+                  )
   if (identical(control[["birth_type"]], "stochastic")) {
     defaults$run_type <- "single"
   }

@@ -69,15 +69,8 @@ initial_birth_rate <- function(fitness, obj) {
   if (is.null(fitness) || obj$control$run_type == "single") {
     birth_rate <- NULL
   } else {
-    ## This magic number is not great, but needed to prevent
-    ## suggesting adding 1e8 as the birth rate (can happen!).  This
-    ## should be "quite large", but obviously that number depends on
-    ## the situation.
-    max_birth_rate_initial <- 500
-    min_birth_rate_initial <- 0.001 # obj$community$parameters$control$equilibrium_extinct_birth_rate
-    # todo - how to pass in parameters. Ctrl uses to be in parameters
-    birth_rate <- pmin(exp(fitness), max_birth_rate_initial)
-    birth_rate <- pmax(birth_rate, min_birth_rate_initial)
+    birth_rate <- pmin(exp(fitness), obj$control$max_birth_rate_initial)
+    birth_rate <- pmax(birth_rate, obj$control$min_birth_rate_initial)
   }
   birth_rate
 }

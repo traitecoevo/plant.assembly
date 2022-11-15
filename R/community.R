@@ -17,7 +17,7 @@
 ##' @export
 ## TODO: Put birth_rate_initial into parameters and set up
 ## appropriately?  We use 1 in a couple of places, no?
-community <- function(parameters, bounds, birth_rate_initial=1e-3,
+community_start <- function(parameters, bounds, birth_rate_initial=1e-3,
                       fitness_approximate_control=NULL) {
   if (is.character(bounds)) {
     bounds <- bounds_infinite(bounds)
@@ -46,7 +46,7 @@ community_parameters <- function(obj) {
   
   p$strategies <- strategy_list(obj$traits, p, birth_rate_list = obj$birth_rate)
 
-  #todo - correct hyperpar
+  # Todo - correct hyperpar
   #hyperpar = param_hyperpar(parameters)
 
   if (!is.null(obj$node_schedule_times)) {

@@ -1,40 +1,54 @@
 
-# Example of assembly for lma 
+# Example of assembly for lma, using maxfit 
 
 ```{r}
 library(plant)
 library(plant.assembly)
 #devtools::load_all()
-source("assembly.R")
 
 plant_log_console()
+
+# Establish baseline parameters
+ctrl_plant <- scm_base_control()
 p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+p$strategy_default$a_f1 <- 0.5
+p$strategy_default$a_f2 <- 0
 
+#p$max_patch_lifetime <- 150 # three species
+p$max_patch_lifetime <- 60 # two species
+#p$max_patch_lifetime <- 10 # one species
 
-bounds <- trait_bounds("lma", p)
+bounds0 <- bounds(lma = c(0.01, 1))
 
-control <- 
+# change some of the controls on assembly
+control <- assembler_control(
   list(
-    birth_move_tol = 1, 
-    compute_viable_fitness = FALSE
+    run_type = "to_equilibrium",
+    birth_type = "maximum",
+    birth_move_tol = 1,
+    compute_viable_fitness = FALSE,
+    equilibrium_eps = ctrl_plant$equilibrium_eps
   )
+)
 
+# setup an empty community
 community0 <- 
-  plant.assembly::community(
+  community_start(
     p, 
-    bounds,
+    bounds0,
     fitness_approximate_control = list(type = "gp")
   )
 
+# setup the assembler
 obj <- 
-  plant.assembly::assembler(
+  assembler_start(
     community0, 
-    control = control, 
-    filename = "tmp2.rds"
+    control = control
   )
 
-nsteps <- 10
-obj <- plant.assembly::assembler_run(obj, nsteps)
+obj <- assembler_run(obj, nsteps =10)
 ```
 
 Now lets' look at the results
@@ -46,7 +60,8 @@ obj$community$birth_rate
 ```
 
 ```{r}
-
+library(dplyr)
+library(ggplot2)
 landscape <- obj$community$fitness_approximate_points %>% as_tibble()
 ggplot(landscape, aes(lma, fitness)) + 
   geom_line() +
