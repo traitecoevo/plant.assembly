@@ -1,0 +1,86 @@
+
+# Example of assembly for lma 
+
+```{r}
+library(plant)
+library(plant.assembly)
+#devtools::load_all()
+source("assembly.R")
+
+plant_log_console()
+p <- scm_base_parameters("FF16")
+
+
+bounds <- trait_bounds("lma", p)
+
+control <- 
+  list(
+    birth_move_tol = 1, 
+    compute_viable_fitness = FALSE
+  )
+
+community0 <- 
+  plant.assembly::community(
+    p, 
+    bounds,
+    fitness_approximate_control = list(type = "gp")
+  )
+
+obj <- 
+  plant.assembly::assembler(
+    community0, 
+    control = control, 
+    filename = "tmp2.rds"
+  )
+
+nsteps <- 10
+obj <- plant.assembly::assembler_run(obj, nsteps)
+```
+
+Now lets' look at the results
+
+How many species in the community?
+```{r}
+obj$community$traits
+obj$community$birth_rate
+```
+
+```{r}
+
+landscape <- obj$community$fitness_approximate_points %>% as_tibble()
+ggplot(landscape, aes(lma, fitness)) + 
+  geom_line() +
+  scale_x_log10() +
+  geom_point(data = tibble(lma = obj$community$traits[,1], fitness = 0), col="red")
+```
+
+# Wraping into functions
+```{r}
+
+trait <- "lma"
+
+info <- model_info(trait)
+ret <- run_model_info(c(10, 1.5), info, path = "output/tmp")
+
+
+
+## This is now nicely generic; we just need a little bit of data in
+## `info` and we can construct everything required for run_model.
+run_model_info <- function(pars, info, ...) {
+  if (length(pars) != length(info$names)) {
+    stop(sprintf("Expected %d parameters", length(info$names)))
+  }
+  run_model(
+    info$trait_names,
+    c(setNames(as.list(pars), info$names), info$pars),
+    ...
+  )
+}
+
+
+
+# run_model <- function(trait_names, pars, path, nsteps = 20L) {
+
+# p <- assembly_parameters(pars = pars, type = "FF16")
+# hyperpar <- make_FF16_hyperpar()
+```

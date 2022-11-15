@@ -48,7 +48,7 @@ rain.}
 \code{for_python_evolve}}
 
 \item{equilibrium}{Logical, inidicating if we should compute
-equilibrium seed rain (the default) or not.}
+equilibrium birth rate (the default) or not.}
 }
 \description{
 This is a small helper function for calling tree from Python.  As

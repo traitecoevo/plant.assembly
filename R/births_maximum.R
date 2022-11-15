@@ -9,7 +9,9 @@ community_new_types_maximum_fitness <- function(sys, control) {
     ret
   }
   eps_too_close <- control$eps_too_close
-  eps_equilibrium <- sys$parameters$control$equilibrium_eps
+  # eps_equilibrium <- sys$parameters$control$equilibrium_eps
+  # Todo -- how to pass in control parameters, these used to come via parameters
+  eps_equilibrium <- 0.001
   eps_positive_fitness <- eps_equilibrium
 
   if (is.null(sys$bounds)) {

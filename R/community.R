@@ -8,7 +8,7 @@
 ##' @param parameters A \code{parameters} object, as specified
 ##' in \code{plant}..
 ##' @param bounds A set of bounds, as specified in \code{plant}.
-##' @param birth_rate_initial A vector of seed rains.
+##' @param birth_rate_initial A vector of birth rates.
 ##' @param fitness_approximate_control List of parameters controlling
 ##' how approximate fitness landscapes are generated. See function
 ##' \code{fitness_approximate_control} for an example.
@@ -42,20 +42,18 @@ make_community <- function(traits, birth_rate, parameters,
 
 community_parameters <- function(obj) {
   
-  browser()
   p <- obj$parameters
+  
+  p$strategies <- strategy_list(obj$traits, p, birth_rate_list = obj$birth_rate)
 
-  p$strategies <- strategy_list(obj$traits, p)
-  p$birth_rate <- obj$birth_rate
+  #todo - correct hyperpar
+  #hyperpar = param_hyperpar(parameters)
 
-#hyperpar = param_hyperpar(parameters), 
-#    birth_rate_list
-
-  if (!is.null(obj$cohort_schedule_times)) {
-    p$cohort_schedule_times <- obj$cohort_schedule_times
+  if (!is.null(obj$node_schedule_times)) {
+    p$node_schedule_times <- obj$node_schedule_times
   }
-  if (!is.null(obj$cohort_schedule_ode_times)) {
-    p$cohort_schedule_ode_times <- obj$cohort_schedule_ode_times
+  if (!is.null(obj$node_schedule_ode_times)) {
+    p$node_schedule_ode_times <- obj$node_schedule_ode_times
   }
 
   p
@@ -80,7 +78,7 @@ community_add <- function(obj, traits, birth_rate=NULL) {
     birth_rate <- rep_len(birth_rate, nrow(traits))
   }
   if (length(birth_rate) != nrow(traits)) {
-    stop("Incompatible length seed rain")
+    stop("Incompatible length birth rate")
   }
   if (ncol(traits) != ncol(obj$traits)) {
     stop("Incorrect size trait matrix")
@@ -126,8 +124,8 @@ community_drop <- function(obj, which) {
 }
 
 community_clear_times <- function(obj) {
-  obj$cohort_schedule_ode_times <- NULL
-  obj$cohort_schedule_times <- NULL
+  obj$node_schedule_ode_times <- NULL
+  obj$node_schedule_times <- NULL
   obj$fitness_approximate_points <- NULL
   obj$fitness_approximate_slopes <- NULL
   obj
@@ -136,9 +134,9 @@ community_clear_times <- function(obj) {
 community_run <- function(obj) {
   if (length(obj) > 0L) {
     p <- build_schedule(community_parameters(obj))
-    obj$birth_rate <- attr(p, "birth_rate_out")
-    obj$cohort_schedule_times <- p$cohort_schedule_times
-    obj$cohort_schedule_ode_times <- p$cohort_schedule_ode_times
+    obj$birth_rate <- attr(p, "offspring_production")
+    obj$node_schedule_times <- p$node_schedule_times
+    obj$node_schedule_ode_times <- p$node_schedule_ode_times
     obj$fitness_approximate_points <- NULL
   }
   obj
@@ -146,10 +144,12 @@ community_run <- function(obj) {
 
 community_run_to_equilibrium <- function(obj) {
   if (length(obj) > 0L) {
-    p <- equilibrium_birth_rate(community_parameters(obj))
-    obj$birth_rate <- attr(p, "birth_rate_out")
-    obj$cohort_schedule_times <- p$cohort_schedule_times
-    obj$cohort_schedule_ode_times <- p$cohort_schedule_ode_times
+    p <- equilibrium_birth_rate(community_parameters(obj), 
+            ctrl = scm_base_control())
+            # todo - do we want to pass ctrl through?
+    obj$birth_rate <- attr(p, "offspring_production")
+    obj$node_schedule_times <- p$node_schedule_times
+    obj$node_schedule_ode_times <- p$node_schedule_ode_times
     obj$fitness_approximate_points <- NULL
   }
   obj

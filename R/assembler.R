@@ -54,7 +54,7 @@ assembler <- function(community, control=NULL, filename=NULL, prev=NULL) {
 ##' "compute_viable_fitness" asks whether to check bounds of viable
 ##' trait space. "check_positive" determines whether the fitness of an
 ##' invader is checked before it is introduced. If
-##' "check_inviable" causes dead residents to be removed when seed rain
+##' "check_inviable" causes dead residents to be removed when birth rate
 ##' drops below "dead_birth_rate".
 ##' "eps_too_close" is tolerance in trait values when searching for maxima.
 ##'

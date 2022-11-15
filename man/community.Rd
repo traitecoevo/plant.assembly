@@ -13,7 +13,7 @@ in \code{plant}..}
 
 \item{bounds}{A set of bounds, as specified in \code{plant}.}
 
-\item{birth_rate_initial}{A vector of seed rains.}
+\item{birth_rate_initial}{A vector of birth rates.}
 
 \item{fitness_approximate_control}{List of parameters controlling
 how approximate fitness landscapes are generated. See function
