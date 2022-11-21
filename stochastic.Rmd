@@ -1,0 +1,120 @@
+
+# Example of stochastic assembly
+
+## 1 trait: lma
+
+```{r}
+library(plant)
+#library(plant.assembly)
+devtools::load_all()
+devtools::load_all("../plant-dev")
+
+plant_log_console()
+
+# Establish baseline parameters
+ctrl_plant <- fast_control()
+p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+
+p$max_patch_lifetime <- 60 # two species
+
+bounds0 <- bounds(lma = c(0.01, 1))
+
+# change some of the controls on assembly
+control <- assembler_control(
+  list(
+    run_type = "single",
+    birth_type = "stochastic",
+    vcv = diag(1)
+  )
+)
+
+# setup an empty community
+community0 <-
+  community_start(
+    p, 
+    bounds0
+  )
+
+# setup the assembler
+obj <- 
+  assembler_start(
+    community0, 
+    control = control
+  )
+
+obj <- assembler_run(obj, nsteps = 100)
+```
+
+
+
+## 2 trait: lma + hmat
+
+
+```{r}
+library(plant)
+#library(plant.assembly)
+devtools::load_all()
+devtools::load_all("../plant-dev")
+plant_log_console()
+
+# Establish baseline parameters
+ctrl_plant <- scm_base_control()
+p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+
+p$max_patch_lifetime <- 60 # two species
+
+bounds0 <- bounds(lma = c(0.01, 1), hmat = c(0.5, 30))
+
+# change some of the controls on assembly
+control <- assembler_control(
+  list(
+    run_type = "single",
+    birth_type = "stochastic",
+    compute_viable_fitness = FALSE,
+    vcv = diag(2)
+  )
+)
+
+# setup an empty community
+community0 <- 
+  community_start(
+    p, 
+    bounds0
+  )
+
+# setup the assembler
+obj <- 
+  assembler_start(
+    community0, 
+    control = control
+  )
+
+obj <- assembler_run(obj, nsteps =10)
+```
+
+
+
+Now lets' look at the results
+
+How many species in the community?
+```{r}
+p$max_patch_lifetime
+p$strategy_default$hmat
+obj$community$traits
+obj$community$birth_rate
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+landscape <- obj$community$fitness_approximate_points %>% as_tibble()
+ggplot(landscape, aes(lma, fitness)) + 
+  geom_line() +
+  scale_x_log10() +
+  geom_point(data = tibble(lma = obj$community$traits[,1], fitness = 0), col="red")
+```
+
