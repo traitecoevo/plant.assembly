@@ -9,6 +9,7 @@
 ##' in \code{plant}..
 ##' @param bounds A set of bounds, as specified in \code{plant}.
 ##' @param birth_rate_initial A vector of birth rates.
+##' @param hyperpar A plant hyperparameter function to be used when calling \code{strategy_list}
 ##' @param fitness_approximate_control List of parameters controlling
 ##' how approximate fitness landscapes are generated. See function
 ##' \code{fitness_approximate_control} for an example.
@@ -17,15 +18,20 @@
 ##' @export
 ## TODO: Put birth_rate_initial into parameters and set up
 ## appropriately?  We use 1 in a couple of places, no?
-community_start <- function(parameters, bounds, birth_rate_initial=1e-3,
-                      fitness_approximate_control=NULL) {
+community_start <- function(parameters, bounds,
+                            birth_rate_initial = 1e-3,
+                            hyperpar = NULL,
+                            fitness_approximate_control = NULL) {
+
   if (is.character(bounds)) {
     bounds <- bounds_infinite(bounds)
   }
   ## TODO: Check parameters is empty.
   ret <- list(parameters=validate(parameters),
               bounds=check_bounds(bounds),
-              birth_rate_initial=birth_rate_initial)
+              birth_rate_initial=birth_rate_initial, 
+              hyperpar = hyperpar
+              )
   ret$trait_names <- rownames(bounds)
   ret$traits <- trait_matrix(numeric(0), ret$trait_names)
   ret$birth_rate <- numeric(0)
@@ -43,11 +49,13 @@ make_community <- function(traits, birth_rate, parameters,
 community_parameters <- function(obj) {
   
   p <- obj$parameters
-  
-  p$strategies <- strategy_list(obj$traits, p, birth_rate_list = obj$birth_rate)
 
-  # Todo - correct hyperpar
-  #hyperpar = param_hyperpar(parameters)
+  if(is.null(obj$hyperpar))
+    hyperpar <- param_hyperpar(p)
+  else 
+    hyperpar <- obj$hyperpar
+  
+  p$strategies <- strategy_list(obj$traits, p, birth_rate_list = obj$birth_rate, hyperpar = hyperpar)
 
   if (!is.null(obj$node_schedule_times)) {
     p$node_schedule_times <- obj$node_schedule_times
@@ -133,7 +141,7 @@ community_clear_times <- function(obj) {
 
 community_run <- function(obj) {
   if (length(obj) > 0L) {
-    p <- build_schedule(community_parameters(obj))
+    p <- build_schedule(community_parameters(obj), ctrl = plant_control())
     obj$birth_rate <- attr(p, "offspring_production")
     obj$node_schedule_times <- p$node_schedule_times
     obj$node_schedule_ode_times <- p$node_schedule_ode_times
@@ -145,8 +153,8 @@ community_run <- function(obj) {
 community_run_to_equilibrium <- function(obj) {
   if (length(obj) > 0L) {
     p <- equilibrium_birth_rate(community_parameters(obj), 
-            ctrl = scm_base_control())
-            # todo - do we want to pass ctrl through?
+            ctrl = plant_control())
+
     obj$birth_rate <- attr(p, "offspring_production")
     obj$node_schedule_times <- p$node_schedule_times
     obj$node_schedule_ode_times <- p$node_schedule_ode_times

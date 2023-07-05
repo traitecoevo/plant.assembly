@@ -28,7 +28,7 @@ community_prepare_fitness <- function(community) {
   if (!is.null(community$bounds)) {
     if (length(community) > 0L) {
       if (is.null(community$node_schedule_times)) {
-        res <- build_schedule(community_parameters(community))
+        res <- build_schedule(community_parameters(community), ctrl = plant_control())
         community$node_schedule_times <- res$node_schedule_times
         community$node_schedule_ode_times <-
           res$node_schedule_ode_times
@@ -84,8 +84,14 @@ community_assert_fitness_prepared <- function(community, approximate) {
 community_make_fitness <- function(community) {
   community_assert_fitness_prepared(community, FALSE)
   p <- community_parameters(community)
+  if(is.null(community$hyperpar)) {
+    hyperpar <- param_hyperpar(p)
+  } else {
+    hyperpar <- community$hyperpar
+  }
+
   fitness <- function(x) {
-    fitness_landscape(x, p)
+    fitness_landscape(x, p, hyperpar = hyperpar, ctrl = plant_control())
   }
   fitness
 }
@@ -117,7 +123,7 @@ fitness_approximate_points <- function(community, bounds=NULL) {
   if (nrow(bounds) != 1L) {
     stop("Only working for one trait at the moment")
   }
-
+  
   control <- fitness_approximate_control(community$fitness_approximate_control)
   ## TODO: it's probably worth harvesting the ode times here?
   fitness <- community_make_fitness(community)

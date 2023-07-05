@@ -11,9 +11,8 @@
 ##' @return An \code{assembler} object.
 ##' @author Rich FitzJohn, Daniel Falster
 ##' @export
-assembler_start <- function(community, control=NULL, filename=NULL, prev=NULL) {
-  control <- assembler_control(control)
-
+assembler_start <- function(community, control=assembler_control(control), filename=NULL, prev=NULL) {
+  
   ret <- list(history=list(),
               done=FALSE,
               control=control,
@@ -131,6 +130,7 @@ assembler_run_model <- function(obj) {
                 single=community_run,
                 to_equilibrium=community_run_to_equilibrium,
                 stop("Unknown run type ", run_type))
+
   obj$community <- run(obj$community)
   obj
 }
