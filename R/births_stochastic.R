@@ -26,14 +26,14 @@ make_mutation_stochastic_naive <- function(n_mutants, vcv) {
     if (length(sys) == 0) {
       return(blank)
     }
-    n <- rpois(1, n_mutants)
-    if (n == 0) {
+    n_mutants_actual <- rpois(1, n_mutants)
+    if (n_mutants_actual == 0) {
       return(blank)
     }
     traits <- sys$traits
-    weights <- sys$seed_rain
-    i <- sample(length(weights), n, replace=TRUE, prob=weights)
-    unname(exp(log(traits[i,,drop=FALSE]) + mvtnorm::rmvnorm(n, sigma=vcv)))
+    weights <- sys$birth_rate
+    i <- sample(length(weights), n_mutants_actual, replace = TRUE, prob = weights)
+    unname(exp(log(traits[i, , drop = FALSE]) + mvtnorm::rmvnorm(n_mutants_actual, sigma = vcv)))
   }
 }
 

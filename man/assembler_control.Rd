@@ -12,7 +12,7 @@ assembler_control(control = NULL)
 \value{
 A list with elements run_type, birth_type, birth_move_tol,
 compute_viable_fitness, n_mutants, n_immigrants, check_positive,
-vcv, check_inviable, dead_seed_rain, eps_too_close
+vcv, check_inviable, dead_birth_rate, eps_too_close
 }
 \description{
 Controls how community assembly works.
@@ -33,8 +33,8 @@ a new type (this helps reduce the number of types).
 "compute_viable_fitness" asks whether to check bounds of viable
 trait space. "check_positive" determines whether the fitness of an
 invader is checked before it is introduced. If
-"check_inviable" causes dead residents to be removed when seed rain
-drops below "dead_seed_rain".
+"check_inviable" causes dead residents to be removed when birth rate
+drops below "dead_birth_rate".
 "eps_too_close" is tolerance in trait values when searching for maxima.
 }
 \author{

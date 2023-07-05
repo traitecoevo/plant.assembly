@@ -11,8 +11,8 @@
 
 ## The order of dependencies is:
 ##
-##   cohort_schedule_times      } -- required for the fitness function
-##   cohort_schedule_ode_times  } /
+##   node_schedule_times      } -- required for the fitness function
+##   node_schedule_ode_times  } /
 ##   fitness_approximate_points   -- required for approximate 1d
 ##   fitness_approximate_slopes   -- required for approximate 2d
 ##
@@ -27,14 +27,14 @@
 community_prepare_fitness <- function(community) {
   if (!is.null(community$bounds)) {
     if (length(community) > 0L) {
-      if (is.null(community$cohort_schedule_times)) {
+      if (is.null(community$node_schedule_times)) {
         res <- build_schedule(community_parameters(community))
-        community$cohort_schedule_times <- res$cohort_schedule_times
-        community$cohort_schedule_ode_times <-
-          res$cohort_schedule_ode_times
-      } else if (is.null(community$cohort_schedule_ode_times)) {
+        community$node_schedule_times <- res$node_schedule_times
+        community$node_schedule_ode_times <-
+          res$node_schedule_ode_times
+      } else if (is.null(community$node_schedule_ode_times)) {
         res <- run_scm(community_parameters(community))
-        community$cohort_schedule_ode_times <- res$ode_times
+        community$node_schedule_ode_times <- res$ode_times
       }
     }
   }
@@ -65,8 +65,8 @@ community_check_fitness_prepared <- function(community, approximate) {
   if (n_spp == 0) {
     return(TRUE)
   }
-  ok_real <- (!is.null(community$cohort_schedule_times) &&
-               !is.null(community$cohort_schedule_ode_times))
+  ok_real <- (!is.null(community$node_schedule_times) &&
+               !is.null(community$node_schedule_ode_times))
   ok_approximate <- (
     !approximate ||
     (n_traits == 1 && !is.null(community$fitness_approximate_points)) ||

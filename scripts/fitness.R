@@ -5,7 +5,7 @@ library(testthat)
 library(plant)
 plant_log_console()
 
-p <- scm_base_parameters()
+p <- scm_base_parameters("FF16")
 sys0 <- community(p, bounds_infinite("lma"))
 sys0 <- community_viable_bounds(sys0)
 

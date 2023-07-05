@@ -9,8 +9,7 @@ community_new_types_maximum_fitness <- function(sys, control) {
     ret
   }
   eps_too_close <- control$eps_too_close
-  eps_equilibrium <- sys$parameters$control$equilibrium_eps
-  eps_positive_fitness <- eps_equilibrium
+  eps_positive_fitness <- control$equilibrium_eps
 
   if (is.null(sys$bounds)) {
     return(empty(sys))

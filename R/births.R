@@ -8,7 +8,7 @@ assembler_births <- function(obj) {
     if (length(i) == 1L) {
       obj <- assembler_births_try_move(obj, to_add, i)
     } else {
-      rain <- initial_seed_rain(attr(to_add, "fitness"), obj)
+      rain <- initial_birth_rate(attr(to_add, "fitness"), obj)
       obj$community <- community_add(obj$community, to_add, rain)
     }
   }
@@ -41,7 +41,7 @@ assembler_births_try_move <- function(obj, to_add, i) {
     ## Here, there is no need to run anything: the original
     ## resident has positive fitness and will increase
     plant_log_births("Adding original resident back")
-    community <- community_add(test, x_prev, initial_seed_rain(w_prev, obj))
+    community <- community_add(test, x_prev, initial_birth_rate(w_prev, obj))
   } else {
     plant_log_births("Move was successful")
     community <- test
@@ -64,22 +64,15 @@ community_new_types <- function(community, control) {
   }
 }
 
-## First order seed rain approximation based on fitness.
-initial_seed_rain <- function(fitness, obj) {
+## First order birth rate approximation based on fitness.
+initial_birth_rate <- function(fitness, obj) {
   if (is.null(fitness) || obj$control$run_type == "single") {
-    seed_rain <- NULL
+    birth_rate <- NULL
   } else {
-    ## This magic number is not great, but needed to prevent
-    ## suggesting adding 1e8 as the seed rain (can happen!).  This
-    ## should be "quite large", but obviously that number depends on
-    ## the situation.
-    max_seed_rain_initial <- 500
-    min_seed_rain_initial <-
-      obj$community$parameters$control$equilibrium_extinct_seed_rain
-    seed_rain <- pmin(exp(fitness), max_seed_rain_initial)
-    seed_rain <- pmax(seed_rain, min_seed_rain_initial)
+    birth_rate <- pmin(exp(fitness), obj$control$max_birth_rate_initial)
+    birth_rate <- pmax(birth_rate, obj$control$min_birth_rate_initial)
   }
-  seed_rain
+  birth_rate
 }
 
 plant_log_births_new_types <- function(to_add) {

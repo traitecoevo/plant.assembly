@@ -1,23 +1,23 @@
 ##' Initialise a community object
 ##'
 ##' Used to store full description of community. Is a list
-##' with elements parameters, bounds, seed_rain_initial,
-##' trait_names, traits, seed_rain, fitness_approximate_control.
+##' with elements parameters, bounds, birth_rate_initial,
+##' trait_names, traits, birth_rate, fitness_approximate_control.
 ##'
 ##' @title Initialise a community object
 ##' @param parameters A \code{parameters} object, as specified
 ##' in \code{plant}..
 ##' @param bounds A set of bounds, as specified in \code{plant}.
-##' @param seed_rain_initial A vector of seed rains.
+##' @param birth_rate_initial A vector of birth rates.
 ##' @param fitness_approximate_control List of parameters controlling
 ##' how approximate fitness landscapes are generated. See function
 ##' \code{fitness_approximate_control} for an example.
 ##' @return An \code{community} object.
 ##' @author Rich FitzJohn, Daniel Falster
 ##' @export
-## TODO: Put seed_rain_initial into parameters and set up
+## TODO: Put birth_rate_initial into parameters and set up
 ## appropriately?  We use 1 in a couple of places, no?
-community <- function(parameters, bounds, seed_rain_initial=1e-3,
+community_start <- function(parameters, bounds, birth_rate_initial=1e-3,
                       fitness_approximate_control=NULL) {
   if (is.character(bounds)) {
     bounds <- bounds_infinite(bounds)
@@ -25,31 +25,35 @@ community <- function(parameters, bounds, seed_rain_initial=1e-3,
   ## TODO: Check parameters is empty.
   ret <- list(parameters=validate(parameters),
               bounds=check_bounds(bounds),
-              seed_rain_initial=seed_rain_initial)
+              birth_rate_initial=birth_rate_initial)
   ret$trait_names <- rownames(bounds)
   ret$traits <- trait_matrix(numeric(0), ret$trait_names)
-  ret$seed_rain <- numeric(0)
+  ret$birth_rate <- numeric(0)
   ret$fitness_approximate_control <- fitness_approximate_control
   class(ret) <- "community"
   ret
 }
 
-make_community <- function(traits, seed_rain, parameters,
+make_community <- function(traits, birth_rate, parameters,
                            bounds=colnames(traits), ...) {
   community_add(community(parameters, bounds, ...),
-                traits, seed_rain)
+                traits, birth_rate)
 }
 
 community_parameters <- function(obj) {
+  
   p <- obj$parameters
-  p$strategies <- strategy_list(obj$traits, p)
-  p$seed_rain <- obj$seed_rain
+  
+  p$strategies <- strategy_list(obj$traits, p, birth_rate_list = obj$birth_rate)
 
-  if (!is.null(obj$cohort_schedule_times)) {
-    p$cohort_schedule_times <- obj$cohort_schedule_times
+  # Todo - correct hyperpar
+  #hyperpar = param_hyperpar(parameters)
+
+  if (!is.null(obj$node_schedule_times)) {
+    p$node_schedule_times <- obj$node_schedule_times
   }
-  if (!is.null(obj$cohort_schedule_ode_times)) {
-    p$cohort_schedule_ode_times <- obj$cohort_schedule_ode_times
+  if (!is.null(obj$node_schedule_ode_times)) {
+    p$node_schedule_ode_times <- obj$node_schedule_ode_times
   }
 
   p
@@ -63,18 +67,18 @@ community_viable_bounds <- function(obj) {
   obj
 }
 
-community_add <- function(obj, traits, seed_rain=NULL) {
-  if (is.null(seed_rain)) {
-    seed_rain <- obj$seed_rain_initial
+community_add <- function(obj, traits, birth_rate=NULL) {
+  if (is.null(birth_rate)) {
+    birth_rate <- obj$birth_rate_initial
   }
   if (!is.matrix(traits)) {
     stop("traits must be a matrix") # sensible?
   }
-  if (length(seed_rain) == 1) {
-    seed_rain <- rep_len(seed_rain, nrow(traits))
+  if (length(birth_rate) == 1) {
+    birth_rate <- rep_len(birth_rate, nrow(traits))
   }
-  if (length(seed_rain) != nrow(traits)) {
-    stop("Incompatible length seed rain")
+  if (length(birth_rate) != nrow(traits)) {
+    stop("Incompatible length birth rate")
   }
   if (ncol(traits) != ncol(obj$traits)) {
     stop("Incorrect size trait matrix")
@@ -85,7 +89,7 @@ community_add <- function(obj, traits, seed_rain=NULL) {
   }
   if (nrow(traits) > 0L) {
     obj$traits <- rbind(obj$traits, traits)
-    obj$seed_rain <- c(obj$seed_rain, seed_rain)
+    obj$birth_rate <- c(obj$birth_rate, birth_rate)
     ## Need to deal with cohort times here.  I think what we should do
     ## here is to retain the times as best we can?  For now though,
     ## we'll just nuke the times.
@@ -113,15 +117,15 @@ community_drop <- function(obj, which) {
   }
   if (!all(keep)) {
     obj$traits <- obj$traits[keep,,drop=FALSE]
-    obj$seed_rain <- obj$seed_rain[keep]
+    obj$birth_rate <- obj$birth_rate[keep]
     obj <- community_clear_times(obj)
   }
   obj
 }
 
 community_clear_times <- function(obj) {
-  obj$cohort_schedule_ode_times <- NULL
-  obj$cohort_schedule_times <- NULL
+  obj$node_schedule_ode_times <- NULL
+  obj$node_schedule_times <- NULL
   obj$fitness_approximate_points <- NULL
   obj$fitness_approximate_slopes <- NULL
   obj
@@ -130,9 +134,9 @@ community_clear_times <- function(obj) {
 community_run <- function(obj) {
   if (length(obj) > 0L) {
     p <- build_schedule(community_parameters(obj))
-    obj$seed_rain <- attr(p, "seed_rain_out")
-    obj$cohort_schedule_times <- p$cohort_schedule_times
-    obj$cohort_schedule_ode_times <- p$cohort_schedule_ode_times
+    obj$birth_rate <- attr(p, "offspring_production")
+    obj$node_schedule_times <- p$node_schedule_times
+    obj$node_schedule_ode_times <- p$node_schedule_ode_times
     obj$fitness_approximate_points <- NULL
   }
   obj
@@ -140,10 +144,12 @@ community_run <- function(obj) {
 
 community_run_to_equilibrium <- function(obj) {
   if (length(obj) > 0L) {
-    p <- equilibrium_seed_rain(community_parameters(obj))
-    obj$seed_rain <- attr(p, "seed_rain_out")
-    obj$cohort_schedule_times <- p$cohort_schedule_times
-    obj$cohort_schedule_ode_times <- p$cohort_schedule_ode_times
+    p <- equilibrium_birth_rate(community_parameters(obj), 
+            ctrl = scm_base_control())
+            # todo - do we want to pass ctrl through?
+    obj$birth_rate <- attr(p, "offspring_production")
+    obj$node_schedule_times <- p$node_schedule_times
+    obj$node_schedule_ode_times <- p$node_schedule_ode_times
     obj$fitness_approximate_points <- NULL
   }
   obj

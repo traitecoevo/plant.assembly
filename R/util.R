@@ -88,3 +88,5 @@ vnapply <- function(X, FUN, ...) {
 last <- function(x) {
   x[[length(x)]]
 }
+
+

@@ -6,7 +6,7 @@
 ##' @param time_disturbance The mean time to disturbance
 ##' @param slope Indicates strength of a leaf economic spectrum tradeoff
 ##' @param lma Vector of species traits
-##' @param seed_rain Vector of species abundances
+##' @param birth_rate Vector of species abundances
 ##' @param equilibrium Logical, inidicating if we should compute
 ##' equilibrium seed rain (the default) or not.
 ##' @param equilibrium_nsteps Maximum number of steps to run the
@@ -16,15 +16,15 @@
 ##' @export
 ##' @rdname for_python
 for_python_equilibrium <- function(time_disturbance, slope,
-                                   lma, seed_rain,
+                                   lma, birth_rate,
                                    equilibrium_nsteps=20L, verbose=FALSE) {
-  if (length(seed_rain) != length(lma)) {
-    stop("seed_rain must be same length as lma")
+  if (length(birth_rate) != length(lma)) {
+    stop("birth_rate must be same length as lma")
   }
 
   sys0 <- python_base_community(time_disturbance, slope, verbose,
                                 equilibrium_nsteps)
-  sys0 <- community_add(sys0, trait_matrix(lma, "lma"), seed_rain)
+  sys0 <- community_add(sys0, trait_matrix(lma, "lma"), birth_rate)
   sys0 <- community_run_to_equilibrium(sys0)
   sys0 <- community_prepare_approximate_fitness(sys0)
   sys0
@@ -35,7 +35,7 @@ for_python_equilibrium <- function(time_disturbance, slope,
 ##' @export
 ##' @rdname for_python
 for_python_evolve <- function(time_disturbance, slope, nsteps,
-                              filename=NULL, lma=NULL, seed_rain=NULL,
+                              filename=NULL, lma=NULL, birth_rate=NULL,
                               verbose=FALSE) {
   equilibrium_nsteps <- 20L
   sys0 <- python_base_community(time_disturbance, slope,
@@ -44,7 +44,7 @@ for_python_evolve <- function(time_disturbance, slope, nsteps,
   obj <- assembler(sys0, list(birth_type="maximum", birth_move_tol=1),
                    filename=filename)
   if (!is.null(lma)) {
-    obj <- assembler_set_traits(obj, trait_matrix(lma, "lma"), seed_rain)
+    obj <- assembler_set_traits(obj, trait_matrix(lma, "lma"), birth_rate)
   }
   obj <- assembler_run(obj, nsteps)
   if (is.null(obj$community$bounds)) {

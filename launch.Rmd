@@ -1,0 +1,101 @@
+
+# Example of assembly for lma, using maxfit 
+
+```{r}
+library(plant)
+library(plant.assembly)
+#devtools::load_all()
+
+plant_log_console()
+
+# Establish baseline parameters
+ctrl_plant <- scm_base_control()
+p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+p$strategy_default$a_f1 <- 0.5
+p$strategy_default$a_f2 <- 0
+
+#p$max_patch_lifetime <- 150 # three species
+p$max_patch_lifetime <- 60 # two species
+#p$max_patch_lifetime <- 10 # one species
+
+bounds0 <- bounds(lma = c(0.01, 1))
+
+# change some of the controls on assembly
+control <- assembler_control(
+  list(
+    run_type = "to_equilibrium",
+    birth_type = "maximum",
+    birth_move_tol = 1,
+    compute_viable_fitness = FALSE,
+    equilibrium_eps = ctrl_plant$equilibrium_eps
+  )
+)
+
+# setup an empty community
+community0 <- 
+  community_start(
+    p, 
+    bounds0,
+    fitness_approximate_control = list(type = "gp")
+  )
+
+# setup the assembler
+obj <- 
+  assembler_start(
+    community0, 
+    control = control
+  )
+
+obj <- assembler_run(obj, nsteps =10)
+```
+
+Now lets' look at the results
+
+How many species in the community?
+```{r}
+obj$community$traits
+obj$community$birth_rate
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+landscape <- obj$community$fitness_approximate_points %>% as_tibble()
+ggplot(landscape, aes(lma, fitness)) + 
+  geom_line() +
+  scale_x_log10() +
+  geom_point(data = tibble(lma = obj$community$traits[,1], fitness = 0), col="red")
+```
+
+# Wraping into functions
+```{r}
+
+trait <- "lma"
+
+info <- model_info(trait)
+ret <- run_model_info(c(10, 1.5), info, path = "output/tmp")
+
+
+
+## This is now nicely generic; we just need a little bit of data in
+## `info` and we can construct everything required for run_model.
+run_model_info <- function(pars, info, ...) {
+  if (length(pars) != length(info$names)) {
+    stop(sprintf("Expected %d parameters", length(info$names)))
+  }
+  run_model(
+    info$trait_names,
+    c(setNames(as.list(pars), info$names), info$pars),
+    ...
+  )
+}
+
+
+
+# run_model <- function(trait_names, pars, path, nsteps = 20L) {
+
+# p <- assembly_parameters(pars = pars, type = "FF16")
+# hyperpar <- make_FF16_hyperpar()
+```
