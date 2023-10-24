@@ -93,8 +93,7 @@ community_make_fitness <- function(community) {
   }
 
   fitness <- function(x) {
-    plant_log_assembler("Computing fitness landscape")
-
+    plant_log_assembler(sprintf("Computing fitness landscape for %s points", nrow(x)))
     plant::fitness_landscape(x, p, hyperpar = hyperpar, ctrl = plant_control())
   }
   fitness
@@ -238,15 +237,16 @@ make_fitness_approximate_function <- function(pts, type) {
 ##' @export
 fitness_approximate_control <- function(control=NULL) {
   defaults <- list(type="grid",
-                   n=50, # total number of points
+                   n=100, # total number of points
                    finite_only=TRUE,
+                   grid_include_residents = TRUE,
                    ## For gp:
                    n_initial=20,
                    n_each=5,
                    n_predict=500,
                    lower_limit=NULL,
-                   cost=grail::cost_var_scaled_capped,
-                   x_seed=NULL,
-                   grid_include_residents=FALSE)
+                   cost=NULL, #grail::cost_var_scaled_capped,
+                   x_seed=NULL
+                   )
   modifyList(defaults, as.list(control))
 }

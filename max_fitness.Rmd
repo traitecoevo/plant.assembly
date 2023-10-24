@@ -18,7 +18,7 @@ First, basic setup:
 ```{r, setup}
 library(plant)
 library(plant.assembly)
-# devtools::load_all()
+devtools::load_all()
 # devtools::load_all("../plant-dev")
 
 # logging of output
@@ -50,7 +50,7 @@ Now let's run the assembly for a single trait
 
 ```{r}
 # Set absolute bounds
-bounds0 <- bounds(lma = c(0.01, 1))
+bounds0 <- bounds(lma = c(0.01, 2))
 
 # set controls on assembly
 control <- assembler_control(
@@ -66,17 +66,7 @@ control <- assembler_control(
 # setup the assembler to start with empty community
 community0 <- 
   community_start(p, bounds0,
-    fitness_approximate_control = list(type = "gp"))
-
-obj <- assembler_start(community0, control = control)
-
-# setup an empty community
-community0 <- 
-  community_start(
-    p, 
-    bounds0,
-    fitness_approximate_control = list(type = "gp")
-  )
+    fitness_approximate_control = list(type = "grid"))
 
 obj <- assembler_start(community0, control = control)
 
