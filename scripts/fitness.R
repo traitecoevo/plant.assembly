@@ -6,7 +6,7 @@ library(plant)
 plant_log_console()
 
 p <- scm_base_parameters("FF16")
-sys0 <- community(p, bounds_infinite("lma"))
+sys0 <- community(p,  plant::bounds_infinite("lma"))
 sys0 <- community_viable_bounds(sys0)
 
 sys0_gp <- community(p, sys0$bounds,

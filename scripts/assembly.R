@@ -5,7 +5,7 @@ plant_log_console()
 
 p <- scm_base_parameters()
 p$disturbance_mean_interval <- 7.0
-sys0 <- community(p, bounds_infinite("lma"))
+sys0 <- community(p,  plant::bounds_infinite("lma"))
 
 ## This is not working with a change to the expand parameters code.
 ## Should possibly nuke existing cohort times to be simple.
@@ -45,7 +45,7 @@ points(res_lma, res_w1, col=cols[-1], pch=19)
 set.seed(1)
 p <- scm_base_parameters()
 p$disturbance_mean_interval <- 7.0
-sys0 <- community(p, bounds_infinite("lma"))
+sys0 <- community(p,  plant::bounds_infinite("lma"))
 max_bounds <- bounds(lma=c(0.01, 10))
 vcv <- mutational_vcv_proportion(max_bounds, 0.001)
 obj_s0 <- assembler(sys0,

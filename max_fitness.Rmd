@@ -1,0 +1,144 @@
+---
+title: "max_fitness assmebly"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{max_fitness}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+
+This vignette provides an example of running community assembly using the max_fitness method in  plant.assembly. Below we consider both a 1 and 2 trait example.
+
+First, basic setup:
+
+# Example of assembly for lma, using maxfit 
+
+
+```{r, setup}
+library(plant)
+library(plant.assembly)
+devtools::load_all()
+# devtools::load_all("../plant-dev")
+
+# logging of output
+plant_log_console()
+
+# set controls on plant package 
+plant_control <- function() {
+  ctrl <- scm_base_control()
+  ctrl$equilibrium_nsteps <- 80
+  ctrl$equilibrium_solver_name <- "iteration"
+  ctrl
+}
+
+# set baseline parameters
+p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+p$strategy_default$hmat <- 10
+p$max_patch_lifetime <- 60
+
+```
+
+
+# One trait: lma
+
+Now let's run the assembly for a single trait
+
+## Assembly
+
+```{r}
+# Set absolute bounds
+bounds0 <- bounds(lma = c(0.01, 2))
+
+# set controls on assembly
+control <- assembler_control(
+  list(
+    run_type = "to_equilibrium",
+    birth_type = "maximum",
+    birth_move_tol = 1,
+    compute_viable_fitness = FALSE,
+    equilibrium_eps = plant_control()$equilibrium_eps
+  )
+)
+
+# setup the assembler to start with empty community
+community0 <- 
+  community_start(p, bounds0,
+    fitness_approximate_control = list(type = "grid"))
+
+obj <- assembler_start(community0, control = control)
+
+# run assembler
+obj <- assembler_run(obj, nsteps = 20)
+
+saveRDS(obj, "output/fitmax-lma.rds")
+```
+
+
+## Analysis
+Now lets' look at the results
+
+```{r}
+obj <- readRDS("output/fitmax-lma.rds")
+```
+
+How many species in the community?
+```{r}
+obj$community$traits
+obj$community$birth_rate
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+landscape <- obj$community$fitness_approximate_points %>% as_tibble()
+
+ggplot(landscape, aes(lma, fitness)) + 
+  geom_line() +
+  scale_x_log10() +
+  geom_point(data = tibble(lma = obj$community$traits[,1], fitness = approx(landscape$lma, landscape$fitness,  obj$community$traits[,1])$y), col="red")
+```
+
+# One trait: Height
+
+## Assembly
+
+```{r}
+# Set absolute bounds
+bounds0 <- bounds(hmat = c(0.5, 30))
+
+# set controls on assembly
+control <- assembler_control(
+  list(
+    run_type = "to_equilibrium",
+    birth_type = "maximum",
+    birth_move_tol = 1,
+    compute_viable_fitness = FALSE,
+    equilibrium_eps = plant_control()$equilibrium_eps
+  )
+)
+
+# setup the assembler to start with empty community
+community0 <- 
+  community_start(p, bounds0,
+    fitness_approximate_control = list(type = "gp"))
+
+obj <- assembler_start(community0, control = control)
+
+# run assembler
+obj <- assembler_run(obj, nsteps = 20)
+
+saveRDS(obj, "output/fitmax-hmat.rds")
+```
+
+# Appendix
+
+Common mixtures of lma for this distrubance regime
+
+         lma birth_rate
+1 0.03886086   277.2675
+2 0.19630583   18.42347
+3 0.11070529   67.25629
+4 0.25085100   2.852756

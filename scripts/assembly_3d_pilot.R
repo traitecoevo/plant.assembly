@@ -46,7 +46,7 @@ run_simulation <- function(t, steps) {
     bounds <- max_bounds
   } else {
     ## could easily move the viable fitness bit within compute_viable_bounds
-    bounds <- viable_fitness(max_bounds, p)
+    bounds <- plant::viable_fitness(max_bounds, p)
     bounds[, "lower"] <- pmin(bounds[, "lower"], min_bounds[, "lower"])
     bounds[, "upper"] <- pmax(bounds[, "upper"], min_bounds[, "upper"])
   }

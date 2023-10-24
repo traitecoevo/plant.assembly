@@ -20,7 +20,7 @@ max_bounds <- rbind(lma=10^c(-4, 2),
 
 f <- function(t) {
   p <- assembler_parameters(t)
-  ## bounds <- viable_fitness(max_bounds, p)
+  ## bounds <- plant::viable_fitness(max_bounds, p)
 
   ## Jump straight to the end:
   bounds <- bounds(lma=c(0.0273839008086021, 1.33352391701713),

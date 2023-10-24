@@ -12,7 +12,7 @@ assembler_parameters <- function(time_disturbance, B4=2.0, B5=2.0) {
 
 max_bounds <- bounds(lma=10^c(-4, 2), rho=c(1, 1e4))
 p <- assembler_parameters(10)
-# bounds <- viable_fitness(max_bounds, p)
+# bounds <- plant::viable_fitness(max_bounds, p)
 
 ## Jump straight to the end:
 bounds <- bounds(lma=c(0.0703621360996001, 0.938239530095711),
