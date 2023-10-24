@@ -253,17 +253,13 @@ should_move <- function(obj, to_add) {
   ret
 }
 
-## Helper function for printing community state.  Not fast!
-##
-## TODO: This might need a trailing newline added after?  I'm getting
-## no trailing newline.  That's a bit surprising and possibly a bug in
-## loggr.
+## Helper function for printing community state.
 plant_log_assembler_state <- function(community) {
   str <- format_community_state(community$traits,
                                 community$birth_rate,
-                                NULL)
-  msg <- paste(c("*** Traits:", str), collapse="\n")
-  plant_log_assembler(msg,
+                                sprintf("\t%s\t", c("res", seq_along(community$birth_rate))))
+  msg <- paste(c("Traits:", str), collapse="\n")
+  plant_log_state(msg,
                       traits=community$traits,
                       birth_rate=community$birth_rate)
 }

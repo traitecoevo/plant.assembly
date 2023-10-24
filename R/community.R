@@ -141,7 +141,8 @@ community_clear_times <- function(obj) {
 
 community_run <- function(obj) {
   if (length(obj) > 0L) {
-    p <- build_schedule(community_parameters(obj), ctrl = plant_control())
+
+    p <- plant:::build_schedule(community_parameters(obj), ctrl = plant_control())
     obj$birth_rate <- attr(p, "offspring_production")
     obj$node_schedule_times <- p$node_schedule_times
     obj$node_schedule_ode_times <- p$node_schedule_ode_times

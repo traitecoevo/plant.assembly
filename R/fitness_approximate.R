@@ -82,6 +82,8 @@ community_assert_fitness_prepared <- function(community, approximate) {
 }
 
 community_make_fitness <- function(community) {
+
+
   community_assert_fitness_prepared(community, FALSE)
   p <- community_parameters(community)
   if(is.null(community$hyperpar)) {
@@ -91,7 +93,10 @@ community_make_fitness <- function(community) {
   }
 
   fitness <- function(x) {
-    fitness_landscape(x, p, hyperpar = hyperpar, ctrl = plant_control())
+    
+    plant_log_assembler("Computing fitness landscape")
+
+    plant::fitness_landscape(x, p, hyperpar = hyperpar, ctrl = plant_control())
   }
   fitness
 }
