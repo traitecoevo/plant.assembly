@@ -55,7 +55,12 @@ obj <-
   )
 
 obj <- assembler_run(obj, nsteps = 100)
+
+saveRDS(obj, "output/stochastic.rds")
 ```
+
+# Analysis
+
 
 
 
