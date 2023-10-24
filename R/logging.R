@@ -18,6 +18,10 @@ plant_log_births <- function(...) {
   plant_log_info(..., routine="births")
 }
 
+plant_log_state <- function(...) {
+  plant_log_info(..., routine = "state")
+}
+
 plant_log_deaths <- function(...) {
   plant_log_info(..., routine="deaths")
 }

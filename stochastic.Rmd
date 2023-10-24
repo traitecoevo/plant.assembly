@@ -1,37 +1,56 @@
+---
+title: "Stochastic assembly"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{stochastic_assembly}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
-# Example of stochastic assembly
+This vignette provides an example of running a stocahstic assembly use plant.assembly. Below we consider both a 1 and 2 trait example.
 
-## 1 trait: lma
+First, basic setup:
 
-```{r}
+```{r, setup}
 library(plant)
 library(plant.assembly)
-devtools::load_all()
+
+library(tidyverse)
+library(ggplot2)
+
+# devtools::load_all()
 #devtools::load_all("../plant-dev")
 
+# logging of output
 plant_log_console()
 
-# Establish baseline parameters
-ctrl_plant <- fast_control()
-p <- scm_base_parameters("FF16")
-p$strategy_default$a_l1 <- 2.17
-p$strategy_default$a_l2 <- 0.5
-
-# Establish baseline parameters
+# set controls on plant package 
 plant_control <- function() {
   ctrl <- scm_base_control()
-  #  ctrl$equilibrium_nsteps <- 20
-  #  ctrl$equilibrium_solver_name <- "hybrid"
   ctrl$equilibrium_nsteps <- 80
   ctrl$equilibrium_solver_name <- "iteration"
   ctrl
 }
 
-p$max_patch_lifetime <- 60 # two species
+# set baseline parameters
+p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+p$max_patch_lifetime <- 60
 
+```
+
+# One trait: lma
+
+Now let's run the assembly for a single trait
+
+## Assembly
+
+```{r}
+# Set absolute bounds
 bounds0 <- bounds(lma = c(0.01, 1))
 
-# change some of the controls on assembly
+# set controls on assembly
 control <- assembler_control(
   list(
     run_type = "single",
@@ -40,46 +59,102 @@ control <- assembler_control(
   )
 )
 
-# setup an empty community
-community0 <-
-  community_start(
-    p, 
-    bounds0
-  )
+# setup the assembler to start with empty community
+community0 <- community_start(p, bounds0)
+obj <- assembler_start(community0, control = control)
 
-# setup the assembler
-obj <- 
-  assembler_start(
-    community0, 
-    control = control
-  )
-
+# run assembler
 obj <- assembler_run(obj, nsteps = 100)
+
+saveRDS(obj, "output/stochastic.rds")
 ```
 
-
-
-## 2 trait: lma + hmat
-
+## Analysis
 
 ```{r}
-library(plant)
-#library(plant.assembly)
-devtools::load_all()
-devtools::load_all("../plant-dev")
-plant_log_console()
+obj <- readRDS("output/stochastic.rds")
+```
 
-# Establish baseline parameters
-ctrl_plant <- scm_base_control()
-p <- scm_base_parameters("FF16")
-p$strategy_default$a_l1 <- 2.17
-p$strategy_default$a_l2 <- 0.5
+The evolutionary trajectory of different trait values as they are added to the community can be plotted. Red plots are traits that are added to the community in a given step, whereas black points are traits which have persisted even after new trait values have been added. 
 
-p$max_patch_lifetime <- 60 # two species
+```{r}
+trait_history <- list()
+birth_history <- list()
+
+birth_history <- map(obj$history, ~.x$birth_rate)
+
+for(i in 1:length(obj$history)){
+  
+  if(length(obj$history[[i]]$traits) == 0){
+    trait_history[[i]] <- obj$history[[i]]$traits %>% as_tibble() 
+  } else {
+    if(i == 1){
+    trait_history[[i]] <- obj$history[[i]]$traits %>% as_tibble() %>%
+      mutate(invader = "no") %>%
+      mutate(step = paste0("Step = ", i))
+    }
+     if(i > 1){
+    trait_history[[i]] <- obj$history[[i]]$traits %>% as_tibble() %>% mutate(invader = map_chr(lma, ~if_else(.x %in% trait_history[[i-1]]$lma, "no", "yes")))%>%
+      mutate(step = paste0("Step = ", i))
+     }
+  }
+  }
+
+plot_history2 <- function(trait_history, birth_history){
+  myColors <- c("red","black")
+  names(myColors) <- c("yes","no")
+  colScale <- scale_colour_manual(values = myColors)
+  
+  if(length(trait_history$lma) == 0){
+    p <- NA
+    return(p)
+  }
+  
+  plot_data <- tibble(
+    traits = trait_history,
+    birth_rates = birth_history
+  ) %>%
+    unnest(traits)
+    plot_data %>%
+    ggplot(aes(x = lma, y = birth_rates)) + 
+    geom_point(aes(colour = invader), size = 2) +
+    xlab(history_object$trait_names) +
+    ylab("Birth rate") +
+    theme_classic() + 
+    theme(text = element_text(size = 16),
+          legend.position = "none") +
+    scale_x_log10(limits = c(0.01, 1)) +
+    scale_y_log10(limits = c(0.0001,5)) +
+      colScale +
+      geom_text(aes(x = 0, y = Inf, label = step, vjust = "inward", hjust = "inward"), size = 5)-> p
+
+  return(p)
+}
+
+plots <- map2(trait_history, birth_history, ~plot_history2(.x,.y))
+plots <- plots[map_lgl(plots, ~!is.na(.x[1]))] 
+walk2(plots, seq_along(plots), ~ggsave(filename = paste0("output/plot/",.y,".png"), plot = .x))
+```
+
+## Fitness landscapes
+
+We might want to caluclate fitness landscape for assembled community
+
+```{r}
+
+```
+
+# Two traits: lma + hmat
+
+Now let's run the assembly for a two traits
+
+## Assembly
+
+```{r}
 
 bounds0 <- bounds(lma = c(0.01, 1), hmat = c(0.5, 30))
 
-# change some of the controls on assembly
+# controls on assembly
 control <- assembler_control(
   list(
     run_type = "single",
@@ -89,24 +164,15 @@ control <- assembler_control(
   )
 )
 
-# setup an empty community
-community0 <- 
-  community_start(
-    p, 
-    bounds0
-  )
+# setup the assembler to start with empty community
+community0 <- community_start(p, bounds0)
+obj <- assembler_start(community0, control = control)
 
-# setup the assembler
-obj <- 
-  assembler_start(
-    community0, 
-    control = control
-  )
-
+# run assembly
 obj <- assembler_run(obj, nsteps =10)
 ```
 
-
+## Analysis
 
 Now lets' look at the results
 
@@ -119,8 +185,6 @@ obj$community$birth_rate
 ```
 
 ```{r}
-library(dplyr)
-library(ggplot2)
 landscape <- obj$community$fitness_approximate_points %>% as_tibble()
 ggplot(landscape, aes(lma, fitness)) + 
   geom_line() +
