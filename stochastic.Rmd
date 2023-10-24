@@ -1,15 +1,26 @@
+---
+title: "Stochastic assembly"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{stochastic_assembly}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
-# Example of stochastic assembly
+This vignette provides an example of running a stocahstic assembly use plant.assembly. Below we consider both a 1 and 2 trait example.
+
+First, basic setup:
 
 ```{r, setup}
 library(plant)
 library(plant.assembly)
- devtools::load_all()
+# devtools::load_all()
 # devtools::load_all("../plant-dev")
 
+# logging of output
 plant_log_console()
 
-# Controls on plant package
+# set controls on plant package 
 plant_control <- function() {
   ctrl <- scm_base_control()
   ctrl$equilibrium_nsteps <- 80
@@ -17,23 +28,25 @@ plant_control <- function() {
   ctrl
 }
 
-# Establish baseline parameters
+# set baseline parameters
 p <- scm_base_parameters("FF16")
 p$strategy_default$a_l1 <- 2.17
 p$strategy_default$a_l2 <- 0.5
 p$max_patch_lifetime <- 60
 
 ```
-# 1 trait: lma
+
+# One trait: lma
+
+Now let's run the assembly for a single trait
 
 ## Assembly
 
 ```{r}
-
-# Absolute bounds
+# Set absolute bounds
 bounds0 <- bounds(lma = c(0.01, 1))
 
-# controls on assembly
+# set controls on assembly
 control <- assembler_control(
   list(
     run_type = "single",
@@ -43,17 +56,8 @@ control <- assembler_control(
 )
 
 # setup the assembler to start with empty community
-community0 <-
-  community_start(
-    p,
-    bounds0
-  )
-
-obj <- 
-  assembler_start(
-    community0, 
-    control = control
-  )
+community0 <- community_start(p, bounds0)
+obj <- assembler_start(community0, control = control)
 
 # run assembler
 obj <- assembler_run(obj, nsteps = 100)
@@ -61,7 +65,9 @@ obj <- assembler_run(obj, nsteps = 100)
 saveRDS(obj, "output/stochastic.rds")
 ```
 
-Might want to caluclate fitness landscape for assembled community
+## Fitness landscapes
+
+We might want to caluclate fitness landscape for assembled community
 
 ```{r}
 
@@ -72,7 +78,9 @@ Might want to caluclate fitness landscape for assembled community
 
 
 
-# 2 trait: lma + hmat
+# Two traits: lma + hmat
+
+Now let's run the assembly for a two traits
 
 ## Assembly
 
@@ -91,17 +99,8 @@ control <- assembler_control(
 )
 
 # setup the assembler to start with empty community
-community0 <- 
-  community_start(
-    p, 
-    bounds0
-  )
-
-obj <- 
-  assembler_start(
-    community0, 
-    control = control
-  )
+community0 <- community_start(p, bounds0)
+obj <- assembler_start(community0, control = control)
 
 # run assembly
 obj <- assembler_run(obj, nsteps =10)

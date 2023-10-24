@@ -1,0 +1,11 @@
+---
+title: "stochastic_assembly"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{stochastic_assembly}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Copy in ouputs of stoachsitic assembly file (slow)
+
