@@ -69,7 +69,7 @@ obj <- assembler_run(obj, nsteps = 100)
 saveRDS(obj, "output/stochastic.rds")
 ```
 
-# Analysis
+## Analysis
 
 ```{r}
 obj <- readRDS("output/stochastic.rds")
@@ -136,8 +136,6 @@ plots <- plots[map_lgl(plots, ~!is.na(.x[1]))]
 walk2(plots, seq_along(plots), ~ggsave(filename = paste0("output/plot/",.y,".png"), plot = .x))
 ```
 
-## 2 trait: lma + hmat
-
 ## Fitness landscapes
 
 We might want to caluclate fitness landscape for assembled community
@@ -145,11 +143,6 @@ We might want to caluclate fitness landscape for assembled community
 ```{r}
 
 ```
-
-## Analysis
-
-
-
 
 # Two traits: lma + hmat
 
@@ -180,7 +173,6 @@ obj <- assembler_run(obj, nsteps =10)
 ```
 
 ## Analysis
-
 
 Now lets' look at the results
 
