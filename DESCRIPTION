@@ -10,13 +10,16 @@ LazyData: true
 Imports:
     plant,
     lhs,
-    grail,
     mvtnorm,
     dfoptim,
     progress,
     akima,
     grader,
     dplyr,
-    ggplot2
+    ggplot2,
+    gplite
 Suggests:
+    knitr,
+    rmarkdown,
     testthat
+VignetteBuilder: knitr
