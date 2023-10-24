@@ -76,7 +76,7 @@ initial_birth_rate <- function(fitness, obj) {
 }
 
 plant_log_births_new_types <- function(to_add) {
-  str <- format_community_state(to_add, NA, "births> ")
-  plant_log_births(paste(c("*** Proposed new type(s):", str), collapse="\n"),
+  str <- format_community_state(to_add, "-", sprintf("\t%s\t", c("i", seq_along(to_add))))
+  plant_log_births(paste(c("Proposed new type(s):", str), collapse="\n"),
                    to_add=to_add)
 }

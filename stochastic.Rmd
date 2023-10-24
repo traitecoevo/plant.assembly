@@ -1,9 +1,17 @@
+---
+title: "Stochastic assembly"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{stochastic_assembly}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
 
-# Example of stochastic assembly
+This vignette provides an example of running a stocahstic assembly use plant.assembly. Below we consider both a 1 and 2 trait example.
 
-## 1 trait: lma
+First, basic setup:
 
-```{r}
+```{r, setup}
 library(plant)
 library(plant.assembly)
 
@@ -13,29 +21,36 @@ library(ggplot2)
 # devtools::load_all()
 #devtools::load_all("../plant-dev")
 
+# logging of output
 plant_log_console()
 
-# Establish baseline parameters
-ctrl_plant <- fast_control()
-p <- scm_base_parameters("FF16")
-p$strategy_default$a_l1 <- 2.17
-p$strategy_default$a_l2 <- 0.5
-
-# Establish baseline parameters
+# set controls on plant package 
 plant_control <- function() {
   ctrl <- scm_base_control()
-  #  ctrl$equilibrium_nsteps <- 20
-  #  ctrl$equilibrium_solver_name <- "hybrid"
   ctrl$equilibrium_nsteps <- 80
   ctrl$equilibrium_solver_name <- "iteration"
   ctrl
 }
 
-p$max_patch_lifetime <- 60 # two species
+# set baseline parameters
+p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+p$max_patch_lifetime <- 60
 
+```
+
+# One trait: lma
+
+Now let's run the assembly for a single trait
+
+## Assembly
+
+```{r}
+# Set absolute bounds
 bounds0 <- bounds(lma = c(0.01, 1))
 
-# change some of the controls on assembly
+# set controls on assembly
 control <- assembler_control(
   list(
     run_type = "single",
@@ -44,20 +59,11 @@ control <- assembler_control(
   )
 )
 
-# setup an empty community
-community0 <-
-  community_start(
-    p, 
-    bounds0
-  )
+# setup the assembler to start with empty community
+community0 <- community_start(p, bounds0)
+obj <- assembler_start(community0, control = control)
 
-# setup the assembler
-obj <- 
-  assembler_start(
-    community0, 
-    control = control
-  )
-
+# run assembler
 obj <- assembler_run(obj, nsteps = 100)
 
 saveRDS(obj, "output/stochastic.rds")
@@ -132,24 +138,30 @@ walk2(plots, seq_along(plots), ~ggsave(filename = paste0("output/plot/",.y,".png
 
 ## 2 trait: lma + hmat
 
+## Fitness landscapes
+
+We might want to caluclate fitness landscape for assembled community
+
 ```{r}
-library(plant)
-#library(plant.assembly)
-devtools::load_all()
-devtools::load_all("../plant-dev")
-plant_log_console()
 
-# Establish baseline parameters
-ctrl_plant <- scm_base_control()
-p <- scm_base_parameters("FF16")
-p$strategy_default$a_l1 <- 2.17
-p$strategy_default$a_l2 <- 0.5
+```
 
-p$max_patch_lifetime <- 60 # two species
+## Analysis
+
+
+
+
+# Two traits: lma + hmat
+
+Now let's run the assembly for a two traits
+
+## Assembly
+
+```{r}
 
 bounds0 <- bounds(lma = c(0.01, 1), hmat = c(0.5, 30))
 
-# change some of the controls on assembly
+# controls on assembly
 control <- assembler_control(
   list(
     run_type = "single",
@@ -159,23 +171,15 @@ control <- assembler_control(
   )
 )
 
-# setup an empty community
-community0 <- 
-  community_start(
-    p, 
-    bounds0
-  )
+# setup the assembler to start with empty community
+community0 <- community_start(p, bounds0)
+obj <- assembler_start(community0, control = control)
 
-# setup the assembler
-obj <- 
-  assembler_start(
-    community0, 
-    control = control
-  )
-
+# run assembly
 obj <- assembler_run(obj, nsteps =10)
 ```
 
+## Analysis
 
 
 Now lets' look at the results

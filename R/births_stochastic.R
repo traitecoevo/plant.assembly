@@ -1,4 +1,6 @@
 community_new_types_stochastic <- function(sys, control) {
+  plant_log_assembler("Adding new types")
+
   vcv <- control$vcv
   if (is.null(vcv) || !is.matrix(vcv)) {
     stop("A vcv must be provided")
@@ -6,6 +8,7 @@ community_new_types_stochastic <- function(sys, control) {
   mutation    <- make_mutation_stochastic_naive(control$n_mutants, vcv)
   immigration <- make_immigration_stochastic_naive(control$n_immigrants)
 
+  
   to_add <- rbind(mutation(sys), immigration(sys))
   if (control$check_positive && nrow(to_add) > 0) {
     fitness <- community_make_fitness(sys)
