@@ -100,7 +100,7 @@ for(i in 1:length(obj$history)){
   }
   }
 
-plot_history2 <- function(trait_history, birth_history){
+plot_history_one_trait <- function(trait_history, birth_history){
   myColors <- c("red","black")
   names(myColors) <- c("yes","no")
   colScale <- scale_colour_manual(values = myColors)
@@ -131,9 +131,9 @@ plot_history2 <- function(trait_history, birth_history){
   return(p)
 }
 
-plots <- map2(trait_history, birth_history, ~plot_history2(.x,.y))
+plots <- map2(trait_history, birth_history, ~plot_history_one_trait(.x,.y))
 plots <- plots[map_lgl(plots, ~!is.na(.x[1]))] 
-walk2(plots, seq_along(plots), ~ggsave(filename = paste0("output/plot/",.y,".png"), plot = .x))
+walk2(plots, seq_along(plots), ~ggsave(filename = paste0("output/stochastic_plot_history_one_trait/",.y,".png"), plot = .x))
 ```
 
 ## Fitness landscapes
@@ -146,7 +146,7 @@ We might want to caluclate fitness landscape for assembled community
 
 # Two traits: lma + hmat
 
-Now let's run the assembly for a two traits
+Now let's run the assembly for two traits
 
 ## Assembly
 
@@ -172,9 +172,41 @@ obj <- assembler_start(community0, control = control)
 obj <- assembler_run(obj, nsteps =10)
 ```
 
+```{r}
+saveRDS(obj, "output/stochastic_two_species.rds")
+```
+
 ## Analysis
 
 Now lets' look at the results
+
+Two-trait species output
+```{r}
+plot_history_two_traits <- function(two_trait_history_object, step){
+  two_trait_history_object$traits %>%
+  as_tibble() -> traits
+  
+  two_trait_history_object$birth_rate %>%
+  as_tibble() -> birth_rate
+  
+  out <- bind_cols(traits, birth_rate) %>%
+    mutate(step = paste0("Step = ", step))
+  out %>% 
+    ggplot(aes(x = lma, y = hmat)) +
+    geom_point(aes(colour = value)) +
+    theme_classic() +
+    scale_x_log10(limits = c(0.01, 1)) +
+    scale_y_log10(limits = c(0.5, 30)) +
+    scale_color_continuous(trans = "log", limits = c(1e-4, 1e3)) +
+    labs(x = "LMA", y = expression(paste(H[mat]))) +
+    geom_text(aes(x = 0, y = Inf, label = step, vjust = "inward", hjust = "inward"), size = 5)
+}
+
+two_trait_plots <- map2(obj$history, seq_along(obj$history), ~plot_history_two_traits(.x, .y))
+
+walk2(two_trait_plots, seq_along(two_trait_plots), ~ggsave(filename = paste0("output/stochastic_plot_history_two_traits/",.y,".png"), plot = .x))
+
+```
 
 How many species in the community?
 ```{r}
