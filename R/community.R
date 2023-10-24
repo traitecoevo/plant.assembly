@@ -24,16 +24,16 @@ community_start <- function(parameters, bounds,
                             fitness_approximate_control = NULL) {
 
   if (is.character(bounds)) {
-    bounds <- bounds_infinite(bounds)
+    bounds <-  plant::bounds_infinite(bounds)
   }
   ## TODO: Check parameters is empty.
-  ret <- list(parameters=validate(parameters),
-              bounds=check_bounds(bounds),
-              birth_rate_initial=birth_rate_initial, 
+  ret <- list(parameters = plant::validate(parameters),
+              bounds = plant::check_bounds(bounds),
+              birth_rate_initial = birth_rate_initial, 
               hyperpar = hyperpar
               )
   ret$trait_names <- rownames(bounds)
-  ret$traits <- trait_matrix(numeric(0), ret$trait_names)
+  ret$traits <- plant::trait_matrix(numeric(0), ret$trait_names)
   ret$birth_rate <- numeric(0)
   ret$fitness_approximate_control <- fitness_approximate_control
   class(ret) <- "community"
@@ -51,11 +51,11 @@ community_parameters <- function(obj) {
   p <- obj$parameters
 
   if(is.null(obj$hyperpar))
-    hyperpar <- param_hyperpar(p)
+    hyperpar <- plant::param_hyperpar(p)
   else 
     hyperpar <- obj$hyperpar
   
-  p$strategies <- strategy_list(obj$traits, p, birth_rate_list = obj$birth_rate, hyperpar = hyperpar)
+  p$strategies <- plant::strategy_list(obj$traits, p, birth_rate_list = obj$birth_rate, hyperpar = hyperpar)
 
   if (!is.null(obj$node_schedule_times)) {
     p$node_schedule_times <- obj$node_schedule_times
@@ -71,7 +71,7 @@ community_viable_bounds <- function(obj) {
   if (length(obj) > 0) {
     stop("You don't want to run this on an existing community")
   }
-  obj$bounds <- viable_fitness(obj$bounds, community_parameters(obj))
+  obj$bounds <- plant::viable_fitness(obj$bounds, community_parameters(obj))
   obj
 }
 

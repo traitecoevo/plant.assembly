@@ -3,7 +3,7 @@ community_new_types_maximum_fitness <- function(sys, control) {
   ## fitness search, such as approxiate fitness points, gets copied
   ## back so we can work with it.
   empty <- function(sys, m=NULL) {
-    ret <- trait_matrix(numeric(0), sys$trait_names)
+    ret <- plant::trait_matrix(numeric(0), sys$trait_names)
     ret <- copy_attributes(m, ret, exclude=c("dim", "dimnames"))
     attr(ret, "done") <- TRUE
     ret
@@ -41,7 +41,7 @@ community_new_types_maximum_fitness <- function(sys, control) {
 ##   want to set them.
 ## * We want to get the full approximate fitness landscape
 find_max_fitness <- function(sys, eps_too_close=1e-3) {
-  bounds <- check_bounds(sys$bounds)
+  bounds <- plant::check_bounds(sys$bounds)
   if (nrow(bounds) == 1L) {
     find_max_fitness_1d(sys, eps_too_close)
   } else {
@@ -53,7 +53,7 @@ find_max_fitness <- function(sys, eps_too_close=1e-3) {
 ## might miss local peaks.  Instead we construct an approximate
 ## landscape and look around the highest point.
 find_max_fitness_1d <- function(sys, eps_too_close) {
-  bounds <- check_bounds(sys$bounds, finite=TRUE)
+  bounds <- plant::check_bounds(sys$bounds, finite=TRUE)
 
   ## This should be cheap, but will be lost if the calling function
   ## didn't arrange it:
@@ -71,7 +71,7 @@ find_max_fitness_1d <- function(sys, eps_too_close) {
   r <- xx[c(max(1, i - 1), min(i + 1, length(xx)))]
   opt <- optimise(fitness_approximate, r, maximum=TRUE)
 
-  ret <- trait_matrix(opt$maximum, sys$trait_names)
+  ret <- plant::trait_matrix(opt$maximum, sys$trait_names)
   attr(ret, "fitness") <- opt$objective
   ret
 }
@@ -79,10 +79,10 @@ find_max_fitness_1d <- function(sys, eps_too_close) {
 find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   do_fit <- function(p) {
     f <- function(x) {
-      community_fitness(sys, trait_matrix(x, sys$trait_names))
+      community_fitness(sys, plant::trait_matrix(x, sys$trait_names))
     }
     fit <- maximize_logspace(f, p, sys$bounds, tol)
-    ret <- trait_matrix(fit$par, sys$trait_names)
+    ret <- plant::trait_matrix(fit$par, sys$trait_names)
     attr(ret, "fitness") <- fit$value
     ret
   }

@@ -28,12 +28,12 @@ community_prepare_fitness <- function(community) {
   if (!is.null(community$bounds)) {
     if (length(community) > 0L) {
       if (is.null(community$node_schedule_times)) {
-        res <- build_schedule(community_parameters(community), ctrl = plant_control())
+        res <- plant::build_schedule(community_parameters(community), ctrl = plant_control())
         community$node_schedule_times <- res$node_schedule_times
         community$node_schedule_ode_times <-
           res$node_schedule_ode_times
       } else if (is.null(community$node_schedule_ode_times)) {
-        res <- run_scm(community_parameters(community))
+        res <- plant::run_scm(community_parameters(community))
         community$node_schedule_ode_times <- res$ode_times
       }
     }
@@ -87,13 +87,12 @@ community_make_fitness <- function(community) {
   community_assert_fitness_prepared(community, FALSE)
   p <- community_parameters(community)
   if(is.null(community$hyperpar)) {
-    hyperpar <- param_hyperpar(p)
+    hyperpar <- plant::param_hyperpar(p)
   } else {
     hyperpar <- community$hyperpar
   }
 
   fitness <- function(x) {
-    
     plant_log_assembler("Computing fitness landscape")
 
     plant::fitness_landscape(x, p, hyperpar = hyperpar, ctrl = plant_control())
@@ -124,7 +123,7 @@ fitness_approximate_points <- function(community, bounds=NULL) {
   if (is.null(bounds)) {
     bounds <- community$bounds
   }
-  bounds <- check_bounds(bounds, finite=TRUE)
+  bounds <- plant::check_bounds(bounds, finite=TRUE)
   if (nrow(bounds) != 1L) {
     stop("Only working for one trait at the moment")
   }
@@ -160,7 +159,7 @@ fitness_approximate_points_grid <- function(fitness, community, bounds, control)
     x <- sort(unique(c(x, community$traits)))
   }
 
-  trait <- trait_matrix(x, community$trait_names)
+  trait <- plant::trait_matrix(x, community$trait_names)
 
   w <- fitness(trait)
   cbind(trait, w, deparse.level=0)
@@ -185,7 +184,7 @@ fitness_approximate_points_gp <- function(fitness,
   }
   bounds <- log(bounds)
   x_resident <- log(x_resident)
-  x <- trait_matrix(seq_range(bounds, n_predict),
+  x <- plant::trait_matrix(seq_range(bounds, n_predict),
                     community$trait_names)
 
   ## Set up the residents and any seed points as special data points
@@ -208,7 +207,7 @@ fitness_approximate_points_gp <- function(fitness,
 community_fitness_slopes <- function(sys) {
   fitness <- community_make_fitness(sys)
   f_logspace <- function(x) {
-    fitness(trait_matrix(exp(x), sys$trait_names))
+    fitness(plant::trait_matrix(exp(x), sys$trait_names))
   }
   apply(log(sys$traits), 1, function(x) grader::slope_info(f_logspace, x))
 }
