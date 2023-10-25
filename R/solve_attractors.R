@@ -26,14 +26,14 @@ max_growth_rate <- function(trait, values, p, schedule=NULL) {
 ##' @param values Values to compute maximum growth rate for
 ##' @param p Parameters object to use.  Importantly, the
 ##' \code{strategy_default} element gets used here.
-##' @param seed_rain Initial seed rain (optional)
+##' @param birth_rate Initial seed rain (optional)
 ##' @param parallel Use multiple processors?
 ##' @author Rich FitzJohn
 ##' @export
-carrying_capacity <- function(trait, values, p, seed_rain=1,
+carrying_capacity <- function(trait, values, p, birth_rate=1,
                               parallel=FALSE) {
   f <- function(x) {
-    carrying_capacity1(trait, x, p, seed_rain)
+    carrying_capacity1(trait, x, p, birth_rate)
   }
   if (parallel) {
     unlist(parallel::mclapply(values, f, mc.preschedule=FALSE))
@@ -41,6 +41,21 @@ carrying_capacity <- function(trait, values, p, seed_rain=1,
     unlist(lapply(values, f))
   }
 }
+
+carrying_capacity1 <- function(trait, value, p, birth_rate = 1) {
+  p <- p$copy()
+  p$clear()
+  ## Use
+  p <- expand_parameters(trait, value, p)
+  p$birth_rate <- birth_rate
+  if (is.null(schedule)) {
+    schedule <- default_cohort_schedule(p)
+  }
+  res <- equilibrium_birth_rate(p)
+  warning("Please fix seed rain mean", immediate. = TRUE)
+  rowMeans(res$birth_rate)
+}
+
 
 ##' Compute region of positive fitness.  This will be the values where
 ##' fitness is approximately zero.
@@ -117,23 +132,23 @@ positive2 <- function(f, x, lower, upper, n_total=200) {
 #' @param values vector of trait values for community
 #' @param p Parameters object to use.  Importantly, the
 #' \code{strategy_default} element gets used here.
-#' @param seed_rain vector of initial seed rains for community
+#' @param birth_rate vector of initial seed rains for community
 #' @author Daniel Falster
 #' @export
-get_equilibrium_community <- function(trait, values, p, seed_rain=NULL) {
+get_equilibrium_community <- function(trait, values, p, birth_rate=NULL) {
   p <- p$copy()
   p$clear()
   p <- expand_parameters(trait, values, p, FALSE)
-  if (!is.null(seed_rain)) {
-    if (length(values) != length(seed_rain)) {
+  if (!is.null(birth_rate)) {
+    if (length(values) != length(birth_rate)) {
       stop("incorrect vector lengths")
     }
-    p$seed_rain <- seed_rain
+    p$birth_rate <- birth_rate
   }
-  res <- equilibrium_seed_rain2(p)
+  res <- equilibrium_birth_rate2(p)
   ## Take the *final*, not the mean value: this is important for
   ## assembly.  TODO: make this change elsewhere too.
-  p$seed_rain <- unname(res$seed_rain[,"out"])
+  p$birth_rate <- unname(res$birth_rate[,"out"])
   list(p=p, schedule=res$schedule)
 }
 
@@ -147,7 +162,7 @@ get_equilibrium_community <- function(trait, values, p, seed_rain=NULL) {
 #' \code{strategy_default} element gets used here.
 #' @param bounds a vector containing the end-points of the
 #' interval to be searched for the root.
-#' @param ... set verbpse=TRUE for verbose output, seed_rain=value
+#' @param ... set verbpse=TRUE for verbose output, birth_rate=value
 #' gives starting values when solving for demographic equilibrium
 #' @param tol the desired accuracy (convergence tolerance).
 #' @param edge_ok Is it (not) an error if we end up on the edge of the
@@ -181,13 +196,13 @@ find_singularity_1D <- function(trait, p, bounds, tol = 1e-03, ...,
       res <- list(trait=upper, gr=f_upper)
     }
     species(structure(list(res$trait), names=trait),
-            seed_rain=attr(res$gr, "seed_rain"),
+            birth_rate=attr(res$gr, "birth_rate"),
             cohort_schedule_times=attr(res$gr, "schedule")$times(1))
   } else {
     res <- uniroot(f, lower=lower, upper=upper,
                    f.lower=f_lower, f.upper=f_upper, tol=tol)
     species(structure(list(res$root), names=trait),
-            seed_rain=attr(res$f.root, "seed_rain"),
+            birth_rate=attr(res$f.root, "birth_rate"),
             cohort_schedule_times=attr(res$f.root, "schedule")$times(1))
   }
 }
@@ -198,7 +213,7 @@ find_singularity_1D <- function(trait, p, bounds, tol = 1e-03, ...,
 #' Returns selection gradient in single species communities
 #' at a range of trait values. This is derivative of fitness
 #' with respect to trait value. The algorithm first solves
-#' for the demographic attractor, using \code{seed_rain} as
+#' for the demographic attractor, using \code{birth_rate} as
 #' a starting value.
 #' @param trait name of trait.
 #' @param values vector of trait values.
@@ -208,7 +223,7 @@ find_singularity_1D <- function(trait, p, bounds, tol = 1e-03, ...,
 #' @param log_scale Determines whether derivative is taken
 #' with respect to raw or log-transformed x values. The latter
 #' is useful when x is log-normally distributed.
-#' @param seed_rain (optional) Starting values for seed rain
+#' @param birth_rate (optional) Starting values for seed rain
 #' when solving for demographic euqilibrium
 #' @param verbose (optional) Print values to screen
 #' @author Daniel Falster
@@ -216,18 +231,18 @@ find_singularity_1D <- function(trait, p, bounds, tol = 1e-03, ...,
 #' @seealso selection_gradient1
 #' @return a vector of values with same length as \code{values}.
 selection_gradient <- function(trait, values, p, dx=1e-04,
-                               log_scale=TRUE, seed_rain=NULL,
+                               log_scale=TRUE, birth_rate=NULL,
                                verbose=TRUE) {
     N <- length(values)
     ret <- rep(NA_real_, N)
-    ret_seed_rain <- rep(NA_real_, N)
+    ret_birth_rate <- rep(NA_real_, N)
     for (i in seq_len(N)) {
       tmp <- selection_gradient1(trait, values[i], p, dx,
-                                    log_scale, seed_rain, verbose)
+                                    log_scale, birth_rate, verbose)
       ret[i] <- as.numeric(tmp) # to drop the attribute
-      ret_seed_rain[i] <- attr(tmp, "seed_rain")
+      ret_birth_rate[i] <- attr(tmp, "birth_rate")
     }
-    attr(ret, "seed_rain") <- ret_seed_rain
+    attr(ret, "birth_rate") <- ret_birth_rate
     ret
 }
 
@@ -237,7 +252,7 @@ selection_gradient <- function(trait, values, p, dx=1e-04,
 #' Returns selection gradient in a single-species community
 #' with given trait value. This is derivative of fitness
 #' with respect to trait value. The algorithm first solves
-#' for the demographic attractor, using \code{seed_rain} as
+#' for the demographic attractor, using \code{birth_rate} as
 #' a starting value.
 #' @param trait name of trait
 #' @param value value of trait where derivative is calculated
@@ -247,7 +262,7 @@ selection_gradient <- function(trait, values, p, dx=1e-04,
 #' @param log_scale Determines whether derivative is taken
 #' with respect to raw or log-transformed x values. The latter
 #' is useful when x is log-normally distributed.
-#' @param seed_rain (optional) Starting values for seed rain
+#' @param birth_rate (optional) Starting values for seed rain
 #' when solving for demographic euqilibrium
 #' @param verbose (optional) Print values to screen
 #' @author Daniel Falster
@@ -256,21 +271,21 @@ selection_gradient <- function(trait, values, p, dx=1e-04,
 #' @return a single value. The equilibirum seed rain is included as
 #' an attribute.
 selection_gradient1 <- function(trait, value, p, dx=1e-04,
-                                log_scale=TRUE, seed_rain=NULL,
+                                log_scale=TRUE, birth_rate=NULL,
                                 verbose=TRUE) {
 
   if (verbose) {
     message(sprintf("Calculating selection gradient for %s = %f",
                     trait, value))
   }
-  res <- get_equilibrium_community(trait, value, p, seed_rain=seed_rain)
+  res <- get_equilibrium_community(trait, value, p, birth_rate=birth_rate)
 
   f <- function(x) fitness_landscape(trait, x, res$p, res$schedule)
   ret <- gradient_fd(f, value, dx, log_scale)
   if (verbose) {
     message(sprintf("\t...selection gradient = %f", ret))
   }
-  attr(ret, "seed_rain") <- res$p$seed_rain
+  attr(ret, "birth_rate") <- res$p$birth_rate
   attr(ret, "schedule") <- res$schedule$copy()
   ret
 }
