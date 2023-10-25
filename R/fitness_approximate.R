@@ -13,14 +13,14 @@
 ##
 ##   node_schedule_times      } -- required for the fitness function
 ##   node_schedule_ode_times  } /
-##   fitness_approximate_points   -- required for approximate 1d
+##   fitness_approximate_points   -- required for approximate 1D
 ##   fitness_approximate_slopes   -- required for approximate 2d
 ##
 ## So every time we call one of these functions we should push back
 ## any attributes of this type back.  This stuff is where references
 ## were definitely nice.
 ##
-## Because the 1d and 2d functions return different bits of computed
+## Because the 1D and 2d functions return different bits of computed
 ## data it's particularly tricky.
 
 ## Same but for community:
@@ -44,7 +44,7 @@ community_prepare_fitness <- function(community) {
 community_prepare_approximate_fitness <- function(community) {
   community <- community_prepare_fitness(community)
   if (!is.null(community$bounds)) {
-    if (length(community$trait_names) == 1L) { # 1d
+    if (length(community$trait_names) == 1L) { # 1D
       if (is.null(community$fitness_approximate_points)) {
         community$fitness_approximate_points <-
           fitness_approximate_points(community)
