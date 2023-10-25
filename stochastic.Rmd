@@ -141,9 +141,23 @@ walk2(plots, seq_along(plots), ~ggsave(filename = paste0("output/stochastic_plot
 We might want to caluclate fitness landscape for assembled community
 
 ```{r}
+filename <- "output/stochastic.rds"
+filename <- "output/stochastic-lma-2023.10.24.rds"
+obj <- readRDS(filename)
 
+# do for current community
+obj$community <- community_prepare_approximate_fitness(obj$community)
+
+library(parallel)
+n_cores <- max(1, detectCores() - 2)
+
+# Add across history
+obj$history <- mclapply(obj$history, community_prepare_approximate_fitness, mc.cores = n_cores)
+
+saveRDS(obj, gsub(".rds", "-fitness.rds", filename, fixed = T))
 ```
 
+To control 
 # Two traits: lma + hmat
 
 Now let's run the assembly for two traits

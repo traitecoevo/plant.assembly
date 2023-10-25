@@ -21,7 +21,8 @@ Imports:
 Suggests:
     knitr,
     rmarkdown,
-    testthat
+    testthat,
+    paralell
 Remotes:
     richfitz/grader
 VignetteBuilder: knitr
