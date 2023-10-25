@@ -30,7 +30,7 @@ community_solve_singularity_1D <- function(community, bounds = NULL, tol = 1e-04
       community %>%
       community_add(plant::trait_matrix(x, "lma")) %>%
       community_run_to_equilibrium() %>%
-      community_selection_gradient_1d()
+      community_selection_gradient_1D()
     
     ret <- out$selection_gradient
     
@@ -101,7 +101,7 @@ community_solve_singularity_1D <- function(community, bounds = NULL, tol = 1e-04
 #' @author Daniel Falster
 #' @export
 #' @return a community with selection gradient added.
-community_selection_gradient_1d <- function(community, dx=1e-04,
+community_selection_gradient_1D <- function(community, dx=1e-04,
                                 log_scale=TRUE) {
 
   msg <- sprintf("Calculating selection gradient for %s = %f",community$trait_names, community$traits)

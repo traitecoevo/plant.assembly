@@ -82,7 +82,7 @@ community_eq <-
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
-  community_selection_gradient_1d()
+  community_selection_gradient_1D()
 
 community_eq$fitness
 community_eq$selection_gradient
@@ -115,7 +115,7 @@ f <- function(x, community) {
   community %>%
     community_add(plant::trait_matrix(x, "lma")) %>%
     community_run_to_equilibrium() %>%
-    community_selection_gradient_1d() 
+    community_selection_gradient_1D() 
 }
 
 # Create a data frame with range of trait values and solve
