@@ -173,7 +173,7 @@ get_equilibrium_community <- function(trait, values, p, birth_rate=NULL) {
 #' information.
 find_singularity_1D <- function(trait, p, bounds, tol = 1e-03, ...,
                                 edge_ok=TRUE) {
-  f <- function(x) selection_gradient1(trait, x, p, ...)
+  f <- function(x) selection_gradient_single(trait, x, p, ...)
   lower <- bounds[[1]]
   upper <- bounds[[2]]
   f_lower <- f(lower)
@@ -228,19 +228,26 @@ find_singularity_1D <- function(trait, p, bounds, tol = 1e-03, ...,
 #' @param verbose (optional) Print values to screen
 #' @author Daniel Falster
 #' @export
-#' @seealso selection_gradient1
+#' @seealso selection_gradient_single
 #' @return a vector of values with same length as \code{values}.
-selection_gradient <- function(trait, values, p, dx=1e-04,
+selection_gradient <- function(values, community0, dx=1e-04,
                                log_scale=TRUE, birth_rate=NULL,
                                verbose=TRUE) {
+    
+    trait <- community0$trait_names
+    
     N <- length(values)
     ret <- rep(NA_real_, N)
     ret_birth_rate <- rep(NA_real_, N)
     for (i in seq_len(N)) {
-      tmp <- selection_gradient1(trait, values[i], p, dx,
-                                    log_scale, birth_rate, verbose)
-      ret[i] <- as.numeric(tmp) # to drop the attribute
-      ret_birth_rate[i] <- attr(tmp, "birth_rate")
+      #browser()
+      community1 <- community_add(community0, plant::trait_matrix(values[i], trait))
+      community1_eq <- community_run_to_equilibrium(community1)
+
+      ret[i] <- selection_gradient_single(community1_eq, dx,
+                                    log_scale, verbose)
+      #ret[i] <- as.numeric(tmp) # to drop the attribute
+      ret_birth_rate[i] <- community1_eq$birth_rate
     }
     attr(ret, "birth_rate") <- ret_birth_rate
     ret
@@ -270,23 +277,33 @@ selection_gradient <- function(trait, values, p, dx=1e-04,
 #' @seealso selection_gradient
 #' @return a single value. The equilibirum seed rain is included as
 #' an attribute.
-selection_gradient1 <- function(trait, value, p, dx=1e-04,
-                                log_scale=TRUE, birth_rate=NULL,
+selection_gradient_single <- function(community1_eq, dx=1e-04,
+                                log_scale=TRUE,
                                 verbose=TRUE) {
 
   if (verbose) {
     message(sprintf("Calculating selection gradient for %s = %f",
-                    trait, value))
+                    community1_eq$trait_names, community1_eq$traits))
   }
-  res <- get_equilibrium_community(trait, value, p, birth_rate=birth_rate)
+  
+  trait_names <- community1_eq$trait_names
+  points <- community1_eq$traits[,trait_names] * c(1, 1 + dx)
+  traits <- plant::trait_matrix(points, "lma")
+  ff <- community_fitness(community1_eq, traits)  
+  ret <- (ff[2] - ff[1]) / dx
 
-  f <- function(x) fitness_landscape(trait, x, res$p, res$schedule)
-  ret <- gradient_fd(f, value, dx, log_scale)
+  # alternative using grader
+  f  <- function(x) {
+    traits <- plant::trait_matrix(x, "lma")
+    community_fitness(community1_eq, traits)
+  } 
+  #grader::gradient(f, community1_eq$traits[, trait])
+
   if (verbose) {
     message(sprintf("\t...selection gradient = %f", ret))
   }
-  attr(ret, "birth_rate") <- res$p$birth_rate
-  attr(ret, "schedule") <- res$schedule$copy()
+#  attr(ret, "birth_rate") <- res$p$birth_rate
+#  attr(ret, "schedule") <- res$schedule$copy()
   ret
 }
 
@@ -322,4 +339,15 @@ max_fitness <- function(trait, p, bounds=NULL, log_scale=TRUE) {
   out <- suppressWarnings(optimise(f, interval=bounds, maximum=TRUE, tol=1e-3))
   structure(if (log_scale) exp(out$maximum) else out$maximum,
             fitness=out$objective)
+}
+
+gradient_fd_forward <- function(f, x, dx) {
+  (f(x + dx) - f(x)) / dx
+}
+
+gradient_fd_centre <- function(f, x, dx) {
+  (f(x + dx / 2) - f(x - dx / 2)) / dx
+}
+gradient_fd_backward <- function(f, x, dx) {
+  (f(x - dx) - f(x)) / (-dx)
 }

@@ -1,0 +1,99 @@
+---
+title: "Solving for attarctors"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{max_fitness}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Example of 1D attarctor for lma
+
+
+```{r, setup}
+library(plant)
+library(plant.assembly)
+devtools::load_all()
+# devtools::load_all("../plant-dev")
+
+# logging of output
+plant_log_console()
+
+# set controls on plant package 
+plant_control <- function() {
+  ctrl <- scm_base_control()
+  ctrl$equilibrium_nsteps <- 20
+  ctrl$equilibrium_solver_name <- "hybrid"
+  ctrl
+}
+
+# set baseline parameters
+p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+p$strategy_default$hmat <- 10
+p$max_patch_lifetime <- 60
+
+```
+
+Setup basic community
+
+```{r}
+# Set absolute bounds
+bounds0 <- bounds(lma = c(0.01, 2))
+
+# set controls on assembly
+# control <- assembler_control(
+#   list(
+#     run_type = "to_equilibrium",
+#     birth_type = "maximum",
+#     birth_move_tol = 1,
+#     compute_viable_fitness = FALSE,
+#     equilibrium_eps = plant_control()$equilibrium_eps
+#   )
+# )
+
+# setup the assembler to start with empty community
+community0 <-
+  community_start(p, bounds0,
+    fitness_approximate_control = list(type = "grid")
+  )
+
+#obj <- assembler_start(community0, control = control)
+
+
+```
+
+
+
+```{r}
+
+
+community1 <- community_add(community0, plant::trait_matrix(x, "lma"))
+community1_eq <- community_run_to_equilibrium(community1)
+
+x <- 0.05
+traits <- plant::trait_matrix(x, "lma")
+community_fitness(community1_eq, traits)
+
+
+# for a single point
+selection_gradient_single(community1_eq,
+  dx = 1e-4,
+  log_scale = TRUE, verbose = TRUE
+)
+
+# for a series of points
+selection_gradient(c(0.04, 0.05, 0.06), community0,
+  dx = 1e-4,
+  log_scale = TRUE, verbose = TRUE
+)
+
+```
