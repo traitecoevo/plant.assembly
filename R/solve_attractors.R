@@ -1,157 +1,5 @@
 ## Functions *related* to assembly, but not actually doing it.
 
-##' Compute max growth rate of a given set of values for a trait.
-##' This is the log of per-capita seed production (i.e., fitness).
-##'
-##' Only works in one dimension
-##' @title Compute Max Growth Rate
-##' @param trait Name of the trait (e.g., \code{"lma"})
-##' @param values Values to compute maximum growth rate for
-##' @param p Parameters object to use.  Importantly, the
-##' \code{strategy_default} element gets used here.
-##' @param schedule \code{CohortSchedule} to use, or \code{NULL} to
-##' generate a hopefully reasonable schedule.
-##' @author Rich FitzJohn
-##' @export
-max_growth_rate <- function(trait, values, p, schedule=NULL) {
-  fitness_landscape_empty(trait, values, p, schedule)
-}
-
-##' Compute the carrying capacity (equilibrium per-capita seed
-##' production) for a set of values of a trait.  Each is considered in
-##' isolation.
-##'
-##' @title Carrying Capacity
-##' @param trait Name of the trait (e.g., \code{"lma"})
-##' @param values Values to compute maximum growth rate for
-##' @param p Parameters object to use.  Importantly, the
-##' \code{strategy_default} element gets used here.
-##' @param birth_rate Initial seed rain (optional)
-##' @param parallel Use multiple processors?
-##' @author Rich FitzJohn
-##' @export
-carrying_capacity <- function(trait, values, p, birth_rate=1,
-                              parallel=FALSE) {
-  f <- function(x) {
-    carrying_capacity1(trait, x, p, birth_rate)
-  }
-  if (parallel) {
-    unlist(parallel::mclapply(values, f, mc.preschedule=FALSE))
-  } else {
-    unlist(lapply(values, f))
-  }
-}
-
-carrying_capacity1 <- function(trait, value, p, birth_rate = 1) {
-  p <- p$copy()
-  p$clear()
-  ## Use
-  p <- expand_parameters(trait, value, p)
-  p$birth_rate <- birth_rate
-  if (is.null(schedule)) {
-    schedule <- default_cohort_schedule(p)
-  }
-  res <- equilibrium_birth_rate(p)
-  warning("Please fix seed rain mean", immediate. = TRUE)
-  rowMeans(res$birth_rate)
-}
-
-
-##' Compute region of positive fitness.  This will be the values where
-##' fitness is approximately zero.
-##'
-##' @title Compute Region of Positive Fitnes
-##' @param trait Name of the trait (e.g., \code{"lma"})
-##' @param p Parameters object to use.  Importantly, the
-##' \code{strategy_default} element gets used here.
-##' @param bounds 2D vector specifing range within which to search
-##' @param value Initial value - must have positive fitness itself!
-##' If not given, then the value from the default strategy within
-##' \code{p} is used.
-##' @param log_scale Is the parameter naturally on a log scale?  If
-##' so, this will greatly speed things up.
-##' @param dx Amount to step the trait.  If \code{log_scale} is
-##' \code{TRUE}, this is on a log scale.
-##' @param find_max_if_negative If the starting value has negative
-##' fitness, should we search for the maximum value?
-##' @export
-##' @author Rich FitzJohn
-
-positive <- function(f, x, dx, lower=-Inf, upper=Inf, eps=1e-3) {
-  b <- plant:::positive_1d_bracket(f, x, dx, lower, upper)
-
-  # Find lower root. If no root exists within that range, take
-  # lower bound
-  if(prod(b$lower$fx[1:2]) < 0){
-    ## The suppressWarnings here is about conversion from -Inf to a
-    ## very small number.
-    lower <- suppressWarnings(uniroot(f, b$lower$x,
-                                      f.lower=b$lower$fx[[1]],
-                                      f.upper=b$lower$fx[[2]],
-                                      tol=eps)$root)
-  } else {
-    lower <- b$lower$x[[1]]
-  }
-  # Find upper root. If no root exists within that range, take
-  # upper bound
-  if(prod(b$upper$fx[1:2]) < 0){
-    upper <- uniroot(f, b$upper$x,
-                   f.lower=b$upper$fx[[1]], f.upper=b$upper$fx[[2]],
-                   tol=eps)$root
-  } else {
-    upper <- b$upper$x[[2]]
-  }
-
-  c(lower, upper)
-}
-
-## This is a multidimensional version of positive.  It's a hack for
-## now.
-##
-## Unlike positive, it *requires* bounds.
-## It takes n_start, which is the *per dimension* number of points to
-## start with.  n_total is the total number of points to test.  It
-## also takes a starting point.  The idea is that starting point has
-## positive fitness so we can use it as a root-creating device.
-positive2 <- function(f, x, lower, upper, n_total=200) {
-  delaunay_init()
-  is_nonnegative <- function(y) y >= 0.0
-  pts <- lapply(seq_along(lower), function(i) c(lower[[i]], upper[[i]]))
-  m0 <- rbind(x, unname(as.matrix(do.call("expand.grid", pts))))
-  y0 <- f(m0)
-  delaunay_run_map(m0, f, is_nonnegative, values=y0,
-                   n_total=n_total, exploit=50)
-}
-
-#' Solve for equilbrium community with given values of specified trait
-#'
-#' Find seed rain and cohort schedule for equilbrium community with
-#' given traits. This is point at which each resident seed returns
-#' on average a single seed.
-#' @param trait name of trait
-#' @param values vector of trait values for community
-#' @param p Parameters object to use.  Importantly, the
-#' \code{strategy_default} element gets used here.
-#' @param birth_rate vector of initial seed rains for community
-#' @author Daniel Falster
-#' @export
-get_equilibrium_community <- function(trait, values, p, birth_rate=NULL) {
-  p <- p$copy()
-  p$clear()
-  p <- expand_parameters(trait, values, p, FALSE)
-  if (!is.null(birth_rate)) {
-    if (length(values) != length(birth_rate)) {
-      stop("incorrect vector lengths")
-    }
-    p$birth_rate <- birth_rate
-  }
-  res <- equilibrium_birth_rate2(p)
-  ## Take the *final*, not the mean value: this is important for
-  ## assembly.  TODO: make this change elsewhere too.
-  p$birth_rate <- unname(res$birth_rate[,"out"])
-  list(p=p, schedule=res$schedule)
-}
-
 #' Find evolutionary attractor for single species and trait.
 #'
 #' Find evolutionary attractor for single species and trait.
@@ -316,4 +164,21 @@ max_fitness <- function(trait, p, bounds=NULL, log_scale=TRUE) {
   out <- suppressWarnings(optimise(f, interval=bounds, maximum=TRUE, tol=1e-3))
   structure(if (log_scale) exp(out$maximum) else out$maximum,
             fitness=out$objective)
+}
+
+##' Compute max growth rate of a given set of values for a trait.
+##' This is the log of per-capita seed production (i.e., fitness).
+##'
+##' Only works in one dimension
+##' @title Compute Max Growth Rate
+##' @param trait Name of the trait (e.g., \code{"lma"})
+##' @param values Values to compute maximum growth rate for
+##' @param p Parameters object to use.  Importantly, the
+##' \code{strategy_default} element gets used here.
+##' @param schedule \code{CohortSchedule} to use, or \code{NULL} to
+##' generate a hopefully reasonable schedule.
+##' @author Rich FitzJohn
+##' @export
+max_growth_rate <- function(trait, values, p, schedule = NULL) {
+  fitness_landscape_empty(trait, values, p, schedule)
 }
