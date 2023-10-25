@@ -171,140 +171,117 @@ get_equilibrium_community <- function(trait, values, p, birth_rate=NULL) {
 #' @export
 #' @return A species object, with trait, seed rain and cohort schedule
 #' information.
-find_singularity_1D <- function(trait, p, bounds, tol = 1e-03, ...,
-                                edge_ok=TRUE) {
-  f <- function(x) selection_gradient_single(trait, x, p, ...)
+community_solve_singularity_1D <- function(community, bounds = NULL, tol = 1e-04, ...,
+                                edge_ok = TRUE) {
+
+  plant_log_assembler(
+    sprintf("Solving 1D attractor for %s", community$trait_names))
+                                  
+  f <- function(x) {
+    out <- 
+      community %>%
+      community_add(plant::trait_matrix(x, "lma")) %>%
+      community_run_to_equilibrium() %>%
+      community_selection_gradient_1d()
+    
+    ret <- out$selection_gradient
+    
+    # Add extra details so we can access these later
+    attr(ret, "community") <- out
+
+    ret
+  }
+    
+  if(is.null(bounds)) 
+    bounds <- community$bounds
+
   lower <- bounds[[1]]
   upper <- bounds[[2]]
+
   f_lower <- f(lower)
   f_upper <- f(upper)
 
   ## This is the exact condition used by uniroot:
   failed <- !isTRUE(as.vector(sign(f_lower) * sign(f_upper) <= 0))
+
   if (failed) {
     msg <- paste("Bounds do not include attractor: taking",
                  if (f_lower < 0) "lower" else "upper")
     if (edge_ok) {
-      message(msg) # could be warning?
+      warning(msg)
     } else {
       stop(msg)
     }
 
     if (f_lower < 0) {
-      res <- list(trait=lower, gr=f_lower)
+      res <- list(root = lower, f.root = f_lower)
     } else {
-      res <- list(trait=upper, gr=f_upper)
+      res <- list(root = upper, f.root = f_upper)
     }
-    species(structure(list(res$trait), names=trait),
-            birth_rate=attr(res$gr, "birth_rate"),
-            cohort_schedule_times=attr(res$gr, "schedule")$times(1))
   } else {
-    res <- uniroot(f, lower=lower, upper=upper,
-                   f.lower=f_lower, f.upper=f_upper, tol=tol)
-    species(structure(list(res$root), names=trait),
-            birth_rate=attr(res$f.root, "birth_rate"),
-            cohort_schedule_times=attr(res$f.root, "schedule")$times(1))
+    res <- uniroot(f,
+      lower = lower, upper = upper,
+      f.lower = f_lower, f.upper = f_upper, tol = tol
+      )
   }
+
+  # We're actualy going to 
+  community_out <- attr(res$f.root, "community")
+  if(community_out$traits != res$root) {
+    stop("community_solve_singularity_1D: Hmm, these values should be equla. Better quit now.")
+  }
+
+  plant_log_assembler(
+    sprintf("Solved! 1D attractor for %s is %s", community$trait_names, as.numeric(res$root))
+  )
+
+  community_out
 }
 
-#' Returns selection gradient in single species communities
-#' at a range of trait values.
-#'
-#' Returns selection gradient in single species communities
-#' at a range of trait values. This is derivative of fitness
-#' with respect to trait value. The algorithm first solves
-#' for the demographic attractor, using \code{birth_rate} as
-#' a starting value.
-#' @param trait name of trait.
-#' @param values vector of trait values.
-#' @param p Parameters object to use.  Importantly, the
-#' \code{strategy_default} element gets used here.
-#' @param dx Interval over which derivative is calculated
-#' @param log_scale Determines whether derivative is taken
-#' with respect to raw or log-transformed x values. The latter
-#' is useful when x is log-normally distributed.
-#' @param birth_rate (optional) Starting values for seed rain
-#' when solving for demographic euqilibrium
-#' @param verbose (optional) Print values to screen
-#' @author Daniel Falster
-#' @export
-#' @seealso selection_gradient_single
-#' @return a vector of values with same length as \code{values}.
-selection_gradient <- function(values, community0, dx=1e-04,
-                               log_scale=TRUE, birth_rate=NULL,
-                               verbose=TRUE) {
-    
-    trait <- community0$trait_names
-    
-    N <- length(values)
-    ret <- rep(NA_real_, N)
-    ret_birth_rate <- rep(NA_real_, N)
-    for (i in seq_len(N)) {
-      #browser()
-      community1 <- community_add(community0, plant::trait_matrix(values[i], trait))
-      community1_eq <- community_run_to_equilibrium(community1)
-
-      ret[i] <- selection_gradient_single(community1_eq, dx,
-                                    log_scale, verbose)
-      #ret[i] <- as.numeric(tmp) # to drop the attribute
-      ret_birth_rate[i] <- community1_eq$birth_rate
-    }
-    attr(ret, "birth_rate") <- ret_birth_rate
-    ret
-}
-
-#' Returns selection gradient in a single-species community
+#' Calculates selection gradient in a single-species community
 #' with given trait value
 #'
-#' Returns selection gradient in a single-species community
+#' Adds selection gradient to a single-species community
 #' with given trait value. This is derivative of fitness
-#' with respect to trait value. The algorithm first solves
-#' for the demographic attractor, using \code{birth_rate} as
-#' a starting value.
-#' @param trait name of trait
-#' @param value value of trait where derivative is calculated
-#' @param p Parameters object to use.  Importantly, the
-#' \code{strategy_default} element gets used here.
+#' with respect to trait value. You should first solv for
+#' using \code{community_run_to_equilibrium}
+#' @param community community object to use. 
 #' @param dx Interval over which derivative is calculated
-#' @param log_scale Determines whether derivative is taken
+#' @param log_scale (currently disabled) Determines whether derivative is taken
 #' with respect to raw or log-transformed x values. The latter
 #' is useful when x is log-normally distributed.
-#' @param birth_rate (optional) Starting values for seed rain
-#' when solving for demographic euqilibrium
-#' @param verbose (optional) Print values to screen
 #' @author Daniel Falster
 #' @export
-#' @seealso selection_gradient
-#' @return a single value. The equilibirum seed rain is included as
-#' an attribute.
-selection_gradient_single <- function(community1_eq, dx=1e-04,
-                                log_scale=TRUE,
-                                verbose=TRUE) {
+#' @return a community with selection gradient added.
+community_selection_gradient_1d <- function(community, dx=1e-04,
+                                log_scale=TRUE) {
 
-  if (verbose) {
-    message(sprintf("Calculating selection gradient for %s = %f",
-                    community1_eq$trait_names, community1_eq$traits))
-  }
+  msg <- sprintf("Calculating selection gradient for %s = %f",community$trait_names, community$traits)
+  plant_log_assembler(msg)
   
-  trait_names <- community1_eq$trait_names
-  points <- community1_eq$traits[,trait_names] * c(1, 1 + dx)
-  traits <- plant::trait_matrix(points, "lma")
-  ff <- community_fitness(community1_eq, traits)  
+  trait_names <- community$trait_names
+  # get points needed for gradient
+  points <- community$traits[,trait_names] * c(1, 1 + dx)
+  # format points
+  traits <- plant::trait_matrix(points, trait_names)
+  # calculate fitness
+  ff <- community_fitness(community, traits)  
+  # caluclate gradient using forward difference
   ret <- (ff[2] - ff[1]) / dx
 
-  # alternative using grader
+  # alternative method using grader
   f  <- function(x) {
     traits <- plant::trait_matrix(x, "lma")
-    community_fitness(community1_eq, traits)
+    community_fitness(community, traits)
   } 
-  #grader::gradient(f, community1_eq$traits[, trait])
+  #grader::gradient(f, community$traits[, trait])
 
-  if (verbose) {
-    message(sprintf("\t...selection gradient = %f", ret))
-  }
-#  attr(ret, "birth_rate") <- res$p$birth_rate
-#  attr(ret, "schedule") <- res$schedule$copy()
-  ret
+  msg <- sprintf("Solved! Selection gradient for %s = %f is %s", community$trait_names, community$traits, ret)
+  plant_log_assembler(msg)
+
+  community[["fitness"]] <- ff[1]
+  community[["selection_gradient"]] <- ret
+  community
 }
 
 ##' Find point of maximum fitness in empty fitness landscape within a
@@ -339,15 +316,4 @@ max_fitness <- function(trait, p, bounds=NULL, log_scale=TRUE) {
   out <- suppressWarnings(optimise(f, interval=bounds, maximum=TRUE, tol=1e-3))
   structure(if (log_scale) exp(out$maximum) else out$maximum,
             fitness=out$objective)
-}
-
-gradient_fd_forward <- function(f, x, dx) {
-  (f(x + dx) - f(x)) / dx
-}
-
-gradient_fd_centre <- function(f, x, dx) {
-  (f(x + dx / 2) - f(x - dx / 2)) / dx
-}
-gradient_fd_backward <- function(f, x, dx) {
-  (f(x - dx) - f(x)) / (-dx)
 }
