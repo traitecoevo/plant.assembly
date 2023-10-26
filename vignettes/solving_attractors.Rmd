@@ -14,8 +14,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Example of 1D attarctor for lma
+This vignette provides an example of calculating attractors for 1 spp communities, using 1,2 or more traits. 
 
+
+First, some basic setup
 
 ```{r, setup}
 library(plant)
@@ -37,23 +39,15 @@ plant_control <- function() {
   ctrl
 }
 
+# set baseline parameters
+p <- scm_base_parameters("FF16")
+p$strategy_default$a_l1 <- 2.17
+p$strategy_default$a_l2 <- 0.5
+p$strategy_default$hmat <- 10
+p$max_patch_lifetime <- 60
+
+
 ```
-
-Setup basic community
-
-```{r}
-# set controls on assembly
-# control <- assembler_control(
-#   list(
-#     run_type = "to_equilibrium",
-#     birth_type = "maximum",
-#     birth_move_tol = 1,
-#     compute_viable_fitness = FALSE,
-#     equilibrium_eps = plant_control()$equilibrium_eps
-#   )
-# )
-```
-
 
 # Example for 1 trait (lma)
 
@@ -82,7 +76,7 @@ community_eq <-
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
-  community_selection_gradient_1D()
+  community_selection_gradient()
 
 community_eq$fitness
 community_eq$selection_gradient
@@ -115,7 +109,7 @@ f <- function(x, community) {
   community %>%
     community_add(plant::trait_matrix(x, "lma")) %>%
     community_run_to_equilibrium() %>%
-    community_selection_gradient_1D() 
+    community_selection_gradient() 
 }
 
 # Create a data frame with range of trait values and solve
@@ -137,9 +131,133 @@ data_communities <-
 plot_sg <- 
   ggplot(data_communities, aes(traits, selection_gradient)) +
   geom_line(col="red") +
+  geom_point(col="red", pch="x") +
   geom_abline(intercept = 0, linetype = "dashed") +
-  ylim(-1000, 1000) +
+  ylim(-10000, 10000) +
   scale_x_log10()
+
+plot_sg
+```
+
+## Using a root solver to find the attractor
+
+We've wrapped up the above routines to enable solving of the 1D attractor
+
+```{r}
+community_attractor <- community0 %>%
+ community_solve_singularity_1D(bounds = c(0.035, 0.045), tol = 1e-4)
+
+community_attractor$traits
+```
+
+Let's add this to our previous plot
+```{r}
+plot_sg +
+  geom_point(col="red",
+    data = tibble(
+      traits = community_attractor$traits, selection_gradient = community_attractor$selection_gradient 
+    )
+  )
+```
+
+
+# 2D Example: Attarctor for lma and hmat
+
+## Selection gradients
+
+Solving for the 2D attarctor is possible with the community objects. 
+
+Let's say you want to calculate the selection gradient at the following trait values. 
+
+```{r}
+traits <- c(0.04045, 10)
+
+# setup the assembler to start with empty community
+community0 <-
+  community_start(
+    p,
+    bounds(lma = c(0.01, 2), hmat = c(0.01, 100)),
+    fitness_approximate_control = list(type = "grid")
+  )
+
+community_eq <-
+  # Empty community
+  community0 %>%
+  # Add a startegy specified by it's trait value
+  community_add(plant::trait_matrix(traits, c("lma", "hmat"))) %>%
+  # solve euqilibrium density
+  community_run_to_equilibrium() %>%
+  # calculate fitness gradient
+  community_selection_gradient()
+
+community_eq <- community_eq %>% community_selection_gradient()
+
+community_eq$fitness
+community_eq$selection_gradient
+```
+
+In this example fitness is near zero (as it should be), because the community is at euqilibrium. The selection gradient is positive meanign, selection is to increase trait value. 
+
+So let's plot the selection gradient across a range of trait values. It's clear from the above that the attractor lies in the range 0.04-0.08.
+
+I'll make a worker function that runs the above routines. 
+
+```{r}
+f <- function(x, community) {
+  community %>%
+    community_add(plant::trait_matrix(x, c("lma", "hmat"))) %>%
+    community_run_to_equilibrium() %>%
+    community_selection_gradient() 
+}
+
+# Create a data frame with range of trait values and solve
+
+data_communities <- 
+  # trait matix
+  expand_grid(
+    lma = seq_log_range(c(0.03, 0.05), length.out = 5),
+    hmat = seq_log_range(c(5, 15), length.out = 5)
+  ) %>%
+  mutate(i = seq_len(n())) %>%
+  nest(.by = i, .key = "traits") %>%
+  mutate(
+    # solve commuities
+    communities = parallel::mclapply(
+      traits, function(x) f(as.matrix(x), community0),
+      mc.cores = detectCores() - 2
+    ))
+
+data_communities2 <-
+  data_communities %>%
+    mutate(
+      selection_gradient_lma = map_dbl(communities, ~ .x$selection_gradient[1]),
+      selection_gradient_hmat = map_dbl(communities, ~ .x$selection_gradient[2])
+    ) %>% 
+    unnest(traits)
+    
+# plot - DIY
+
+plot_sg <- 
+  data_communities2 %>% 
+    select(lma, hmat, selection_gradient_lma, selection_gradient_hmat) %>%
+    ggplot(aes(x = lma, y = hmat, 
+      xend = lma + rescale(selection_gradient_lma, 0.02/4), 
+      yend = hmat + rescale(selection_gradient_hmat, 10/10))) +
+  geom_point() +
+  geom_segment(linewidth = 0.25, arrow = arrow(length = unit(0.01, "npc")))
+
+# ggquiver is deisgned for this 
+# but only works when x axes are log transformed
+# could add custom axis labe;l back to original values?
+library(ggquiver)
+
+ rescale <- function(x, s = 1) {x / max(abs(range(x))) * s }
+
+plot_sg <-
+  data_communities2 %>% 
+    ggplot(aes(x = log(lma), y = log(hmat), u = selection_gradient_lma, v= selection_gradient_hmat)) +
+    geom_point() +
+    geom_quiver(vecsize=NULL)
 
 plot_sg
 ```
