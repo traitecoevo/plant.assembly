@@ -27,8 +27,8 @@ plant_log_console()
 # set controls on plant package 
 plant_control <- function() {
   ctrl <- scm_base_control()
-  ctrl$equilibrium_nsteps <- 80
-  ctrl$equilibrium_solver_name <- "iteration"
+  ctrl$equilibrium_nsteps <- 20
+  ctrl$equilibrium_solver_name <- "hybrid"
   ctrl
 }
 
@@ -72,10 +72,13 @@ obj <- assembler_start(community0, control = control)
 
 # run assembler
 obj <- assembler_run(obj, nsteps = 20)
-
-saveRDS(obj, "output/fitmax-lma.rds")
 ```
 
+Save output
+```{r}
+saveRDS(obj, "output/fitmax-lma.rds")
+
+```
 
 ## Analysis
 Now lets' look at the results

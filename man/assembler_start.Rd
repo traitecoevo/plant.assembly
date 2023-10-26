@@ -4,7 +4,12 @@
 \alias{assembler_start}
 \title{start community assembly process.}
 \usage{
-assembler_start(community, control = NULL, filename = NULL, prev = NULL)
+assembler_start(
+  community,
+  control = assembler_control(control),
+  filename = NULL,
+  prev = NULL
+)
 }
 \arguments{
 \item{community}{A \code{community} object.}

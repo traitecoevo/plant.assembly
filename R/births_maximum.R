@@ -43,16 +43,16 @@ community_new_types_maximum_fitness <- function(sys, control) {
 find_max_fitness <- function(sys, eps_too_close=1e-3) {
   bounds <- plant::check_bounds(sys$bounds)
   if (nrow(bounds) == 1L) {
-    find_max_fitness_1d(sys, eps_too_close)
+    find_max_fitness_1D(sys, eps_too_close)
   } else {
     find_max_fitness_2d(sys, eps_too_close)
   }
 }
 
-## NOTE: In the 1d case we don't use the optimise approach because it
+## NOTE: In the 1D case we don't use the optimise approach because it
 ## might miss local peaks.  Instead we construct an approximate
 ## landscape and look around the highest point.
-find_max_fitness_1d <- function(sys, eps_too_close) {
+find_max_fitness_1D <- function(sys, eps_too_close) {
   bounds <- plant::check_bounds(sys$bounds, finite=TRUE)
 
   ## This should be cheap, but will be lost if the calling function

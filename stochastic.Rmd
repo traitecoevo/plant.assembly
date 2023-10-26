@@ -72,7 +72,7 @@ saveRDS(obj, "output/stochastic.rds")
 ## Analysis
 
 ```{r}
-obj <- readRDS("output/stochastic-lma-2023.10.24-fitness.rds")
+obj <- readRDS("output/stochastic.rds")
 ```
 
 Tidy an assembly object. This extracts and tidies the community (i.e endpoint-community) resident traits, the community fitness landscape (i.e endpoint-fitness landscape), and the historical timeseries of the two properties above. 
@@ -89,15 +89,36 @@ history_plots <- plot_community(tidied_assembly$history)
 
 ## Fitness landscapes
 
+By default, fitness landscapes aren't computed in the stcoahstic analysis, but we can add these.
+
 Plot fitness landscapes. These also use the same function for both communities and historical timeseries of communities.
 
 ```{r}
+# do for current community
+obj$community <- community_prepare_approximate_fitness(obj$community)
+
+
+# Add across history, using parallel computating
+
+library(parallel)
+n_cores <- max(1, detectCores() - 2)
+
+obj$history <- mclapply(obj$history, community_prepare_approximate_fitness, mc.cores = n_cores)
+
+saveRDS(obj, gsub(".rds", "-fitness.rds", filename, fixed = T))
+```
+
+Now plot.
+
+```{r}
+tidied_assembly <- tidy_assembly(obj)
+
 community_landscape_plots <- plot_landscape(tidied_assembly$community_landscape)
 history_landscape_plots <- plot_landscape(tidied_assembly$history_landscape)
 
+# save to file
 imap(history_landscape_plots, ~ggsave(paste0("output/stochastic/stochastic_plot_history_landscape_one_trait/",.y,".png"), .x))
 ```
-
 
 # Two traits: lma + hmat
 

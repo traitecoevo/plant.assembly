@@ -8,6 +8,7 @@ community_start(
   parameters,
   bounds,
   birth_rate_initial = 0.001,
+  hyperpar = NULL,
   fitness_approximate_control = NULL
 )
 }
@@ -18,6 +19,8 @@ in \code{plant}..}
 \item{bounds}{A set of bounds, as specified in \code{plant}.}
 
 \item{birth_rate_initial}{A vector of birth rates.}
+
+\item{hyperpar}{A plant hyperparameter function to be used when calling \code{strategy_list}}
 
 \item{fitness_approximate_control}{List of parameters controlling
 how approximate fitness landscapes are generated. See function
