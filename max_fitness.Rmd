@@ -81,7 +81,7 @@ saveRDS(obj, "output/fitmax-lma.rds")
 Now lets' look at the results
 
 ```{r}
-obj <- readRDS("output/fitmax-lma.rds")
+obj <- readRDS("output/fitmax-lma-old1.rds")
 ```
 
 How many species in the community?
@@ -100,6 +100,15 @@ ggplot(landscape, aes(lma, fitness)) +
   scale_x_log10() +
   geom_point(data = tibble(lma = obj$community$traits[,1], fitness = approx(landscape$lma, landscape$fitness,  obj$community$traits[,1])$y), col="red")
 ```
+
+Generate a history of fitness landscapes across steps, as species are introduced and removed.
+
+```{r}
+assembly <- tidy_assembly(obj)
+
+fitmax_plots <- plot_landscape(assembly$history_landscape)
+```
+
 
 # One trait: Height
 
