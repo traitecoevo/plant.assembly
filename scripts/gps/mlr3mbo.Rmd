@@ -1,0 +1,106 @@
+
+
+
+```{r}
+library(bbotk)
+library(mlr3mbo)
+library(mlr3learners)
+set.seed(1)
+
+obfun <- ObjectiveRFun$new(
+  fun = function(xs) list(y1 = xs$x^2),
+  domain = ps(x = p_dbl(lower = -10, upper = 10)),
+  codomain = ps(y1 = p_dbl(tags = "minimize"))
+)
+
+instance <- OptimInstanceSingleCrit$new(
+  objective = obfun,
+  terminator = trm("evals", n_evals = 10)
+)
+
+surrogate <- srlrn(lrn("regr.km", control = list(trace = FALSE)))
+
+acqfun <- acqf("ei")
+
+acqopt <- acqo(opt("random_search", batch_size = 100),
+  terminator = trm("evals", n_evals = 100)
+)
+
+optimizer <- opt("mbo",
+  loop_function = bayesopt_ego,
+  surrogate = surrogate,
+  acq_function = acqfun,
+  acq_optimizer = acqopt
+)
+
+optimizer$optimize(instance)
+
+instance$archive$data %>% as_tibble() %>%
+ggplot(aes(x = x, y = y1)) +
+  geom_point() +
+  geom_step() +
+  labs(x = "x.", y = "y") +
+  theme_minimal()
+
+```
+
+```{r}
+objective_function <- function(xs) {
+  list(y = 418.9829 * 2 - (sum(unlist(xs) * sin(sqrt(abs(unlist(xs)))))))
+}
+domain <- ps(
+  x1 = p_dbl(lower = -500, upper = 500),
+  x2 = p_dbl(lower = -500, upper = 500)
+)
+codomain <- ps(y = p_dbl(tags = "minimize"))
+
+objective <- ObjectiveRFun$new(
+  fun = objective_function,
+  domain = domain,
+  codomain = codomain
+)
+
+instance <- OptimInstanceSingleCrit$new(
+  objective = objective,
+  search_space = domain,
+  terminator = trm("evals", n_evals = 60)
+)
+
+# Gaussian Process, EI, DIRECT
+#surrogate <- srlrn(default_gp()) # in example, but doesn't work with cran version
+
+surrogate <- srlrn(lrn("regr.km", control = list(trace = FALSE)))
+
+acq_function <- acqf("ei")
+acq_optimizer <- acqo(opt("nloptr", algorithm = "NLOPT_GN_DIRECT_L"),
+  terminator = trm("stagnation", threshold = 1e-8)
+)
+optimizer <- opt("mbo",
+  loop_function = bayesopt_ego,
+  surrogate = surrogate,
+  acq_function = acq_function,
+  acq_optimizer = acq_optimizer
+)
+
+set.seed(2906)
+optimizer$optimize(instance)
+
+```
+
+```
+ggplot(aes(x = batch_nr, y = cummin(y)), data = instance$archive$data) +
+  geom_point() +
+  geom_step() +
+  labs(x = "Batch Nr.", y = "Best y") +
+  theme_minimal()
+
+
+xdt = generate_design_grid(instance$search_space, resolution = 101)$data
+ydt = objective$eval_dt(xdt)
+ggplot(aes(x = x1, y = x2, z = y), data = cbind(xdt, ydt)) +
+  geom_contour_filled() +
+  geom_point(aes(color = batch_nr), size = 2, data = instance$archive$data) +
+  scale_color_gradient(low = "lightgrey", high = "red") +
+  theme_minimal()
+  
+```

@@ -1,0 +1,271 @@
+
+# Parallelizable Bayesian Optimization with ParBayesianOptimization
+
+## simple example
+
+``` r
+simpleFunction <- function(x) dnorm(x,3,2)*1.5 + dnorm(x,7,1) + dnorm(x,10,2)
+
+# Find the x that maximizes our simpleFunction
+xmax <- optim(8,simpleFunction,method = "L-BFGS-B",lower = 0, upper = 15,control = list(fnscale = -1))$par
+
+# Get a visual
+library(ggplot2)
+ggplot(data = data.frame(x=c(0,15)),aes(x=x)) + 
+  stat_function(fun = simpleFunction) +
+  geom_vline(xintercept = xmax,linetype="dashed") +
+  ggtitle("simpleFunction") +
+  theme_bw()
+```
+
+
+## plant example
+
+```{r}
+
+library(plant)
+library(plant.assembly)
+devtools::load_all()
+# devtools::load_all("../plant-dev")
+
+# logging of output
+plant_log_console()
+
+# set controls on plant package
+plant_control <- function() {
+  ctrl <- scm_base_control()
+  ctrl$equilibrium_nsteps <- 20
+  ctrl$equilibrium_solver_name <- "hybrid"
+  ctrl
+}
+
+# set baseline parameters
+p0 <- scm_base_parameters("FF16")
+p0$strategy_default$a_l1 <- 2.17
+p0$strategy_default$a_l2 <- 0.5
+p0$strategy_default$hmat <- 10
+p0$max_patch_lifetime <- 60
+
+ctrl <- scm_base_control()
+ctrl$save_RK45_cache <- T
+
+
+trait <- 0.04045
+
+# setup the assembler to start with empty community
+community0 <-
+  community_start(
+    p0,
+    bounds(lma = c(0.01, 2)),
+    fitness_approximate_control = list(type = "grid")
+  )
+
+community <-
+  # Empty community
+  community0 %>%
+  # Add a startegy specified by it's trait value
+  community_add(plant::trait_matrix(trait, "lma")) %>%
+  # solve euqilibrium density
+  community_run_to_equilibrium()
+
+p <- community_parameters(community)
+```
+
+Make a function optimise using mutant method
+
+```{r}
+
+p1 <- expand_parameters(trait_matrix(0.0825, "lma"), p0) %>% 
+  build_schedule(ctrl = ctrl) %>%
+  equilibrium_birth_rate(ctrl = ctrl)
+
+scm <- run_scm(p1, use_ode_times = TRUE, ctrl = ctrl)
+
+x <- 0.05
+traits <- plant::trait_matrix(x, "lma")
+p_mutants <- expand_parameters(traits, p)
+scm$run_mutant(p_mutants)
+scm$net_reproduction_ratios
+
+make_f <- function(scm) {
+  function(x) {
+    traits <- plant::trait_matrix(exp(x), "lma")
+    p_mutants <- expand_parameters(traits, p)
+
+    count <<- count + 1
+
+    scm$run_mutant(p_mutants)
+    log(scm$net_reproduction_ratios)
+  }
+}
+
+f <- make_f(scm)
+f(log(0.0825))
+
+x <- seq_log(0.01, 3, length.out = 100)
+y <- purrr::map_dbl(log(x), f)
+
+xopt = x[y==max(y)]
+yopt <- y[y == max(y)]
+
+plot(x, y, log = "x", type = "l")
+points(0.0825, f(log(0.0825)),  col="black")
+points(xopt, yopt, col = "red")
+
+```
+
+## Try R's optimisation
+
+optimise is for 1D optimisation, but not guaranteed to give global solution
+```{r}
+#xmax <- optim(log(0.01), f, method = "Brent", lower = log(0.01), upper = log(0.0825))
+
+# local maximisation 
+count <- 0
+xmax <- optimise(f, maximum = TRUE, lower = log(0.01), upper = log(2))
+exp(xmax$maximum)
+
+plot(x, y, log = "x", type = "l")
+points(xopt, yopt, col = "red")
+points(0.0825, f(log(0.0825)), col = "black")
+points(exp(xmax$maximum), xmax$objective, col = "green")
+```
+
+Yay! 
+
+
+## Try ParBayesianOptimization
+
+```{r}
+library(ParBayesianOptimization)
+
+FUN <- function(x) list(Score = f(x))
+
+f(log(0.0825))
+
+FUN(log(0.0825))
+
+bounds <- list(x = log(c(0.01,2)))
+initGrid <- data.frame(x = log(c(0.01, 1, 2)))
+
+set.seed(6)
+count <- 0
+optObjSimp <- bayesOpt(
+  FUN = FUN
+  , bounds = bounds
+  , initGrid = initGrid
+  , iters.n = 10,
+  acqThresh = 0.8
+)
+count
+```
+
+Let’s see how close the algorithm got to the global maximum:
+
+```{r}
+xopt2 <- exp(getBestPars(optObjSimp)$x)
+yopt2 <- f(log(xopt2))
+
+plot(x, y, log = "x", type = "l")
+points(xopt, yopt, col = "red")
+points(0.0825, f(log(0.0825)), col = "black")
+points(exp(xmax$maximum), xmax$objective, col = "blue")
+points(xopt2, yopt2, col = "green")
+points(exp(optObjSimp$scoreSummary$x), optObjSimp$scoreSummary$Score, col = "#014d01", pch= "x")
+
+
+```
+
+
+## Try mlr3mbo
+
+```{r}
+library(bbotk)
+count <- 0 
+sinus_1D <- function(xs) { 
+  count <<- count +1
+  2 * xs$x * sin(14 * xs$x)
+  }
+
+domain <- ps(x = p_dbl(lower = 0, upper = 1))
+codomain <- ps(y = p_dbl(tags = "minimize"))
+objective <- ObjectiveRFun$new(sinus_1D,
+  domain = domain, codomain = codomain
+)
+
+instance <- OptimInstanceSingleCrit$new(objective,
+  search_space = domain,
+  terminator = trm("evals", n_evals = 20)
+)
+
+## random search with bbotk
+optimizer <- opt("random_search", batch_size = 20)
+optimizer$optimize(instance)
+
+optimal$instance$result
+
+## Bayes opt
+library(mlr3mbo)
+
+lrn_gp <- lrn("regr.km",
+  covtype = "matern5_2", optim.method = "BFGS",
+  control = list(trace = FALSE)
+)
+
+
+surrogate <- srlrn(lrn_gp, archive = instance$archive)
+
+acq_function <- acqf("ei", surrogate = surrogate)
+
+xydt <- generate_design_grid(domain, resolution = 1001)$data
+
+instance <- OptimInstanceSingleCrit$new(objective,
+  terminator = trm("evals", n_evals = 20)
+)
+design <- data.table(x = c(0.1, 0.34, 0.65, 1))
+instance$eval_batch(xydt)
+instance$archive$data
+
+
+library(mlr3mbo)
+
+bayesopt_ego <- mlr_loop_functions$get("bayesopt_ego")
+
+surrogate <- srlrn(lrn("regr.km",
+  covtype = "matern5_2",
+  optim.method = "BFGS", control = list(trace = FALSE)
+))
+acq_function <- acqf("ei")
+acq_optimizer <- acqo(opt("nloptr", algorithm = "NLOPT_GN_ORIG_DIRECT"),
+  terminator = trm("stagnation", iters = 100, threshold = 1e-5)
+)
+
+optimizer <- opt("mbo",
+  loop_function = bayesopt_ego,
+  surrogate = surrogate,
+  acq_function = acq_function,
+  acq_optimizer = acq_optimizer
+)
+
+count <- 0
+instance <- OptimInstanceSingleCrit$new(objective,
+  terminator = trm("evals", n_evals = 20)
+)
+design <- data.table(x = c(0.1, 0.34, 0.65, 1))
+instance$eval_batch(design)
+optimizer$optimize(instance)
+
+
+xdt <- generate_design_grid(instance$search_space, resolution = 101)$data
+
+# this is the original function
+ydt <- objective$eval_dt(xdt)
+#How do we predict from the model?
+y_pred <- 0
+
+ggplot(aes(x = x, y = y), data = cbind(xdt, ydt, y_pred)) +
+  geom_line() +
+  geom_point(aes(color = batch_nr), size = 2, data = instance$archive$data) +
+  scale_color_gradient(low = "lightgrey", high = "red") +
+  theme_minimal()
+```
