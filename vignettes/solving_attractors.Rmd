@@ -234,7 +234,12 @@ data_communities2 <-
       selection_gradient_hmat = map_dbl(communities, ~ .x$selection_gradient[2])
     ) %>% 
     unnest(traits)
-    
+
+filename <- "output/data_communities_2D_grid.rds"
+saveRDS(data_communities2, filename)
+
+data_communities2 <- readRDS(filename)
+
 # plot - DIY
 
 plot_sg <- 
