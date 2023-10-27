@@ -251,13 +251,13 @@ plot_sg <-
 # could add custom axis labe;l back to original values?
 library(ggquiver)
 
- rescale <- function(x, s = 1) {x / max(abs(range(x))) * s }
+rescale <- function(x, s = 1) {x / max(abs(range(x))) * s }
 
 plot_sg <-
-  data_communities2 %>% 
+  data_communities2 %>%
     ggplot(aes(x = log(lma), y = log(hmat), u = selection_gradient_lma, v= selection_gradient_hmat)) +
     geom_point() +
-    geom_quiver(vecsize=NULL)
+    geom_quiver(vecsize=0.4)
 
 plot_sg
 ```
