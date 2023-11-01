@@ -485,6 +485,50 @@ instance$archive$data %>% as_tibble() %>%
   geom_line(data = tibble(x = log(x), y), col = "red") +
   geom_line(data = vals, aes(col = type)) +
   theme_minimal()
+
+# plot surrogate
+
+ggplot(aes(x = exp(x), y = y), data = instance$archive$data) +
+  geom_line(data = tibble(x= log(x), y), col = "red") +
+  geom_point() +
+#  geom_step(col="grey") +
+  geom_line(data = xdt, aes(y=mean_prediction)) + 
+  geom_line(data = xdt, aes(y=mean_prediction - 2*se_prediction), col="grey") + 
+  geom_line(data = xdt, aes(y=mean_prediction + 2*se_prediction), col="grey") + 
+  labs(x = "x", y = "F") +
+  scale_x_log10() +
+  theme_minimal()
+
+# compare to others
+xopt3 <- exp(instance$result$x)
+yopt3 <- instance$result$y
+
+
+plot(x, y, log = "x", type = "l", xlim = c(0.05, 1), ylim = c(0, 10))
+abline(h = 0, lty = "dashed")
+points(trait, f(log(trait)), col = "black")
+points(xopt, yopt, col = "red")
+points(exp(xmax$maximum), xmax$objective, col = "blue")
+points(xopt2, yopt2, col = "green")
+points(xopt3, yopt3, col = "orange")
+lines(exp(xdt$x), xdt$mean_prediction, col = "orange", lty= "dashed")
+
+points(exp(optObjSimp$scoreSummary$x), optObjSimp$scoreSummary$Score, col = "#014d01", pch = "x")
+
+
+
+# plot true function in black
+# surrogate prediction (mean +- se in grey)
+# known optimum in darkred
+# found optimum in darkgreen
+ggplot(aes(x = x, y = y1), data = xdt) +
+  geom_point(data = instance$archive$data %>% as_tibble()) +
+  geom_line() +
+  geom_line(aes(x = x, y = mean_prediction), colour = "grey", data = xdt) +
+  geom_ribbon(aes(x = x, ymin = mean_prediction - se_prediction, ymax = mean_prediction + se_prediction), fill = "grey", alpha = 0.2) +
+  geom_point(aes(x = 0, y = 0), color = "darkred") +
+  geom_point(aes(x = x, y = y1), data = instance$result, color = "darkgreen") +
+  theme_minimal()
 ```
 
 # Solving 1D attractors 
