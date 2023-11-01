@@ -76,6 +76,7 @@ community_viable_bounds <- function(obj) {
 }
 
 community_add <- function(obj, traits, birth_rate=NULL) {
+
   if (is.null(birth_rate)) {
     birth_rate <- obj$birth_rate_initial
   }

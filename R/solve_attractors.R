@@ -28,9 +28,9 @@ community_solve_singularity_1D <- function(community, bounds = NULL, tol = 1e-04
   f <- function(x) {
     out <- 
       community %>%
-      community_add(plant::trait_matrix(x, "lma")) %>%
+      community_add(plant::trait_matrix(x, community$trait_names)) %>%
       community_run_to_equilibrium() %>%
-      community_selection_gradient_1D()
+      community_selection_gradient()
     
     ret <- out$selection_gradient
     
@@ -101,30 +101,39 @@ community_solve_singularity_1D <- function(community, bounds = NULL, tol = 1e-04
 #' @author Daniel Falster
 #' @export
 #' @return a community with selection gradient added.
-community_selection_gradient_1D <- function(community, dx=1e-04,
+community_selection_gradient <- function(community, dx=1e-04,
                                 log_scale=TRUE) {
 
-  msg <- sprintf("Calculating selection gradient for %s = %f",community$trait_names, community$traits)
+  msg <- sprintf("Calculating selection gradient for [%s] = [%s]",
+    paste(community$trait_names, collapse = ", "), 
+    paste(community$traits, collapse = ", ")
+  )
   plant_log_assembler(msg)
   
   trait_names <- community$trait_names
   # get points needed for gradient
-  points <- community$traits[,trait_names] * c(1, 1 + dx)
-  # format points
-  traits <- plant::trait_matrix(points, trait_names)
+  points <- grader:::gradient_points(community$traits, d = dx, r = 1)
+ 
+  # bind on current traits so we can return current fitness too
+  xx <- 
+    rbind(
+      community$traits,
+      points
+    )
   # calculate fitness
-  ff <- community_fitness(community, traits)  
+  ff <- community_fitness(community, xx)
+
+  # extract points for derivative
+  y <- ff[-1]  
+  dim(y) <- attr(points, "dim_y")
   # caluclate gradient using forward difference
-  ret <- (ff[2] - ff[1]) / dx
+  ret <- grader:::gradient_extrapolate(y, points)
 
-  # alternative method using grader
-  f  <- function(x) {
-    traits <- plant::trait_matrix(x, "lma")
-    community_fitness(community, traits)
-  } 
-  #grader::gradient(f, community$traits[, trait])
-
-  msg <- sprintf("Solved! Selection gradient for %s = %f is %s", community$trait_names, community$traits, ret)
+  msg <- sprintf("Solved! Selection gradient for [%s] = [%s] is [%s]", 
+    paste(community$trait_names, collapse = ", "), 
+    paste(community$traits, collapse = ", "),
+    paste(ret, collapse = ", ")
+  )
   plant_log_assembler(msg)
 
   community[["fitness"]] <- ff[1]

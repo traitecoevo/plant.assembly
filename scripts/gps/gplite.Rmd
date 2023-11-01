@@ -1,0 +1,49 @@
+# gplite
+
+- Readme https://cran.r-project.org/web/packages/gplite/readme/README.html
+- GH: https://github.com/jpiironen/gplite, https://jpiironen.github.io/material/gplite/
+- getting started: https://cran.r-project.org/web/packages/gplite/vignettes/quickstart.html
+
+
+Benefits: 
+
+- low overhead
+- easy interface for fitting, prediction, draws etc
+- can combine covariance mlr_loop_functions
+
+Cons: 
+
+- No optimisation
+- No iterations/epochs
+- Does it have acquisition functions? Need to implement these
+
+
+```{r}
+library(gplite)
+library(ggplot2)
+
+# create some toy 1d regression data
+set.seed(32004)
+n <- 10
+sigma <- 0.1
+x <- rnorm(n)
+y <- sin(3*x)*exp(-abs(x))
+
+# set up the gp model, and optimize the hyperparameters
+gp <- gp_init(cfs = cf_sexp(), lik = lik_gaussian())
+gp <- gp_optim(gp, x, y)
+
+# compute the predictive mean and variance in a grid of points
+xt <- seq(-4, 4, len=300)
+pred <- gp_pred(gp, xt, var=T)
+
+# visualize
+mu <- pred$mean
+lb <- pred$mean - 2*sqrt(pred$var)
+ub <- pred$mean + 2*sqrt(pred$var)
+ggplot() +
+  geom_ribbon(aes(x=xt, ymin=lb, ymax=ub), fill='lightgray') +
+  geom_line(aes(x=xt, y=mu), size=1) +
+  geom_point(aes(x=x, y=y), size=0.5) +
+  xlab('x') + ylab('y')
+```

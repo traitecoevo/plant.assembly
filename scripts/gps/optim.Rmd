@@ -1,0 +1,441 @@
+
+# Approaches to solving fitness maxima and attractors
+
+# Background
+
+## Approximatign Black Box functions and Bayeisan optimisation
+
+GPRs have been used as suurogates/emulators to approximate black box models
+
+Once a surrogate is available, it can be used for futher taks, like finding optima or passing into an MCMC algorithm for parametrisation (e.g. [Fer et al 2018](10.5194/bg-15-5801-2018))
+
+[Bayeisan optimisation](https://en.wikipedia.org/wiki/Bayesian_optimization) involves finding a maximum/minimum, by iterative fits of a GP.  In previous work with Rich we used this in a DIY setup. But there's a bunch of packages that enable this, including
+  - mlr3mbo: https://github.com/mlr-org/mlr3mbo/
+  - ParBayesianOptimization: https://github.com/AnotherSamWilson/ParBayesianOptimization
+  - tidymodels: https://tune.tidymodels.org/reference/tune_grid.html#ref-examples
+
+the same tools are often used for tuning Hyperparameters of ML models (Bischl et al )
+
+Refs
+
+
+- Jones, Donald R., Matthias Schonlau, and William J. Welch. 1998. “Efficient Global Optimization of Expensive Black-Box Functions.” Journal of Global Optimization 13 (4): 455–92. https://doi.org/10.1023/A:1008306431147.
+  - *The key to using response surfaces for global optimization lies in balancing the need to exploit the approximating surface (by sampling where it is minimized) with the need to improve the approximation (by sampling where prediction error may be high).*
+
+
+
+## Differential evolution
+
+WIKipedia: [Differential evolution (DE)](https://en.m.wikipedia.org/wiki/Differential_evolution)
+  - method that optimizes a problem by iteratively trying to improve a candidate solution with regard to a given measure of quality. Such methods are commonly known as metaheuristics as they make few or no assumptions about the optimized problem and can search very large spaces of candidate solutions. However, metaheuristics such as DE do not guarantee an optimal solution is ever found.
+  - DE is used for multidimensional real-valued functions but does not use the gradient of the problem being optimized, which means DE does not require the optimization problem to be differentiable, as is required by classic optimization methods such as gradient descent and quasi-newton methods. DE can therefore also be used on optimization problems that are not even continuous, are noisy, change over time, etc.
+  - DE optimizes a problem by maintaining a population of candidate solutions and creating new candidate solutions by combining existing ones according to its simple formulae, and then keeping whichever candidate solution has the best score or fitness on the optimization problem at hand. In this way, the optimization problem is treated as a black box that merely provides a measure of quality given a candidate solution and the gradient is therefore not needed.
+
+## Root finding
+
+I'm curious here to see how well prepackged tools work, also to see if we can use them for root finding. 
+
+## Fer et al 2018
+
+uses mlegp package https://cran.r-project.org/web/packages/mlegp/index.html
+
+"In this study, we fitted a Gaussian process (GP) model as our statistical emulator, using the mlegp (v3.1.4) package in R (Dancik, 2013). GP assumes that the covariance between any set of points in parameter space is multivariate Gaussian, and the correlation between points decreases as the distance between them increases (mlegp uses a power exponential autocorrelation function). We chose a GP model as our emulator because of its desirable properties. First, because GP is an interpolator rather than a smoother it will always pass exactly through the design points. Second, GP allows for the estimation of uncertainties associated with interpolation – uncertainty for a GP model will converge smoothly to zero at the design points (knots, Fig. 1). Third, among nonparametric approaches, GP is shown to be the best emulator construction method (Wang et al., 2014). The GP model is essentially the anisotropic multivariate generalization of the Kriging model commonly employed in geostatistics (Sacks et al., 1989). Because we are dealing with a deterministic model, we assume that the variance at a lag of distance zero, known as the nugget in geostatistics, is equal to zero, but this assumption could be relaxed for stochastic models. We do not go into further details of GP modeling, or its comparison to other emulator methods, since both are well documented elsewhere Kennedy and O’Hagan, 2001; Rasmussen and Williams, 2006)."
+
+Note point about nugget = 0 --> important when using GP as emulator
+
+
+# Fitness maxima with plant example
+
+```{r}
+
+library(plant)
+library(plant.assembly)
+devtools::load_all()
+# devtools::load_all("../plant-dev")
+
+# logging of output
+plant_log_console()
+
+# set controls on plant package
+plant_control <- function() {
+  ctrl <- scm_base_control()
+  ctrl$equilibrium_nsteps <- 20
+  ctrl$equilibrium_solver_name <- "hybrid"
+  ctrl
+}
+
+# set baseline parameters
+p0 <- scm_base_parameters("FF16")
+p0$strategy_default$a_l1 <- 2.17
+p0$strategy_default$a_l2 <- 0.5
+p0$strategy_default$hmat <- 10
+p0$max_patch_lifetime <- 60
+
+ctrl <- scm_base_control()
+ctrl$save_RK45_cache <- T
+
+```
+
+```{r}
+trait <- 0.04045
+
+# setup the assembler to start with empty community
+community0 <-
+  community_start(
+    p0,
+    bounds(lma = c(0.01, 2)),
+    fitness_approximate_control = list(type = "grid")
+  )
+
+
+community <-
+  # Empty community
+  community0 %>%
+  # Add a startegy specified by it's trait value
+  community_add(plant::trait_matrix(trait, "lma")) %>%
+  # solve euqilibrium density
+  community_run_to_equilibrium()
+
+p <- community_parameters(community)
+```
+
+Make a function optimise using mutant method
+
+```{r}
+
+scm <- run_scm(p, use_ode_times = TRUE, ctrl = ctrl)
+
+make_f <- function(scm) {
+  function(x) {
+    traits <- plant::trait_matrix(exp(x), "lma")
+    p_mutants <- expand_parameters(traits, p, keep_existing_strategies = FALSE)
+
+    count <<- count + 1
+
+    scm$run_mutant(p_mutants)
+    log(scm$net_reproduction_ratios)
+  }
+}
+
+count <- 0
+f <- make_f(scm)
+f(log(0.05))
+f(log(trait))
+
+x <- seq_log(0.01, 3, length.out = 50)
+y <- purrr::map_dbl(log(x), f)
+
+xopt = x[y==max(y)]
+yopt <- y[y == max(y)]
+
+plot(x, y, log = "x", type = "l")
+abline(h=0, lty = "dashed")
+points(trait, f(log(trait)),  col="black")
+points(xopt, yopt, col = "red")
+
+
+```
+
+## R's optimisation
+
+optimise is for 1D optimisation, but not guaranteed to give global solution
+```{r}
+# local maximisation 
+count <- 0
+xmax <- optimise(f, maximum = TRUE, lower = log(0.01), upper = log(2))
+exp(xmax$maximum)
+count
+
+plot(x, y, log = "x", type = "l")
+abline(h = 0, lty = "dashed")
+points(trait, f(log(trait)), col = "black")
+points(xopt, yopt, col = "red")
+points(exp(xmax$maximum), xmax$objective, col = "blue")
+```
+
+Yay! 
+
+
+## Bayesian_optimization via `ParBayesianOptimization`
+
+```{r}
+library(ParBayesianOptimization)
+
+FUN <- function(x) list(Score = f(x))
+
+f(log(0.0825)) == FUN(log(0.0825))$Score
+
+bounds <- list(x = log(c(0.01,2)))
+initGrid <- data.frame(x = log(c(0.01, 1, 2)))
+
+set.seed(6)
+count <- 0
+optObjSimp <- bayesOpt(
+  FUN = FUN
+  , bounds = bounds
+  , initGrid = initGrid
+  , iters.n = 10,
+  acqThresh = 0.8
+)
+count
+```
+
+Let’s see how close the algorithm got to the global maximum:
+
+```{r}
+xopt2 <- exp(getBestPars(optObjSimp)$x)
+yopt2 <- f(log(xopt2))
+
+
+plot(x, y, log = "x", type = "l")
+abline(h = 0, lty = "dashed")
+points(trait, f(log(trait)), col = "black")
+points(xopt, yopt, col = "red")
+points(exp(xmax$maximum), xmax$objective, col = "blue")
+points(xopt2, yopt2, col = "green")
+points(exp(optObjSimp$scoreSummary$x), optObjSimp$scoreSummary$Score, col = "#014d01", pch= "x")
+```
+
+## mlr3mbo -bayesopt_ego
+
+```{r}
+
+library(bbotk)
+library(mlr3mbo)
+library(mlr3learners)
+library(ggplot2)
+library(dplyr)
+set.seed(1)
+
+
+optimizer <- opt("mbo",
+  loop_function = bayesopt_ego,
+  surrogate = srlrn(lrn("regr.km", control = list(trace = FALSE))),
+  acq_function = acqf("ei"),
+  acq_optimizer = acqo(opt("random_search", batch_size = 100),
+                        terminator = trm("evals", n_evals = 100))
+)
+
+obfun <- ObjectiveRFun$new(
+  fun = function(xs) list(y = f(xs$x)),
+  domain = ps(x = p_dbl(lower = log(0.01), upper = log(2))),
+  codomain = ps(y = p_dbl(tags = "maximize"))
+)
+
+instance <- OptimInstanceSingleCrit$new(
+  objective = obfun,
+  terminator = trm("evals", n_evals = 10)
+)
+
+initial_design <- data.table(x = log(c(0.02, 0.04, 0.1, 0.2, 0.4, 2)))
+instance$eval_batch(initial_design)
+
+optimizer$optimize(instance)
+
+instance$result
+
+# make predictions
+xdt <- data.table(x = seq_range(log(c(0.01, 2)), length.out = 101))
+surrogate_pred <- optimizer$surrogate$predict(xdt)
+xdt[, c("mean_prediction", "se_prediction") := surrogate_pred]
+
+# plot surrogate
+
+ggplot(aes(x = exp(x), y = y), data = instance$archive$data) +
+  geom_line(data = tibble(x= log(x), y), col = "red") +
+  geom_point() +
+#  geom_step(col="grey") +
+  geom_line(data = xdt, aes(y=mean_prediction)) + 
+  geom_line(data = xdt, aes(y=mean_prediction - 2*se_prediction), col="grey") + 
+  geom_line(data = xdt, aes(y=mean_prediction + 2*se_prediction), col="grey") + 
+  labs(x = "x", y = "F") +
+  scale_x_log10() +
+  theme_minimal()
+
+# compare to others
+xopt3 <- exp(instance$result$x)
+yopt3 <- instance$result$y
+
+
+plot(x, y, log = "x", type = "l", xlim = c(0.05, 1), ylim = c(0, 10))
+abline(h = 0, lty = "dashed")
+points(trait, f(log(trait)), col = "black")
+points(xopt, yopt, col = "red")
+points(exp(xmax$maximum), xmax$objective, col = "blue")
+points(xopt2, yopt2, col = "green")
+points(xopt3, yopt3, col = "orange")
+lines(exp(xdt$x), xdt$mean_prediction, col = "orange", lty= "dashed")
+
+points(exp(optObjSimp$scoreSummary$x), optObjSimp$scoreSummary$Score, col = "#014d01", pch = "x")
+
+
+
+# plot true function in black
+# surrogate prediction (mean +- se in grey)
+# known optimum in darkred
+# found optimum in darkgreen
+ggplot(aes(x = x, y = y1), data = xdt) +
+  geom_point(data = instance$archive$data %>% as_tibble()) +
+  geom_line() +
+  geom_line(aes(x = x, y = mean_prediction), colour = "grey", data = xdt) +
+  geom_ribbon(aes(x = x, ymin = mean_prediction - se_prediction, ymax = mean_prediction + se_prediction), fill = "grey", alpha = 0.2) +
+  geom_point(aes(x = 0, y = 0), color = "darkred") +
+  geom_point(aes(x = x, y = y1), data = instance$result, color = "darkgreen") +
+  theme_minimal()
+```
+
+## mlr3mbo - other optimisers
+
+Several other optimisation options
+
+- see https://mlr3book.mlr-org.com/chapters/chapter4/hyperparameter_optimization.html#tbl-tuners
+
+### gensa -  Generalized Simulated Annealing
+
+Extend example above with `gensa` -- Generalized Simulated Annealing
+
+
+```{r}
+# create optimization instance
+instance <- OptimInstanceSingleCrit$new(
+  objective = obfun,
+  terminator = trm("evals", n_evals = 25)
+)
+
+# load optimizer
+optimizer <- opt("random_search") ## Randome search
+optimizer <- opt("grid_search") ## Grod serach
+#optimizer <- opt("irace") ## Iterated Racing
+#optimizer <- opt("nloptr") ## Non-linear Optimization via nloptr
+optimizer <- opt("gensa") ##  Generalized Simulated Annealing
+
+# trigger optimization
+optimizer$optimize(instance)
+
+```
+
+## 
+
+# Solving 1D attractors 
+
+## Bayesian optimisation
+
+Answer: not really because there's also zero selection at bounds and the alogrithm often finds this. 
+
+
+Root finding requires findo zero crosserover. 
+
+I investigated whether we could reform the root fining problem as an optimistaion problem. To some extent yes. 
+
+Root finding involves finding point where
+$$f(x)=0$$
+whereas an optiomsation probem involves finding the point
+$$\frac{dg(x)}{dx}=0, \,\, f(x) = \frac{dg(x)}{dx}$$
+
+Folloieng the example at https://mathematica.stackexchange.com/questions/94638/finding-the-attractors-of-the-vector-field-constructed-as-the-gradient-of-an-int, they suggest calculation a fitness function from the selection gradient using the
+[`norm`](https://reference.wolfram.com/language/ref/Norm.html). 
+
+I tried this, but we encountered a problem that the selection gradient goes to zero towards the outer bounds of trait values. This means there's potentially three zeros and the opimisation can easily move towards the boundary point. 
+
+
+Make a function optimise using mutant method
+
+```{r}
+traits <- c(0.1)
+
+# setup the assembler to start with empty community
+community0 <-
+  community_start(
+    p0,
+    bounds(lma = c(0.01, 2)),
+    fitness_approximate_control = list(type = "grid")
+  )
+
+community_eq <-
+  # Empty community
+  community0 %>%
+  # Add a startegy specified by it's trait value
+  community_add(plant::trait_matrix(traits, c("lma"))) %>%
+  # solve euqilibrium density
+  community_run_to_equilibrium() %>%
+  # calculate fitness gradient
+  community_selection_gradient()
+
+community_eq <- community_eq %>% community_selection_gradient()
+
+community_eq$fitness
+community_eq$selection_gradient
+
+
+make_f <- function(community0) {
+  function(x, birth_rate = NULL) {
+    community_eq <-
+      # Empty community
+      community0 %>%
+      # Add a startegy specified by it's trait value
+      community_add(plant::trait_matrix(exp(x), c("lma")), birth_rate = birth_rate) %>%
+      # solve euqilibrium density
+      community_run_to_equilibrium() %>%
+      # calculate fitness gradient
+      community_selection_gradient()
+
+    community_eq <- community_eq %>% community_selection_gradient()
+
+    ret <- -norm2(community_eq$selection_gradient) / community_eq$birth_rate
+
+    attr(ret, "community") <- community_eq
+
+    ret
+  }
+}
+
+f <- make_f(community0)
+
+out <- f(log(0.04045), 208)
+
+out <- f(log(2))
+```
+
+Try bayesopt_ego
+
+```{r}
+
+library(ParBayesianOptimization)
+
+FUN <- function(x) list(Score = f(x))
+
+bounds <- list(x = log(c(0.01, 2)))
+initGrid <- data.frame(x = log(c(0.01, 1, 2)))
+
+set.seed(6)
+optObjSimp2 <- bayesOpt(
+  FUN = FUN,
+  bounds = bounds,
+  initGrid = initGrid,
+  iters.n = 10,
+  acqThresh = 0.5
+)
+
+library(tidyverse)
+
+
+data <- tibble(
+  x = exp(optObjSimp$scoreSummary$x),
+  y = optObjSimp$scoreSummary$Score,
+  best = optObjSimp$scoreSummary$x %in% getBestPars(optObjSimp)$x
+)
+
+ggplot(data, aes(x, y)) + geom_line() + geom_point() +scale_x_log10() +
+  geom_point(data = data %>% filter(best), col="red")
+
+xopt <- exp(getBestPars(optObjSimp)$x)
+yopt2 <- f(log(xopt2))
+
+plot(x, y, log = "x", type = "p")
+points(xopt, yopt, col = "red")
+points(0.0825, f(log(0.0825)), col = "black")
+points(exp(xmax$maximum), xmax$objective, col = "blue")
+points(xopt2, yopt2, col = "green")
+points(exp(optObjSimp$scoreSummary$x), optObjSimp$scoreSummary$Score, col = "#014d01", pch = "x")
+
+```
