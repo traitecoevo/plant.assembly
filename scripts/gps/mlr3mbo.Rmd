@@ -1,10 +1,55 @@
+# mlr3mbo
 
+A new R6 and much more modular implementation for single- and multi-objective Bayesian Optimization.
+
+GH: https://github.com/mlr-org/mlr3mbo
+Cran: https://cran.r-project.org/web/packages/mlr3mbo/index.html
+Site: https://mlr3mbo.mlr-org.com/dev/articles/mlr3mbo.html#putting-it-together
+Book: https://mlr3book.mlr-org.com
+
+This package builds off a broader suite of tools, "Applied Machine Learning Using mlr3 in R" (see book https://mlr3book.mlr-org.comml3r), based on the [mlr3 package](https://github.com/mlr-org/mlr3).
+
+
+Lots of sophisticated options, and focussed on black-box models
+
+- See examples
+  - Simple Optimization Example: https://github.com/mlr-org/mlr3mbo/#simple-optimization-example
+  - Single-Objective: 2D Schwefel Function: https://mlr3mbo.mlr-org.com/dev/articles/mlr3mbo.html#single-objective-2d-schwefel-function
+- options for 
+  - multiobjetive optimisation
+  - different surrogate models
+  - Acquisition Functions
+  - Acquisition Function Optimizer
+- builds off 
+  - ml3r
+  - bbotk: Black-Box Optimization Toolkit 
+    - https://cran.r-project.org/web/packages/bbotk/index.html
+    - The package includes several optimization algorithms e.g. Random Search, Iterated Racing, Bayesian Optimization (in mlr3mbo) and Hyperband (in mlr3hyperband).
+- Uses R6 classes
+- higher dependency load than other packages, but perhaps less need to build intermeidate steps
+- can access fitted GP after optimisation -- https://github.com/mlr-org/mlr3mbo/issues/131
+
+More details
+
+- Black Box Optimization: https://mlr3book.mlr-org.com/chapters/chapter5/advanced_tuning_methods_and_black_box_optimization.html#sec-black-box-optimization
+
+Refs
+
+- Jones, Donald R., Matthias Schonlau, and William J. Welch. 1998. “Efficient Global Optimization of Expensive Black-Box Functions.” Journal of Global Optimization 13 (4): 455–92. https://doi.org/10.1023/A:1008306431147.
+
+- Bischl, Bernd, Martin Binder, Michel Lang, Tobias Pielok, Jakob Richter, Stefan Coors, Janek Thomas, et al. 2023. “Hyperparameter Optimization: Foundations, Algorithms, Best Practices, and Open Challenges.” Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery, e1484.
+- Bischl, Bernd, Raphael Sonabend, Lars Kotthoff, and Michel Lang, eds. 2023. Flexible and Robust Machine Learning Using mlr3 in R. https://mlr3book.mlr-org.com.
+
+
+Efficient Global Optimization of Expensive Black-Box Functions
 
 
 ```{r}
 library(bbotk)
 library(mlr3mbo)
 library(mlr3learners)
+library(ggplot2)
+library(dplyr)
 set.seed(1)
 
 obfun <- ObjectiveRFun$new(
@@ -35,11 +80,25 @@ optimizer <- opt("mbo",
 
 optimizer$optimize(instance)
 
-instance$archive$data %>% as_tibble() %>%
-ggplot(aes(x = x, y = y1)) +
-  geom_point() +
-  geom_step() +
-  labs(x = "x.", y = "y") +
+# make predictions
+xdt <- data.table(x = seq(-10, 10, length.out = 101))
+y1 <- obfun$eval_dt(xdt)
+surrogate_pred <- surrogate$predict(xdt)
+
+xdt[, "y1" := y1]
+xdt[, c("mean_prediction", "se_prediction") := surrogate_pred]
+
+# plot true function in black
+# surrogate prediction (mean +- se in grey)
+# known optimum in darkred
+# found optimum in darkgreen
+ggplot(aes(x = x, y = y1), data = xdt) +
+  geom_point(data = instance$archive$data %>% as_tibble()) +
+  geom_line() +
+  geom_line(aes(x = x, y = mean_prediction), colour = "grey", data = xdt) +
+  geom_ribbon(aes(x = x, ymin = mean_prediction - se_prediction, ymax = mean_prediction + se_prediction), fill = "grey", alpha = 0.2) +
+  geom_point(aes(x = 0, y = 0), color = "darkred") +
+  geom_point(aes(x = x, y = y1), data = instance$result, color = "darkgreen") +
   theme_minimal()
 
 ```

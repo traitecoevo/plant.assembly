@@ -1,32 +1,15 @@
-# NOTE: the current version of GPfit - version 0.2-0 is more flexible
-# and more stable than version 0.1-0. 
+# GPfit
 
-# 1. The most important update:
-#    GP_fit(x,y) # in version 0.1-0. fits a GP model with Gaussian correlation
-#
-#    In version 0.2-0, one can specify the correlation structure as Matern or
-#    power exponential with different power. For instance, we used 
-#    GP_fit(x, y,corr = list(type = "exponential", power = 2)) to produce the plots and
-#    simulation results presented in this paper.
-#
-#    The default is set to: corr = list(type = "exponential", power = 1.95)
-#
-# 2. A few default plotting characters have been updated for better visuals
-#    the defaults in version 0.1-0 was: 
-#         "line_type = c(1, 1), legends = TRUE, cex = 2, pch = 1"
-#    the defaults in version 0.2-0 are:
-#         "line_type = c(1, 2), legends = FALSE, cex = 1, pch = 20"
-#
-# 3. The version 1.0-0 is the same as version 0.2-0 except the citation of 
-#    this JSS paper 
-#
-# Loads the package (assuming that it is installed on the machine)
+Cran: https://cran.r-project.org/web/packages/GPfit/index.html
+
+Paper: MacDonald et al(2015) GPfit: An R Package for Fitting a Gaussian Process Model to Deterministic Simulator Outputs   doi.org/10.18637/jss.v064.i12
 
 
+```{r}
 #=================================
 # Likelihood plots - Fig 1
 #=================================
-
+```{r}
 library("GPfit", "lhs")
 
 #-- 1d test function -------------
@@ -645,6 +628,4 @@ h2 <- levelplot(Y_hat2, xlab = expression(X[1]), ylab = expression(X[2]), row.va
   column.values = xvector, xlim = range, ylim = range, contour = TRUE, col.regions = mypalette)
 print(h2)
 dev.off()
-#---------------------
-
-#=============================================
+```

@@ -1,10 +1,33 @@
 
 # Parallelizable Bayesian Optimization with ParBayesianOptimization
 
+Nice setup for Bayesian Optimization 
+
+GH: https://github.com/AnotherSamWilson/ParBayesianOptimization
+
+- iterative process of refining estimate of optimum
+- finished solution gives optimum, and access to all estimated points
+- can recover the GP by just refitting the GP with all the archived points
+- potneially allows parallelisation but this also complicates things a little so we wouldn't use it
+- Intro page explains acquaisition functiosn nciely - see https://github.com/AnotherSamWilson/ParBayesianOptimization/blob/master/vignettes/UtilityFunctions.png
+- uses `DiceKriging::km` for actual GP
+- iterative refinement involves finding all local optima and choosing the best. The local optima are found by passing the GP to optim: https://github.com/AnotherSamWilson/ParBayesianOptimization/blob/af44dd96f9c0fa1bde3ae9bf3fa53d735bac119f/R/getLocalOptimums.R#L85. As starting points, take existing function calls
 
 
-https://github.com/AnotherSamWilson/ParBayesianOptimization
+Details on algorithm
 
+- calls `addIterations`
+- addIterations
+  - Actually fits GP https://github.com/AnotherSamWilson/ParBayesianOptimization/blob/master/R/addIterations.R#L147C15-L147C23  `updateGP(optObj,bounds = bounds, verbose = 0,...)`
+  - GP fit with `km` function from `DiceKriging` package
+  - `km` accepts argument: ` covtype` with default `covtype = "matern5_2"`, so can potneially modify this
+- optimisation happens by calling `optim` 
+
+Can refit GP using
+
+```
+gp <- updateGP(optObjSimp)
+```
 
 
 ## Simple Example
