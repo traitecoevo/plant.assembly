@@ -10,13 +10,22 @@ The [{plant}](https://github.com/traitecoevo/plant) package for R is an extensib
 Current capabilities include
 
 - stochastic assembly. 
-- fitmax assembly
+- fitmax assembly for 1 traits
+- Solve 1-species attractor fir 1 trait
 
 Envisioned future capabilities:
 
-- More tools for 1D analysis, e.g. PIPs
-- Solve 1-species attractor 
 - use emulators to approximate fitness landscapes
+- More tools for 1D analysis, e.g. PIPs
+
+
+to do
+
+- community functions for mutant fitness explorer
+- community functions for selection gradient function to pass to optimiser
+- wire up gp from mlr3mbo
+- root solving for first species 2D, 3D examples
+
 
 ## Installation
 
