@@ -101,7 +101,7 @@ find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   } else {
     ret <- NULL
     X <- sys$traits
-    gr_norm <- vnapply(sys$fitness_approximate_slopes, function(x) norm2(x$gr))
+    gr_norm <- vnapply(sys$fitness_slopes, function(x) norm2(x$gr))
     idx <- order(gr_norm, decreasing=TRUE)
     attempts <- list()
 

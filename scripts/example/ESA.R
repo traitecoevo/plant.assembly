@@ -59,7 +59,7 @@ f_assemble <- function(trait, disturbance_interval,
         p,
         bounds0,
         hyperpar = make_FF16_hyperpar(B_lf1 = B_lf1),
-        fitness_approximate_control = list(type = "gp")
+        fitness_control = list(type = "gp")
       )
   }
   
@@ -84,7 +84,7 @@ process_results <- function(pars) {
     mutate(
       label = paste(trait, disturbance_interval, B_lf1),
       obj = map(filename, readRDS),
-      landscape = map(obj, ~ .x$community$fitness_approximate_points %>% as_tibble()),
+      landscape = map(obj, ~ .x$community$fitness_points %>% as_tibble()),
       res = map2(obj, landscape, ~ tibble(trait_value = .x$community$traits[, 1], fitness = approx(.y[[1]], .y[[2]], .x$community$traits[, 1])$y))
     )
 
@@ -117,7 +117,7 @@ plot_landscapes <- function(landscapes, residents) {
 
 plot_community_landscape <- function(community) {
   
-  landscapes <- community$fitness_approximate_points %>% as_tibble() %>%
+  landscapes <- community$fitness_points %>% as_tibble() %>%
     mutate(trait_value = ifelse(is.na(lma), hmat, lma))
 
   residents <- tibble(trait_value = community$traits[, 1], fitness = approx(landscapes[[1]], landscapes[[2]], community$traits[, 1])$y)

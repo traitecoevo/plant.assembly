@@ -65,7 +65,7 @@ community0 <-
   community_start(
     p,
     bounds(lma = c(0.01, 2)),
-    fitness_approximate_control = list(type = "grid")
+    fitness_control = list(type = "grid")
   )
 
 community_eq <-
@@ -91,7 +91,7 @@ community_eq <- community_eq %>%
   community_prepare_approximate_fitness()
 
 data <- 
-  community_eq$fitness_approximate_points %>% as_tibble() %>% 
+  community_eq$fitness_points %>% as_tibble() %>% 
   mutate(resident = ifelse(lma %in% community_eq$traits, TRUE, FALSE))
 
 ggplot(data, aes(lma, fitness)) +
@@ -177,7 +177,7 @@ community0 <-
   community_start(
     p,
     bounds(lma = c(0.01, 2), hmat = c(0.01, 100)),
-    fitness_approximate_control = list(type = "grid")
+    fitness_control = list(type = "grid")
   )
 
 community_eq <-

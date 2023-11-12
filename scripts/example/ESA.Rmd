@@ -103,7 +103,7 @@ out %>% tidy_patch()
 
 landscapes <- 
   obj$history %>% 
-  purrr:::map_df(~.x$fitness_approximate_points %>% as_tibble(), .id = "step") %>% mutate(trait_value =lma) %>%
+  purrr:::map_df(~.x$fitness_points %>% as_tibble(), .id = "step") %>% mutate(trait_value =lma) %>%
   mutate(step= as.integer(step))
 
 f_extract_residents <- function(.x) {
@@ -112,8 +112,8 @@ f_extract_residents <- function(.x) {
       trait_value = .x$traits[, 1],
       fitness = 
         approx(
-          .x$fitness_approximate_points[,"lma"], 
-          .x$fitness_approximate_points[, "fitness"], 
+          .x$fitness_points[,"lma"], 
+          .x$fitness_points[, "fitness"], 
           .x$traits[, 1]
             )$y
   )
@@ -147,12 +147,12 @@ community <- obj$community
 B_lf1_new = 1.1
 
 fitness1 <- 
-  community$fitness_approximate_points %>% as_tibble() %>% mutate(step=1, trait_value=lma) 
+  community$fitness_points %>% as_tibble() %>% mutate(step=1, trait_value=lma) 
 
 # change env via hyper par
 community$hyperpar <- make_FF16_hyperpar(B_lf1 = B_lf1_new)
 
-community$fitness_approximate_points <- NULL
+community$fitness_points <- NULL
 community <- plant.assembly:::community_prepare_fitness(community)
 
 community2 <- plant.assembly:::community_prepare_approximate_fitness(community)
@@ -163,7 +163,7 @@ community3b <- plant.assembly:::community_prepare_approximate_fitness(community3
 
 residents1 <- tibble(lma = community$traits[, 1], fitness = approx(fitness1[[1]], fitness1[[2]], community$traits[, 1])$y) %>% mutate(step=1, trait_value=lma)
 
-fitness3 <- community3b$fitness_approximate_points %>% as_tibble() %>% mutate(step = 1,trait_value=lma)
+fitness3 <- community3b$fitness_points %>% as_tibble() %>% mutate(step = 1,trait_value=lma)
 
 residents3 <- tibble(lma = community$traits[, 1], fitness = approx(fitness3[[1]], fitness3[[2]], community$traits[, 1])$y)%>% mutate(step = 1,trait_value=lma)
 
@@ -187,7 +187,7 @@ obj2 <- readRDS(filename2)
 
 community4 <- obj2$community
 
-fitness4 <- community4$fitness_approximate_points %>% as_tibble() %>% mutate(step = 1,trait_value=lma)
+fitness4 <- community4$fitness_points %>% as_tibble() %>% mutate(step = 1,trait_value=lma)
 
 residents4 <- tibble(lma = community4$traits[, 1], fitness = approx(fitness4[[1]], fitness4[[2]], community4$traits[, 1])$y) %>% mutate(step = 1,trait_value=lma)
 

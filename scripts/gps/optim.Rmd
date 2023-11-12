@@ -84,7 +84,7 @@ community0 <-
   community_start(
     p0,
     bounds(lma = c(0.01, 2)),
-    fitness_approximate_control = list(type = "grid")
+    fitness_control = list(type = "grid")
   )
 
 
@@ -368,7 +368,7 @@ instance$archive$data
 # Now fit surrogate
 
 lrn_gp <- lrn("regr.km",
-  covtype = "exp", optim.method = "BFGS",
+  covtype = "matern3_2", optim.method = "BFGS",
   control = list(trace = FALSE)
 )
 
@@ -393,9 +393,10 @@ ggplot(aes(x = x, y = y)) +
   geom_line(data = xdt, col="black") +
   geom_ribbon(data = xdt, aes(x = x, ymin = y - se, ymax = y + se), fill = "grey", alpha = 0.2) +
   theme_minimal()
+
 ```
 
-### Can we use acquisition function to change the way Bayes Opt refines?
+### We can change the acquisition function to change the way Bayes Opt refines?
 
 - lots of acquisiton functions available `as.data.table(mlr_acqfunctions)`
 - could build own lopp function, which chooses new points
@@ -404,8 +405,8 @@ ggplot(aes(x = x, y = y)) +
 ```{r}
 optimizer <- opt("mbo",
   loop_function = bayesopt_ego,
-  surrogate = srlrn(lrn("regr.km", covtype = "exp", control = list(trace = FALSE))),
-  acq_function = acqf("cb"),
+  surrogate = srlrn(lrn("regr.km", covtype = "matern3_2", optim.method = "BFGS",control = list(trace = FALSE))),
+  acq_function = acqf("sd"),
   acq_optimizer = acqo(opt("nloptr", algorithm = "NLOPT_GN_ORIG_DIRECT"),
     terminator = trm("stagnation", iters = 100, threshold = 1e-5))
   )
@@ -428,6 +429,9 @@ optimizer$optimize(instance)
 
 instance$result
 
+# call one more update on surrogate to make sure it's cpatured the last point (see https://github.com/mlr-org/mlr3mbo/issues/131)
+optimizer$surrogate$update()
+
 # make predictions
 xdt <- data.table(x = seq_range(log(c(0.01, 2)), length.out = 101))
 surrogate_pred <- optimizer$surrogate$predict(xdt)
@@ -442,54 +446,50 @@ instance$archive$data %>%
   geom_line(data = xdt, col = "black") +
   geom_ribbon(data = xdt, aes(x = x, ymin = y - se, ymax = y + se), fill = "grey", alpha = 0.2) +
   theme_minimal()
+```
 
-# plot surrogate
+## Try different surrogates on same data
 
-ggplot(aes(x = exp(x), y = y), data = instance$archive$data) +
-  geom_line(data = tibble(x= log(x), y), col = "red") +
+```{r}
+
+
+sf <- function(type, data) {
+  lrn_gp <- lrn("regr.km",
+    covtype = type, optim.method = "BFGS",
+    control = list(trace = FALSE)
+  )
+
+  surrogate <- srlrn(lrn_gp, archive = data)
+
+  surrogate$update()
+  surrogate$learner$model
+
+  xdt <- data.table(x = seq_range(log(c(0.01, 2)), length.out = 101))
+  surrogate_pred <- surrogate$predict(xdt)
+ 
+  bind_cols(
+    xdt |> as_tibble(),
+    surrogate_pred |>as_tibble()
+  ) |>
+  rename(y = mean) |>
+  select(-se) |> mutate(type = type) 
+}
+
+types <- c("matern5_2", "matern3_2", "exp")
+
+vals <- purrr:::map_df(types, ~sf(.x, instance$archive))
+
+instance$archive$data %>% as_tibble() %>%
+  ggplot(aes(x = x, y = y)) +
   geom_point() +
-#  geom_step(col="grey") +
-  geom_line(data = xdt, aes(y=mean_prediction)) + 
-  geom_line(data = xdt, aes(y=mean_prediction - 2*se_prediction), col="grey") + 
-  geom_line(data = xdt, aes(y=mean_prediction + 2*se_prediction), col="grey") + 
-  labs(x = "x", y = "F") +
-  scale_x_log10() +
+  geom_line(data = tibble(x = log(x), y), col = "red") +
+  geom_line(data = vals, aes(col = type)) +
   theme_minimal()
-
-# compare to others
-xopt3 <- exp(instance$result$x)
-yopt3 <- instance$result$y
-
-
-plot(x, y, log = "x", type = "l", xlim = c(0.05, 1), ylim = c(0, 10))
-abline(h = 0, lty = "dashed")
-points(trait, f(log(trait)), col = "black")
-points(xopt, yopt, col = "red")
-points(exp(xmax$maximum), xmax$objective, col = "blue")
-points(xopt2, yopt2, col = "green")
-points(xopt3, yopt3, col = "orange")
-lines(exp(xdt$x), xdt$mean_prediction, col = "orange", lty= "dashed")
-
-points(exp(optObjSimp$scoreSummary$x), optObjSimp$scoreSummary$Score, col = "#014d01", pch = "x")
-
-
-
-# plot true function in black
-# surrogate prediction (mean +- se in grey)
-# known optimum in darkred
-# found optimum in darkgreen
-ggplot(aes(x = x, y = y1), data = xdt) +
-  geom_point(data = instance$archive$data %>% as_tibble()) +
-  geom_line() +
-  geom_line(aes(x = x, y = mean_prediction), colour = "grey", data = xdt) +
-  geom_ribbon(aes(x = x, ymin = mean_prediction - se_prediction, ymax = mean_prediction + se_prediction), fill = "grey", alpha = 0.2) +
-  geom_point(aes(x = 0, y = 0), color = "darkred") +
-  geom_point(aes(x = x, y = y1), data = instance$result, color = "darkgreen") +
-  theme_minimal()
-
 ```
 
 # Solving 1D attractors 
+
+for this suggest building gp of Sg then passing to root finder
 
 ## Bayesian optimisation
 
@@ -521,7 +521,7 @@ community0 <-
   community_start(
     p0,
     bounds(lma = c(0.01, 2)),
-    fitness_approximate_control = list(type = "grid")
+    fitness_control = list(type = "grid")
   )
 
 community_eq <-

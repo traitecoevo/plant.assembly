@@ -2,7 +2,7 @@
 ##'
 ##' Used to store full description of community. Is a list
 ##' with elements parameters, bounds, birth_rate_initial,
-##' trait_names, traits, birth_rate, fitness_approximate_control.
+##' trait_names, traits, birth_rate, fitness_control.
 ##'
 ##' @title Initialise a community object
 ##' @param parameters A \code{parameters} object, as specified
@@ -10,9 +10,9 @@
 ##' @param bounds A set of bounds, as specified in \code{plant}.
 ##' @param birth_rate_initial A vector of birth rates.
 ##' @param hyperpar A plant hyperparameter function to be used when calling \code{strategy_list}
-##' @param fitness_approximate_control List of parameters controlling
+##' @param fitness_control List of parameters controlling
 ##' how approximate fitness landscapes are generated. See function
-##' \code{fitness_approximate_control} for an example.
+##' \code{fitness_control} for an example.
 ##' @return An \code{community} object.
 ##' @author Rich FitzJohn, Daniel Falster
 ##' @export
@@ -21,7 +21,7 @@
 community_start <- function(parameters, bounds,
                             birth_rate_initial = 1e-3,
                             hyperpar = NULL,
-                            fitness_approximate_control = NULL) {
+                            fitness_control = NULL) {
 
   if (is.character(bounds)) {
     bounds <-  plant::bounds_infinite(bounds)
@@ -35,7 +35,7 @@ community_start <- function(parameters, bounds,
   ret$trait_names <- rownames(bounds)
   ret$traits <- plant::trait_matrix(numeric(0), ret$trait_names)
   ret$birth_rate <- numeric(0)
-  ret$fitness_approximate_control <- fitness_approximate_control
+  ret$fitness_control <- fitness_control
   class(ret) <- "community"
   ret
 }
@@ -135,8 +135,8 @@ community_drop <- function(obj, which) {
 community_clear_times <- function(obj) {
   obj$node_schedule_ode_times <- NULL
   obj$node_schedule_times <- NULL
-  obj$fitness_approximate_points <- NULL
-  obj$fitness_approximate_slopes <- NULL
+  obj$fitness_points <- NULL
+  obj$fitness_slopes <- NULL
   obj
 }
 
@@ -147,7 +147,7 @@ community_run <- function(obj) {
     obj$birth_rate <- attr(p, "offspring_production")
     obj$node_schedule_times <- p$node_schedule_times
     obj$node_schedule_ode_times <- p$node_schedule_ode_times
-    obj$fitness_approximate_points <- NULL
+    obj$fitness_points <- NULL
   }
   obj
 }
@@ -160,7 +160,7 @@ community_run_to_equilibrium <- function(obj) {
     obj$birth_rate <- attr(p, "offspring_production")
     obj$node_schedule_times <- p$node_schedule_times
     obj$node_schedule_ode_times <- p$node_schedule_ode_times
-    obj$fitness_approximate_points <- NULL
+    obj$fitness_points <- NULL
   }
   obj
 }

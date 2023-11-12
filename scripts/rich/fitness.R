@@ -10,7 +10,7 @@ sys0 <- community(p,  plant::bounds_infinite("lma"))
 sys0 <- community_viable_bounds(sys0)
 
 sys0_gp <- community(p, sys0$bounds,
-                     fitness_approximate_control=list(type="gp"))
+                     fitness_control=list(type="gp"))
 
 sys0 <- community_prepare_approximate_fitness(sys0)
 sys0_gp <- community_prepare_approximate_fitness(sys0_gp)
@@ -20,8 +20,8 @@ f_gp <- community_fitness_approximate(sys0_gp)
 
 xx <- seq_log_range(sys0$bounds, 500)
 
-plot(sys0$fitness_approximate_points, log="x")
-points(sys0_gp$fitness_approximate_points, col="blue")
+plot(sys0$fitness_points, log="x")
+points(sys0_gp$fitness_points, col="blue")
 
 lines(xx, f(xx))
 lines(xx, f_gp(xx), col="blue")

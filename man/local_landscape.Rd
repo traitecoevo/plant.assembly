@@ -11,7 +11,7 @@ local_landscape_control(control = NULL)
 }
 \arguments{
 \item{sys}{Single community with element
-\code{fitness_approximate_slopes}}
+\code{fitness_slopes}}
 
 \item{xlim, ylim}{Optional x and y limits (otherwise resident range
 will be expanded by \code{control$scal})}
@@ -25,5 +25,5 @@ indicate which pair of traits to compute the landscape for.}
 }
 \description{
 Generate a local landscape from a history with a
-\code{fitness_approximate_slopes} element.
+\code{fitness_slopes} element.
 }

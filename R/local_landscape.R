@@ -1,8 +1,8 @@
 ##' Generate a local landscape from a history with a
-##' \code{fitness_approximate_slopes} element.
+##' \code{fitness_slopes} element.
 ##' @title Generate local landscape
 ##' @param sys Single community with element
-##'   \code{fitness_approximate_slopes}
+##'   \code{fitness_slopes}
 ##' @param xlim,ylim Optional x and y limits (otherwise resident range
 ##'   will be expanded by \code{control$scal})
 ##' @param control Set of control parameters, passed to
@@ -102,12 +102,12 @@ make_approximate_fitness_slopes <- function(sys, combine=max, i=NULL) {
   xx <- log(sys$traits)
 
   if (is.null(i)) {
-    funcs <- lapply(sys$fitness_approximate_slopes, grader::taylor2)
+    funcs <- lapply(sys$fitness_slopes, grader::taylor2)
   } else {
     trim <- function(obj) {
       list(x=obj$x[i], fx=obj$fx, gr=obj$gr[i], H=obj$H[i, i, drop=FALSE])
     }
-    funcs <- lapply(sys$fitness_approximate_slopes,
+    funcs <- lapply(sys$fitness_slopes,
                     function(x) grader::taylor2(trim(x)))
     xx <- xx[, i, drop=FALSE]
   }

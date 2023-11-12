@@ -27,8 +27,8 @@ plant_log_console()
 # set controls on plant package 
 plant_control <- function() {
   ctrl <- scm_base_control()
-  ctrl$equilibrium_nsteps <- 20
-  ctrl$equilibrium_solver_name <- "hybrid"
+  ctrl$equilibrium_nsteps <- 200
+  ctrl$equilibrium_solver_name <- "iteration"
   ctrl
 }
 
@@ -66,7 +66,7 @@ control <- assembler_control(
 # setup the assembler to start with empty community
 community0 <- 
   community_start(p, bounds0,
-    fitness_approximate_control = list(type = "grid"))
+    fitness_control = list(type = "grid"))
 
 obj <- assembler_start(community0, control = control)
 
@@ -96,7 +96,7 @@ obj$community$birth_rate
 ```{r}
 library(dplyr)
 library(ggplot2)
-landscape <- obj$community$fitness_approximate_points %>% as_tibble()
+landscape <- obj$community$fitness_points %>% as_tibble()
 
 ggplot(landscape, aes(lma, fitness)) + 
   geom_line() +
@@ -135,7 +135,7 @@ control <- assembler_control(
 # setup the assembler to start with empty community
 community0 <- 
   community_start(p, bounds0,
-    fitness_approximate_control = list(type = "gp"))
+    fitness_control = list(type = "gp"))
 
 obj <- assembler_start(community0, control = control)
 

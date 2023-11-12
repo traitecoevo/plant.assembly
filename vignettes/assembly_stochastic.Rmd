@@ -182,7 +182,7 @@ obj$community$birth_rate
 ```
 
 ```{r}
-landscape <- obj$community$fitness_approximate_points %>% as_tibble()
+landscape <- obj$community$fitness_points %>% as_tibble()
 ggplot(landscape, aes(lma, fitness)) + 
   geom_line() +
   scale_x_log10() +
