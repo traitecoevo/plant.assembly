@@ -22,7 +22,7 @@ plant_default_assembly_pars <- function(hmat = 10, max_patch_lifetime = 60, fixe
 
 plant_community_hyperpar <- function(community) {
  if (is.null(community$model_support$hyperpar)) {
-   hyperpar <- plant::param_hyperpar(p)
+   hyperpar <- plant::param_hyperpar(community$model_support$p)
  } else {
    hyperpar <- community$model_support$hyperpar
  }
@@ -102,25 +102,40 @@ plant_community_viable_bounds <- function(community) {
 ##' production per capita.
 ##' @author Rich FitzJohn
 ##' @export
-plant_community_fitness_landscape <- function(community, control, log_fitness = FALSE) {
+plant_community_fitness_landscape <- function(community) {
 
   plant_log_assembler(sprintf(
-    "Calulcating fitness landscape for %d strategy communtiy, %d points", nrow(obj$community$traits), control$fitness_control$n))
+    "Calulcating fitness landscape for %d strategy communtiy, %d points", nrow(community$traits), community$fitness_control$n))
 
+  x <- seq_log_range(community$bounds, community$fitness_control$n)
+
+  # add residents
+  x <- sort(unique(c(x, community$traits)))
+  
+  y <- plant_community_mutant_fitness(community, x)
+
+  community$fitness_points <- 
+    dplyr::tibble(x = x, fitness = y) %>% 
+    mutate(resident = ifelse(x %in% community$traits, TRUE, FALSE))
+  
+  names(community$fitness_points)[1] <- community$trait_names
+
+#  community$model_support$p <- 
+ 
+  community
+}
+
+
+plant_community_mutant_fitness <- function(community, x) {
+ 
   p <- plant_community_parameters(community)
   hyperpar <- plant_community_hyperpar(community)
-
-  x <- seq_log_range(community$bounds, control$fitness_control$n)
-
-  if (!is.null(control$grid_include_residents) && control$grid_include_residents) {
-    x <- sort(unique(c(x, community$traits[[1]])))
-  }
 
   traits <- trait_matrix(x, community$trait_names)
 
   n_residents <- length(p$strategies)
   mutant_birth_rates <- rep(0, nrow(traits))
-  
+
   p_mutants <- mutant_parameters(traits, p, hyperpar,
     birth_rate_list = mutant_birth_rates
   )
@@ -142,30 +157,17 @@ plant_community_fitness_landscape <- function(community, control, log_fitness = 
     )
     net_reproduction_ratios <- scm$net_reproduction_ratios
   }
-
-  if (log_fitness) {
-    y <- log(net_reproduction_ratios)
-  } else {
-    y <- net_reproduction_ratios
-  }
-
-  community$fitness_points <- dplyr::tibble(x = x, fitness = y)
-  names(community$fitness_points)[1] <- community$trait_names
-
-  community$model_support$p <- 
-  community$model_support$node_schedule_ode_times
-  community$model_support$node_XXX <- 
-
-  community
+  
+  y <- log(net_reproduction_ratios)
+  
+  y
 }
 
 
 # connect functions
 community_parameters <- plant_community_parameters
 
-community_fitness <- stop #todo
-#plant_community_fitness
-
+community_mutant_fitness <- plant_community_mutant_fitness
 community_run <- plant_community_run
 community_run_to_equilibrium <- plant_community_run_to_equilibrium
 community_fitness_landscape <- plant_community_fitness_landscape

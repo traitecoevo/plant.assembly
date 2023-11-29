@@ -120,8 +120,9 @@ community_selection_gradient <- function(community, dx=1e-04,
       community$traits,
       points
     )
+  
   # calculate fitness
-  ff <- community_fitness(community, xx)
+  ff <- community_mutant_fitness(community, xx)
 
   # extract points for derivative
   y <- ff[-1]  
