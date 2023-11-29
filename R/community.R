@@ -20,7 +20,7 @@
 ## appropriately?  We use 1 in a couple of places, no?
 community_start <- function(bounds,
                             birth_rate_initial = 1e-3,
-                            extras = NULL,
+                            model_support = NULL,
                             fitness_control = NULL) {
 
   if (is.character(bounds)) {
@@ -29,7 +29,7 @@ community_start <- function(bounds,
   ## TODO: Check parameters is empty.
   ret <- list(bounds = check_bounds(bounds),
               birth_rate_initial = birth_rate_initial,
-              extras = extras
+              model_support = model_support
               )
   ret$trait_names <- rownames(bounds)
   ret$traits <- trait_matrix(numeric(0), ret$trait_names)
@@ -45,7 +45,7 @@ community_add <- function(obj, traits, birth_rate=NULL) {
     birth_rate <- obj$birth_rate_initial
   }
   if (!is.matrix(traits)) {
-    stop("traits must be a matrix") # sensible?
+    stop("traits must be a matrix")
   }
   if (length(birth_rate) == 1) {
     birth_rate <- rep_len(birth_rate, nrow(traits))
@@ -63,9 +63,7 @@ community_add <- function(obj, traits, birth_rate=NULL) {
   if (nrow(traits) > 0L) {
     obj$traits <- rbind(obj$traits, traits)
     obj$birth_rate <- c(obj$birth_rate, birth_rate)
-    ## Need to deal with cohort times here.  I think what we should do
-    ## here is to retain the times as best we can?  For now though,
-    ## we'll just nuke the times.
+
     obj <- community_clear_times(obj)
   }
   obj
@@ -99,7 +97,7 @@ community_drop <- function(obj, which) {
 community_clear_times <- function(obj) {
   obj$fitness_points <- NULL
   obj$fitness_slopes <- NULL
-  obj$extras <- NULL
+#  obj$model_support <- NULL
   obj
 }
 

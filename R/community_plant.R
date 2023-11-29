@@ -21,10 +21,10 @@ plant_default_assembly_pars <- function(hmat = 10, max_patch_lifetime = 60, fixe
 }
 
 plant_community_hyperpar <- function(community) {
- if (is.null(community$extras$hyperpar)) {
+ if (is.null(community$model_support$hyperpar)) {
    hyperpar <- plant::param_hyperpar(p)
  } else {
-   hyperpar <- community$extras$hyperpar
+   hyperpar <- community$model_support$hyperpar
  }
  hyperpar
 }
@@ -32,18 +32,18 @@ plant_community_hyperpar <- function(community) {
 
 plant_community_parameters <- function(community) {
   
-  p <- community$extras$p
+  p <- community$model_support$p
 
   hyperpar <- plant_community_hyperpar(community)
 
   if(nrow(community$traits) > 0)
     p$strategies <- plant::strategy_list(community$traits, p, birth_rate_list = community$birth_rate, hyperpar = hyperpar)
 
-  if (!is.null(community$extras$node_schedule_times)) {
-    p$node_schedule_times <- community$extras$node_schedule_times
+  if (!is.null(community$model_support$node_schedule_times)) {
+    p$node_schedule_times <- community$model_support$node_schedule_times
   }
-  if (!is.null(community$extras$node_schedule_ode_times)) {
-    p$node_schedule_ode_times <- community$extras$node_schedule_ode_times
+  if (!is.null(community$model_support$node_schedule_ode_times)) {
+    p$node_schedule_ode_times <- community$model_support$node_schedule_ode_times
   }
 
   p
@@ -52,11 +52,11 @@ plant_community_parameters <- function(community) {
 plant_community_run <- function(community) {
   if (length(community) > 0L) {
 
-    p <- plant:::build_schedule(plant_community_parameters(community), ctrl = community$extras$plant_control)
+    p <- plant:::build_schedule(plant_community_parameters(community), ctrl = community$model_support$plant_control)
     community$birth_rate <- attr(p, "offspring_production")
 
-    community$extras$node_schedule_times <- p$node_schedule_times
-    community$extras$node_schedule_ode_times <- p$node_schedule_ode_times
+    community$model_support$node_schedule_times <- p$node_schedule_times
+    community$model_support$node_schedule_ode_times <- p$node_schedule_ode_times
     community$fitness_points <- NULL
   }
   community
@@ -65,11 +65,11 @@ plant_community_run <- function(community) {
 plant_community_run_to_equilibrium <- function(community) {
   if (length(community) > 0L) {
     p <- equilibrium_birth_rate(plant_community_parameters(community), 
-            ctrl = community$extras$plant_control)
+            ctrl = community$model_support$plant_control)
 
     community$birth_rate <- attr(p, "offspring_production")
-    community$extras$node_schedule_times <- p$node_schedule_times
-    community$extras$node_schedule_ode_times <- p$node_schedule_ode_times
+    community$model_support$node_schedule_times <- p$node_schedule_times
+    community$model_support$node_schedule_ode_times <- p$node_schedule_ode_times
     community$fitness_points <- NULL
   }
   community
@@ -125,7 +125,7 @@ plant_community_fitness_landscape <- function(community, control, log_fitness = 
     birth_rate_list = mutant_birth_rates
   )
 
-  ctrl <- community$extras$plant_control
+  ctrl <- community$model_support$plant_control
 
   if (n_residents > 0L) {
     # if there's a resident, use the saved environment to calculate mutant fitness
@@ -152,9 +152,9 @@ plant_community_fitness_landscape <- function(community, control, log_fitness = 
   community$fitness_points <- dplyr::tibble(x = x, fitness = y)
   names(community$fitness_points)[1] <- community$trait_names
 
-  community$extras$p <- 
-  community$extras$node_schedule_ode_times
-  community$extras$node_XXX <- 
+  community$model_support$p <- 
+  community$model_support$node_schedule_ode_times
+  community$model_support$node_XXX <- 
 
   community
 }
