@@ -155,18 +155,12 @@ assembler_restore <- function(obj, community, prev) {
   prev
 }
 
-assembler_prepare_fitness <- function(obj) {
-  plant_log_assembler("Computing ode times")
-  obj$community <- community_prepare_fitness(obj$community)
-  if (obj$control$birth_type == "maximum") {
-    plant_log_assembler("Computing fitness")
-    obj$community <- community_prepare_approximate_fitness(obj$community)
-  }
-  obj
-}
-
 assembler_append_history <- function(obj) {
-  obj <- assembler_prepare_fitness(obj)
+  
+  if (obj$control$birth_type == "maximum") {
+    obj$community <- community_fitness_landscape(obj$community)
+  }
+
   obj$history <- c(obj$history, list(obj$community))
   if (isTRUE(obj$done)) {
     attr(obj$history, "done") <- TRUE

@@ -58,7 +58,7 @@ control <- assembler_control(
 # setup the assembler to start with empty community
 community0 <- 
   community_start(bounds0,
-    fitness_control = list(type = "grid"),
+    fitness_control = list(type = "grid", n = 60),
     model_support = model_support)
 
 obj <- assembler_start(community0, control = control)
@@ -89,7 +89,7 @@ obj$community$birth_rate
 ```{r}
 library(dplyr)
 library(ggplot2)
-landscape <- obj$community$fitness_points %>% as_tibble()
+landscape <- obj$community$fitness_points
 
 ggplot(landscape, aes(lma, fitness)) + 
   geom_line() +
