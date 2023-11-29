@@ -18,19 +18,18 @@
 ##' @export
 ## TODO: Put birth_rate_initial into parameters and set up
 ## appropriately?  We use 1 in a couple of places, no?
-community_start <- function(parameters, bounds,
+community_start <- function(bounds,
                             birth_rate_initial = 1e-3,
-                            hyperpar = NULL,
+                            extras = NULL,
                             fitness_control = NULL) {
 
   if (is.character(bounds)) {
     bounds <-  bounds_infinite(bounds)
   }
   ## TODO: Check parameters is empty.
-  ret <- list(parameters = plant::validate(parameters),
-              bounds = check_bounds(bounds),
-              birth_rate_initial = birth_rate_initial, 
-              hyperpar = hyperpar
+  ret <- list(bounds = check_bounds(bounds),
+              birth_rate_initial = birth_rate_initial,
+              extras = extras
               )
   ret$trait_names <- rownames(bounds)
   ret$traits <- trait_matrix(numeric(0), ret$trait_names)
@@ -38,41 +37,6 @@ community_start <- function(parameters, bounds,
   ret$fitness_control <- fitness_control
   class(ret) <- "community"
   ret
-}
-
-make_community <- function(traits, birth_rate, parameters,
-                           bounds=colnames(traits), ...) {
-  community_add(community(parameters, bounds, ...),
-                traits, birth_rate)
-}
-
-community_parameters <- function(obj) {
-  
-  p <- obj$parameters
-
-  if(is.null(obj$hyperpar))
-    hyperpar <- plant::param_hyperpar(p)
-  else 
-    hyperpar <- obj$hyperpar
-  
-  p$strategies <- plant::strategy_list(obj$traits, p, birth_rate_list = obj$birth_rate, hyperpar = hyperpar)
-
-  if (!is.null(obj$node_schedule_times)) {
-    p$node_schedule_times <- obj$node_schedule_times
-  }
-  if (!is.null(obj$node_schedule_ode_times)) {
-    p$node_schedule_ode_times <- obj$node_schedule_ode_times
-  }
-
-  p
-}
-
-community_viable_bounds <- function(obj) {
-  if (length(obj) > 0) {
-    stop("You don't want to run this on an existing community")
-  }
-  obj$bounds <- plant::viable_fitness(obj$bounds, community_parameters(obj))
-  obj
 }
 
 community_add <- function(obj, traits, birth_rate=NULL) {
@@ -133,52 +97,12 @@ community_drop <- function(obj, which) {
 }
 
 community_clear_times <- function(obj) {
-  obj$node_schedule_ode_times <- NULL
-  obj$node_schedule_times <- NULL
   obj$fitness_points <- NULL
   obj$fitness_slopes <- NULL
+  obj$extras <- NULL
   obj
 }
 
-community_run <- function(obj) {
-  if (length(obj) > 0L) {
-
-    p <- plant:::build_schedule(community_parameters(obj), ctrl = plant_control())
-    obj$birth_rate <- attr(p, "offspring_production")
-    obj$node_schedule_times <- p$node_schedule_times
-    obj$node_schedule_ode_times <- p$node_schedule_ode_times
-    obj$fitness_points <- NULL
-  }
-  obj
-}
-
-community_run_to_equilibrium <- function(obj) {
-  if (length(obj) > 0L) {
-    p <- equilibrium_birth_rate(community_parameters(obj), 
-            ctrl = plant_control())
-
-    obj$birth_rate <- attr(p, "offspring_production")
-    obj$node_schedule_times <- p$node_schedule_times
-    obj$node_schedule_ode_times <- p$node_schedule_ode_times
-    obj$fitness_points <- NULL
-  }
-  obj
-}
-
-community_fitness <- function(obj, traits) {
-  community_make_fitness(obj)(traits)
-}
-
-##' Returns number of types in community
-##'
-##' @title Returns number of types in \code{community}
-##' @param x A \code{community} object.
-##' @return number of rows in trait matrix.
-##' @author Rich FitzJohn, Daniel Falster
-##' @export
-length.community <- function(x) {
-  nrow(x$traits)
-}
 
 ##' Helper function to create trait matrices suitable for
 ##' \code{\link{strategy_list}}.
