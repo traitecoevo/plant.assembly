@@ -31,21 +31,13 @@ devtools::load_all()
 # logging of output
 plant_log_console()
 
-# set controls on plant package 
-plant_control <- function() {
-  ctrl <- scm_base_control()
-  ctrl$equilibrium_nsteps <- 20
-  ctrl$equilibrium_solver_name <- "hybrid"
-  ctrl
-}
-
 # set baseline parameters
-p <- scm_base_parameters("FF16")
-p$strategy_default$a_l1 <- 2.17
-p$strategy_default$a_l2 <- 0.5
-p$strategy_default$hmat <- 10
-p$max_patch_lifetime <- 60
+p <- plant_default_assembly_pars()
 
+model_support <- list(
+  p = plant_default_assembly_pars(),
+  plant_control = plant_default_assembly_control()
+)
 
 ```
 
@@ -63,9 +55,9 @@ trait <- 0.04045
 # setup the assembler to start with empty community
 community0 <-
   community_start(
-    p,
     bounds(lma = c(0.01, 2)),
-    fitness_control = list(type = "grid")
+    fitness_control = list(type = "grid"),
+    model_support = model_support
   )
 
 community_eq <-
@@ -175,9 +167,9 @@ traits <- c(0.04045, 10)
 # setup the assembler to start with empty community
 community0 <-
   community_start(
-    p,
     bounds(lma = c(0.01, 2), hmat = c(0.01, 100)),
-    fitness_control = list(type = "grid")
+    fitness_control = list(type = "grid"),
+    model_support = model_support
   )
 
 community_eq <-

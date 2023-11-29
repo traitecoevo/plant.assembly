@@ -1,5 +1,5 @@
 
-plant_default_assembly_control <- function(equilibrium_nsteps = 80,equilibrium_solver_name = "iteration") {
+plant_default_assembly_control <- function(equilibrium_nsteps = 100,equilibrium_solver_name = "iteration") {
   plant_control <- plant::scm_base_control()  
   plant_control$equilibrium_nsteps <- equilibrium_nsteps
   plant_control$equilibrium_solver_name <- "iteration"
@@ -164,8 +164,7 @@ plant_community_fitness_landscape <- function(community, control, log_fitness = 
 community_parameters <- plant_community_parameters
 
 community_fitness <- stop #todo
-
-plant_community_fitness
+#plant_community_fitness
 
 community_run <- plant_community_run
 community_run_to_equilibrium <- plant_community_run_to_equilibrium

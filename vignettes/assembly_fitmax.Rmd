@@ -24,20 +24,13 @@ devtools::load_all()
 # logging of output
 plant_log_console()
 
-# set controls on plant package 
-plant_control <- function() {
-  ctrl <- scm_base_control()
-  ctrl$equilibrium_nsteps <- 200
-  ctrl$equilibrium_solver_name <- "iteration"
-  ctrl
-}
-
 # set baseline parameters
-p <- scm_base_parameters("FF16")
-p$strategy_default$a_l1 <- 2.17
-p$strategy_default$a_l2 <- 0.5
-p$strategy_default$hmat <- 10
-p$max_patch_lifetime <- 60
+p <- plant_default_assembly_pars()
+
+model_support <- list(
+  p = plant_default_assembly_pars(),
+  plant_control = plant_default_assembly_control()
+)
 
 ```
 
@@ -58,15 +51,15 @@ control <- assembler_control(
     run_type = "to_equilibrium",
     birth_type = "maximum",
     birth_move_tol = 1,
-    compute_viable_fitness = FALSE,
-    equilibrium_eps = plant_control()$equilibrium_eps
+    compute_viable_fitness = FALSE
   )
 )
 
 # setup the assembler to start with empty community
 community0 <- 
-  community_start(p, bounds0,
-    fitness_control = list(type = "grid"))
+  community_start(bounds0,
+    fitness_control = list(type = "grid"),
+    model_support = model_support)
 
 obj <- assembler_start(community0, control = control)
 
@@ -127,15 +120,15 @@ control <- assembler_control(
     run_type = "to_equilibrium",
     birth_type = "maximum",
     birth_move_tol = 1,
-    compute_viable_fitness = FALSE,
-    equilibrium_eps = plant_control()$equilibrium_eps
+    compute_viable_fitness = FALSE
   )
 )
 
 # setup the assembler to start with empty community
 community0 <- 
-  community_start(p, bounds0,
-    fitness_control = list(type = "gp"))
+  community_start(bounds0,
+    fitness_control = list(type = "gp"),
+     model_support = model_support)
 
 obj <- assembler_start(community0, control = control)
 
