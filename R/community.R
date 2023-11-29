@@ -28,7 +28,7 @@ community_start <- function(parameters, bounds,
   }
   ## TODO: Check parameters is empty.
   ret <- list(parameters = plant::validate(parameters),
-              bounds = plant::check_bounds(bounds),
+              bounds = check_bounds(bounds),
               birth_rate_initial = birth_rate_initial, 
               hyperpar = hyperpar
               )

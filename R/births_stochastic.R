@@ -76,7 +76,7 @@ mutational_vcv_proportion <- function(x, p=0.001) {
   if (inherits(x, "community")) {
     x <- x$bounds
   }
-  bounds <- plant::check_bounds(x)
+  bounds <- check_bounds(x)
   if (!all(is.finite(bounds))) {
     stop("All bounds must be finite")
   }

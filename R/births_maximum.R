@@ -41,7 +41,7 @@ community_new_types_maximum_fitness <- function(sys, control) {
 ##   want to set them.
 ## * We want to get the full approximate fitness landscape
 find_max_fitness <- function(sys, eps_too_close=1e-3) {
-  bounds <- plant::check_bounds(sys$bounds)
+  bounds <- check_bounds(sys$bounds)
   if (nrow(bounds) == 1L) {
     find_max_fitness_1D(sys, eps_too_close)
   } else {
@@ -53,7 +53,7 @@ find_max_fitness <- function(sys, eps_too_close=1e-3) {
 ## might miss local peaks.  Instead we construct an approximate
 ## landscape and look around the highest point.
 find_max_fitness_1D <- function(sys, eps_too_close) {
-  bounds <- plant::check_bounds(sys$bounds, finite=TRUE)
+  bounds <- check_bounds(sys$bounds, finite=TRUE)
 
   ## This should be cheap, but will be lost if the calling function
   ## didn't arrange it:
