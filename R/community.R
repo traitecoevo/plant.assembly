@@ -24,7 +24,7 @@ community_start <- function(parameters, bounds,
                             fitness_control = NULL) {
 
   if (is.character(bounds)) {
-    bounds <-  plant::bounds_infinite(bounds)
+    bounds <-  bounds_infinite(bounds)
   }
   ## TODO: Check parameters is empty.
   ret <- list(parameters = plant::validate(parameters),
