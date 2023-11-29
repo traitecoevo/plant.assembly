@@ -72,7 +72,7 @@ community_eq <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(plant::trait_matrix(trait, "lma")) %>%
+  community_add(trait_matrix(trait, "lma")) %>%
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
@@ -107,7 +107,7 @@ I'll make a worker function that runs the above routines.
 ```{r}
 f <- function(x, community) {
   community %>%
-    community_add(plant::trait_matrix(x, "lma")) %>%
+    community_add(trait_matrix(x, "lma")) %>%
     community_run_to_equilibrium() %>%
     community_selection_gradient() 
 }
@@ -184,7 +184,7 @@ community_eq <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(plant::trait_matrix(traits, c("lma", "hmat"))) %>%
+  community_add(trait_matrix(traits, c("lma", "hmat"))) %>%
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
@@ -205,7 +205,7 @@ I'll make a worker function that runs the above routines.
 ```{r}
 f <- function(x, community) {
   community %>%
-    community_add(plant::trait_matrix(x, c("lma", "hmat"))) %>%
+    community_add(trait_matrix(x, c("lma", "hmat"))) %>%
     community_run_to_equilibrium() %>%
     community_selection_gradient() 
 }

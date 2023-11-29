@@ -33,7 +33,7 @@ community_start <- function(parameters, bounds,
               hyperpar = hyperpar
               )
   ret$trait_names <- rownames(bounds)
-  ret$traits <- plant::trait_matrix(numeric(0), ret$trait_names)
+  ret$traits <- trait_matrix(numeric(0), ret$trait_names)
   ret$birth_rate <- numeric(0)
   ret$fitness_control <- fitness_control
   class(ret) <- "community"
@@ -178,4 +178,18 @@ community_fitness <- function(obj, traits) {
 ##' @export
 length.community <- function(x) {
   nrow(x$traits)
+}
+
+##' Helper function to create trait matrices suitable for
+##' \code{\link{strategy_list}}.
+##'
+##' @title Create trait matrix
+##' @param x Values
+##' @param trait_name Name of a single trait
+##' @export
+##' @author Rich FitzJohn
+trait_matrix <- function(x, trait_name) {
+  m <- matrix(x, ncol = length(trait_name))
+  colnames(m) <- trait_name
+  m
 }

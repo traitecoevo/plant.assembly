@@ -92,7 +92,7 @@ community <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(plant::trait_matrix(trait, "lma")) %>%
+  community_add(trait_matrix(trait, "lma")) %>%
   # solve euqilibrium density
   community_run_to_equilibrium()
 
@@ -107,7 +107,7 @@ scm <- run_scm(p, use_ode_times = TRUE, ctrl = ctrl)
 
 make_f <- function(scm) {
   function(x) {
-    traits <- plant::trait_matrix(exp(x), "lma")
+    traits <- trait_matrix(exp(x), "lma")
     p_mutants <- expand_parameters(traits, p, keep_existing_strategies = FALSE)
 
     count <<- count + 1
@@ -528,7 +528,7 @@ community_eq <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(plant::trait_matrix(traits, c("lma"))) %>%
+  community_add(trait_matrix(traits, c("lma"))) %>%
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
@@ -546,7 +546,7 @@ make_f <- function(community0) {
       # Empty community
       community0 %>%
       # Add a startegy specified by it's trait value
-      community_add(plant::trait_matrix(exp(x), c("lma")), birth_rate = birth_rate) %>%
+      community_add(trait_matrix(exp(x), c("lma")), birth_rate = birth_rate) %>%
       # solve euqilibrium density
       community_run_to_equilibrium() %>%
       # calculate fitness gradient

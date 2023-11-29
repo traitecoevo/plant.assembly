@@ -3,7 +3,7 @@ community_new_types_maximum_fitness <- function(sys, control) {
   ## fitness search, such as approxiate fitness points, gets copied
   ## back so we can work with it.
   empty <- function(sys, m=NULL) {
-    ret <- plant::trait_matrix(numeric(0), sys$trait_names)
+    ret <- trait_matrix(numeric(0), sys$trait_names)
     ret <- copy_attributes(m, ret, exclude=c("dim", "dimnames"))
     attr(ret, "done") <- TRUE
     ret
@@ -71,7 +71,7 @@ find_max_fitness_1D <- function(sys, eps_too_close) {
   r <- xx[c(max(1, i - 1), min(i + 1, length(xx)))]
   opt <- optimise(fitness_approximate, r, maximum=TRUE)
 
-  ret <- plant::trait_matrix(opt$maximum, sys$trait_names)
+  ret <- trait_matrix(opt$maximum, sys$trait_names)
   attr(ret, "fitness") <- opt$objective
   ret
 }
@@ -79,10 +79,10 @@ find_max_fitness_1D <- function(sys, eps_too_close) {
 find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   do_fit <- function(p) {
     f <- function(x) {
-      community_fitness(sys, plant::trait_matrix(x, sys$trait_names))
+      community_fitness(sys, trait_matrix(x, sys$trait_names))
     }
     fit <- maximize_logspace(f, p, sys$bounds, tol)
-    ret <- plant::trait_matrix(fit$par, sys$trait_names)
+    ret <- trait_matrix(fit$par, sys$trait_names)
     attr(ret, "fitness") <- fit$value
     ret
   }
