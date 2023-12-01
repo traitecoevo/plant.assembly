@@ -116,3 +116,14 @@ trait_matrix <- function(x, trait_name) {
   colnames(m) <- trait_name
   m
 }
+
+##' Returns number of types in community
+##'
+##' @title Returns number of types in \code{community}
+##' @param x A \code{community} object.
+##' @return number of rows in trait matrix.
+##' @author Rich FitzJohn, Daniel Falster
+##' @export
+length.community <- function(x) {
+  nrow(x$traits)
+}

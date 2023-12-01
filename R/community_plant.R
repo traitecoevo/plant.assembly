@@ -104,16 +104,21 @@ plant_community_viable_bounds <- function(community) {
 ##' production per capita.
 ##' @author Rich FitzJohn
 ##' @export
-plant_community_fitness_landscape <- function(community, bounds = community$bounds, n = community$fitness_control$n) {
+plant_community_fitness_landscape <- function(community, bounds = community$bounds, npts = community$fitness_control$n) {
 
+  if(is.null(community$fitness_function)) {
+    community <- 
+      community %>%
+      plant_community_run()
+  }
   plant_log_assembler(sprintf(
-    "Calulcating fitness landscape for %d strategy communtiy, %d points", nrow(community$traits), n))
+    "Calulcating fitness landscape for %d strategy communtiy, %d points", nrow(community$traits), npts))
 
-  x <- seq_log_range(bounds, n)
+  x <- seq_log_range(bounds, npts)
 
   # add residents
   x <- sort(unique(c(x, community$traits)))
-  
+
   y <- community$fitness_function(x)
 
   community$fitness_points <- 
@@ -139,9 +144,6 @@ plant_community_update_fitness_function <- function(community) {
       use_ode_times = length(p$node_schedule_ode_times) > 0)
     community$resident_fitness <- log(scm$net_reproduction_ratios)
     } else {
-    # otherwise just run mutants with zero birth rate
-    scm <- run_scm(p_mutants, ctrl = ctrl,
-      use_ode_times = length(p$node_schedule_ode_times) > 0)
     community$resident_fitness <- numeric()
   }
 
@@ -150,10 +152,18 @@ plant_community_update_fitness_function <- function(community) {
       traits <- trait_matrix(x, community$trait_names)
 
       p_mutants <- mutant_parameters(traits, p, hyperpar,
-        birth_rate_list = rep(0, nrow(traits)) )
-
-      scm$run_mutant(p_mutants)
-      log(scm$net_reproduction_ratios)
+        birth_rate_list = rep(0, nrow(traits)))
+      
+      if (length(p$strategies) > 0L) {
+        scm$run_mutant(p_mutants)
+        ret <- log(scm$net_reproduction_ratios)
+      } else {
+        # otherwise just run mutants with zero birth rate
+        scm <- run_scm(p_mutants, ctrl = ctrl, use_ode_times = 0)
+        ret <- log(scm$net_reproduction_ratios)
+      }
+      
+    ret
   }
 
   community

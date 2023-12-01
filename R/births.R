@@ -36,7 +36,7 @@ assembler_births_try_move <- function(obj, to_add, i) {
 
   ## Now, try adding the previous case back in.  First, check
   ## the fitness:
-  w_prev <- community_fitness(test, x_prev)
+  w_prev <- test$fitness_function(x_prev)
   if (w_prev > 0) {
     ## Here, there is no need to run anything: the original
     ## resident has positive fitness and will increase

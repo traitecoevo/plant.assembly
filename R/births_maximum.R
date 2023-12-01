@@ -55,21 +55,17 @@ find_max_fitness <- function(sys, eps_too_close=1e-3) {
 find_max_fitness_1D <- function(sys, eps_too_close) {
   bounds <- check_bounds(sys$bounds, finite=TRUE)
 
-  ## This should be cheap, but will be lost if the calling function
-  ## didn't arrange it:
-  sys <- community_prepare_approximate_fitness(sys)
-  fitness_approximate <- community_fitness_approximate(sys)
+  # xx <- seq_log_range(sys$bounds, 500)
+  # yy <- fitness_approximate(xx)
+  i <- which.max(sys$fitness_points$fitness)
 
-  xx <- seq_log_range(sys$bounds, 500)
-  yy <- fitness_approximate(xx)
-  i <- which.max(yy)
-
+  xx <- sys$fitness_points[,1, drop = TRUE]
   ## If we want to polish this point a bit, we could optimise over the
   ## actual fitness function or the approximate; for now I'm using the
   ## approximate as this will be much faster and the optimum should
   ## actually lie in that range.
   r <- xx[c(max(1, i - 1), min(i + 1, length(xx)))]
-  opt <- optimise(fitness_approximate, r, maximum=TRUE)
+  opt <- optimise(sys$fitness_function, r, maximum = TRUE)
 
   ret <- trait_matrix(opt$maximum, sys$trait_names)
   attr(ret, "fitness") <- opt$objective
