@@ -122,7 +122,7 @@ community_selection_gradient <- function(community, dx=1e-04,
     )
   
   # calculate fitness
-  ff <- community_mutant_fitness(community, xx)
+  ff <- community$fitness_function(xx)
 
   # extract points for derivative
   y <- ff[-1]  
@@ -137,7 +137,7 @@ community_selection_gradient <- function(community, dx=1e-04,
   )
   plant_log_assembler(msg)
 
-  community[["fitness"]] <- ff[1]
+  community[["resident_fitness"]] <- ff[1]
   community[["selection_gradient"]] <- ret
   community
 }

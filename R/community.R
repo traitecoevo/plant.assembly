@@ -64,7 +64,7 @@ community_add <- function(obj, traits, birth_rate=NULL) {
     obj$traits <- rbind(obj$traits, traits)
     obj$birth_rate <- c(obj$birth_rate, birth_rate)
 
-    obj <- community_clear_times(obj)
+    obj <- community_reset(obj)
   }
   obj
 }
@@ -89,15 +89,16 @@ community_drop <- function(obj, which) {
   if (!all(keep)) {
     obj$traits <- obj$traits[keep,,drop=FALSE]
     obj$birth_rate <- obj$birth_rate[keep]
-    obj <- community_clear_times(obj)
+    obj <- community_reset(obj)
   }
   obj
 }
 
-community_clear_times <- function(obj) {
+community_reset <- function(obj) {
+  obj$resident_fitness <- NULL
   obj$fitness_points <- NULL
   obj$fitness_slopes <- NULL
-#  obj$model_support <- NULL
+  obj$fitness_function <- NULL
   obj
 }
 

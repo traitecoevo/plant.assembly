@@ -59,7 +59,8 @@ plant_community_run <- function(community) {
     community$model_support$node_schedule_ode_times <- p$node_schedule_ode_times
     community$fitness_points <- NULL
   }
-  community
+
+  plant_community_update_fitness_function(community)
 }
 
 plant_community_run_to_equilibrium <- function(community) {
@@ -72,7 +73,8 @@ plant_community_run_to_equilibrium <- function(community) {
     community$model_support$node_schedule_ode_times <- p$node_schedule_ode_times
     community$fitness_points <- NULL
   }
-  community
+
+  plant_community_update_fitness_function(community)
 }
 
 plant_community_viable_bounds <- function(community) {
@@ -102,74 +104,67 @@ plant_community_viable_bounds <- function(community) {
 ##' production per capita.
 ##' @author Rich FitzJohn
 ##' @export
-plant_community_fitness_landscape <- function(community) {
+plant_community_fitness_landscape <- function(community, bounds = community$bounds, n = community$fitness_control$n) {
 
   plant_log_assembler(sprintf(
-    "Calulcating fitness landscape for %d strategy communtiy, %d points", nrow(community$traits), community$fitness_control$n))
+    "Calulcating fitness landscape for %d strategy communtiy, %d points", nrow(community$traits), n))
 
-  x <- seq_log_range(community$bounds, community$fitness_control$n)
+  x <- seq_log_range(bounds, n)
 
   # add residents
   x <- sort(unique(c(x, community$traits)))
   
-  y <- plant_community_mutant_fitness(community, x)
+  y <- community$fitness_function(x)
 
   community$fitness_points <- 
     dplyr::tibble(x = x, fitness = y) %>% 
     mutate(resident = ifelse(x %in% community$traits, TRUE, FALSE))
   
   names(community$fitness_points)[1] <- community$trait_names
-
-#  community$model_support$p <- 
  
   community
 }
 
-
-plant_community_mutant_fitness <- function(community, x) {
- 
+plant_community_update_fitness_function <- function(community) {
+  
   p <- plant_community_parameters(community)
   hyperpar <- plant_community_hyperpar(community)
 
-  traits <- trait_matrix(x, community$trait_names)
-
-  n_residents <- length(p$strategies)
-  mutant_birth_rates <- rep(0, nrow(traits))
-
-  p_mutants <- mutant_parameters(traits, p, hyperpar,
-    birth_rate_list = mutant_birth_rates
-  )
-
   ctrl <- community$model_support$plant_control
-
-  if (n_residents > 0L) {
+  ctrl$save_RK45_cache <- T
+  
+  if (length(p$strategies) > 0L) {
     # if there's a resident, use the saved environment to calculate mutant fitness
-    ctrl$save_RK45_cache <- T
-
-    scm <- run_scm(p, use_ode_times = length(p$node_schedule_ode_times) > 0, ctrl = ctrl)
-    scm$run_mutant(p_mutants)
-    net_reproduction_ratios <- scm$net_reproduction_ratios
-  } else {
+    scm <- run_scm(p, ctrl = ctrl,
+      use_ode_times = length(p$node_schedule_ode_times) > 0)
+    community$resident_fitness <- log(scm$net_reproduction_ratios)
+    } else {
     # otherwise just run mutants with zero birth rate
-    scm <- run_scm(p_mutants,
-      use_ode_times = length(p$node_schedule_ode_times) > 0,
-      ctrl = ctrl
-    )
-    net_reproduction_ratios <- scm$net_reproduction_ratios
+    scm <- run_scm(p_mutants, ctrl = ctrl,
+      use_ode_times = length(p$node_schedule_ode_times) > 0)
+    community$resident_fitness <- numeric()
   }
-  
-  y <- log(net_reproduction_ratios)
-  
-  y
+
+  community$fitness_function <- 
+    function(x) {
+      traits <- trait_matrix(x, community$trait_names)
+
+      p_mutants <- mutant_parameters(traits, p, hyperpar,
+        birth_rate_list = rep(0, nrow(traits)) )
+
+      scm$run_mutant(p_mutants)
+      log(scm$net_reproduction_ratios)
+  }
+
+  community
 }
+
 
 
 # connect functions
 community_parameters <- plant_community_parameters
-
-community_mutant_fitness <- plant_community_mutant_fitness
 community_run <- plant_community_run
 community_run_to_equilibrium <- plant_community_run_to_equilibrium
-community_fitness_landscape <- plant_community_fitness_landscape
 
+community_fitness_landscape <- plant_community_fitness_landscape
 community_viable_bounds <- plant_community_viable_bounds

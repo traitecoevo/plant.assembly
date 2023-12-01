@@ -64,13 +64,13 @@ community_eq <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(trait_matrix(trait, "lma")) %>%
+  community_add(trait_matrix(trait, "lma"), birth_rate = 200) %>%
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
   community_selection_gradient()
 
-community_eq$fitness
+community_eq$resident_fitness
 community_eq$selection_gradient
 ```
 
@@ -175,13 +175,13 @@ community_eq <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(trait_matrix(traits, c("lma", "hmat"))) %>%
+  community_add(trait_matrix(traits, c("lma", "hmat")), birth_rate = 200) %>%
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
   community_selection_gradient()
 
-community_eq$fitness
+community_eq$resident_fitness
 community_eq$selection_gradient
 ```
 
@@ -229,6 +229,7 @@ saveRDS(data_communities2, filename)
 data_communities2 <- readRDS(filename)
 
 # plot - DIY
+rescale <- function(x, s = 1) {x / max(abs(range(x))) * s }
 
 plot_sg <- 
   data_communities2 %>% 
