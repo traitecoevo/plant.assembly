@@ -11,8 +11,7 @@ community_new_types_stochastic <- function(sys, control) {
   
   to_add <- rbind(mutation(sys), immigration(sys))
   if (control$check_positive && nrow(to_add) > 0) {
-    fitness <- community_make_fitness(sys)
-    w <- fitness(to_add)
+    w <- sys$fitness_function(to_add)#fitness(to_add)
     keep <- w >= 0.0
     to_add <- to_add[keep, , drop=FALSE]
     attr(to_add, "fitness") <- w[keep]
@@ -76,7 +75,7 @@ mutational_vcv_proportion <- function(x, p=0.001) {
   if (inherits(x, "community")) {
     x <- x$bounds
   }
-  bounds <- plant::check_bounds(x)
+  bounds <- check_bounds(x)
   if (!all(is.finite(bounds))) {
     stop("All bounds must be finite")
   }

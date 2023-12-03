@@ -84,7 +84,7 @@ community0 <-
   community_start(
     p0,
     bounds(lma = c(0.01, 2)),
-    fitness_approximate_control = list(type = "grid")
+    fitness_control = list(type = "grid")
   )
 
 
@@ -92,7 +92,7 @@ community <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(plant::trait_matrix(trait, "lma")) %>%
+  community_add(trait_matrix(trait, "lma")) %>%
   # solve euqilibrium density
   community_run_to_equilibrium()
 
@@ -107,7 +107,7 @@ scm <- run_scm(p, use_ode_times = TRUE, ctrl = ctrl)
 
 make_f <- function(scm) {
   function(x) {
-    traits <- plant::trait_matrix(exp(x), "lma")
+    traits <- trait_matrix(exp(x), "lma")
     p_mutants <- expand_parameters(traits, p, keep_existing_strategies = FALSE)
 
     count <<- count + 1
@@ -205,15 +205,22 @@ library(mlr3mbo)
 library(mlr3learners)
 library(ggplot2)
 library(dplyr)
-set.seed(1)
+```
 
-
+```{r}
 optimizer <- opt("mbo",
   loop_function = bayesopt_ego,
-  surrogate = srlrn(lrn("regr.km", control = list(trace = FALSE))),
+  surrogate = srlrn(lrn("regr.km", covtype = "matern3_2", control = list(trace = FALSE))),
   acq_function = acqf("ei"),
-  acq_optimizer = acqo(opt("random_search", batch_size = 100),
-                        terminator = trm("evals", n_evals = 100))
+  # Alteraive options for acquistion optimiser
+  # # Radnom search
+  # acq_optimizer = acqo(opt("random_search", batch_size = 100),
+  #                       terminator = trm("evals", n_evals = 100))
+  
+  # Optimiser
+  acq_optimizer = acqo(opt("nloptr", algorithm = "NLOPT_GN_ORIG_DIRECT"),
+    terminator = trm("stagnation", iters = 100, threshold = 1e-5)
+  )
 )
 
 obfun <- ObjectiveRFun$new(
@@ -224,10 +231,11 @@ obfun <- ObjectiveRFun$new(
 
 instance <- OptimInstanceSingleCrit$new(
   objective = obfun,
-  terminator = trm("evals", n_evals = 10)
+  terminator = trm("evals", n_evals = 20)
 )
 
-initial_design <- data.table(x = log(c(0.02, 0.04, 0.1, 0.2, 0.4, 2)))
+#evaulate some initial points, make sure to include bounds and residents
+initial_design <- data.table(x = sort(c(log(p$strategies[[1]]$lma), seq_range(log(c(0.01, 2)), 10))))
 instance$eval_batch(initial_design)
 
 optimizer$optimize(instance)
@@ -237,7 +245,7 @@ instance$result
 # make predictions
 xdt <- data.table(x = seq_range(log(c(0.01, 2)), length.out = 101))
 surrogate_pred <- optimizer$surrogate$predict(xdt)
-xdt[, c("mean_prediction", "se_prediction") := surrogate_pred]
+xdt[, c("y", "se_prediction") := surrogate_pred]
 
 # plot surrogate
 
@@ -245,9 +253,8 @@ ggplot(aes(x = exp(x), y = y), data = instance$archive$data) +
   geom_line(data = tibble(x= log(x), y), col = "red") +
   geom_point() +
 #  geom_step(col="grey") +
-  geom_line(data = xdt, aes(y=mean_prediction)) + 
-  geom_line(data = xdt, aes(y=mean_prediction - 2*se_prediction), col="grey") + 
-  geom_line(data = xdt, aes(y=mean_prediction + 2*se_prediction), col="grey") + 
+  geom_line(data = xdt) + 
+  geom_ribbon(data = xdt, aes(ymin = y - se_prediction, ymax = y + se_prediction), fill = "grey", alpha = 0.2) + 
   labs(x = "x", y = "F") +
   scale_x_log10() +
   theme_minimal()
@@ -306,17 +313,183 @@ instance <- OptimInstanceSingleCrit$new(
 optimizer <- opt("random_search") ## Randome search
 optimizer <- opt("grid_search") ## Grod serach
 #optimizer <- opt("irace") ## Iterated Racing
-#optimizer <- opt("nloptr") ## Non-linear Optimization via nloptr
+optimizer <- opt("nloptr",  algorithm = "NLOPT_GN_ORIG_DIRECT") ## Non-linear Optimization via nloptr
 optimizer <- opt("gensa") ##  Generalized Simulated Annealing
 
 # trigger optimization
 optimizer$optimize(instance)
+```
+
+## Space filling deisgns
+
+What is we just want to create a good design of a space and fit a surrogate?
+
+We can use the same tools 
+
+- see https://mlr3book.mlr-org.com/chapters/chapter5/advanced_tuning_methods_and_black_box_optimization.html#sec-bayesian-optimization-blocks
+
+- specify a design, could be grid, or latin hypercube or others, see https://mlr3book.mlr-org.com/chapters/chapter5/advanced_tuning_methods_and_black_box_optimization.html#fig-bayesian-optimization-designs
+  - Whichever of these methods you choose, the result is a Design object, which is mostly just a wrapper around a data.table
+  - could also specify a completely custom initial design by defining your own data.table. 
+  - Either way, when manually constructing an initial design (as opposed to letting loop_function automate this), it needs to be evaluated on the OptimInstance before optimizing it
+
+```{r}
+library(bbotk)
+library(mlr3mbo)
+library(mlr3learners)
+library(ggplot2)
+library(dplyr)
+
+# specifiy domain
+domain = ps(x = p_dbl(lower = log(0.01), upper = log(2)))
+
+# specify function
+obfun <- ObjectiveRFun$new(
+  fun = function(xs) list(y = f(xs$x)),
+  domain = domain,
+  codomain = ps(y = p_dbl(tags = "maximize"))
+)
+
+# Create the design
+# initial_design <- data.table(x = log(c(0.02, 0.04, 0.1, 0.2, 0.4, 2)))
+#initial_design <- generate_design_grid(domain, resolution = 10)
+initial_design <- generate_design_lhs(domain, n = 20)
+
+# start instance to evaluate function
+instance <- OptimInstanceSingleCrit$new(
+  objective = obfun,
+  terminator = trm("evals", n_evals = 10)
+)
+instance$eval_batch(initial_design$data)
+
+# see the data
+instance$archive$data
+
+# Now fit surrogate
+
+lrn_gp <- lrn("regr.km",
+  covtype = "matern3_2", optim.method = "BFGS",
+  control = list(trace = FALSE)
+)
+
+surrogate <- srlrn(lrn_gp, archive = instance$archive)
+
+surrogate$update()
+surrogate$learner$model
+
+# points for plotting
+xdt <- data.table(x = seq_range(log(c(0.01, 2)), length.out = 101))
+surrogate_pred <- surrogate$predict(xdt)
+xdt[, c("y", "se") := surrogate_pred]
+
+# plot true function in black
+# surrogate prediction (mean +- se in grey)
+# known optimum in darkred
+# found optimum in darkgreen
+instance$archive$data %>% as_tibble() %>% 
+ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(data = tibble(x= log(x), y), col = "red") +
+  geom_line(data = xdt, col="black") +
+  geom_ribbon(data = xdt, aes(x = x, ymin = y - se, ymax = y + se), fill = "grey", alpha = 0.2) +
+  theme_minimal()
 
 ```
 
-## 
+### We can change the acquisition function to change the way Bayes Opt refines?
+
+- lots of acquisiton functions available `as.data.table(mlr_acqfunctions)`
+- could build own lopp function, which chooses new points
+  - https://mlr3book.mlr-org.com/chapters/chapter5/advanced_tuning_methods_and_black_box_optimization.html#sec-bayesian-optimization-loop
+
+```{r}
+optimizer <- opt("mbo",
+  loop_function = bayesopt_ego,
+  surrogate = srlrn(lrn("regr.km", covtype = "matern3_2", optim.method = "BFGS",control = list(trace = FALSE))),
+  acq_function = acqf("sd"),
+  acq_optimizer = acqo(opt("nloptr", algorithm = "NLOPT_GN_ORIG_DIRECT"),
+    terminator = trm("stagnation", iters = 100, threshold = 1e-5))
+  )
+
+obfun <- ObjectiveRFun$new(
+  fun = function(xs) list(y = f(xs$x)),
+  domain = ps(x = p_dbl(lower = log(0.01), upper = log(2))),
+  codomain = ps(y = p_dbl(tags = "maximize"))
+)
+
+initial_design <- data.table(x = sort(c(log(p$strategies[[1]]$lma), seq_range(log(c(0.01, 2)), 10))))
+
+instance <- OptimInstanceSingleCrit$new(
+  objective = obfun,
+  terminator = trm("evals", n_evals = 20)
+)
+instance$eval_batch(initial_design)
+
+optimizer$optimize(instance)
+
+instance$result
+
+# call one more update on surrogate to make sure it's cpatured the last point (see https://github.com/mlr-org/mlr3mbo/issues/131)
+optimizer$surrogate$update()
+
+# make predictions
+xdt <- data.table(x = seq_range(log(c(0.01, 2)), length.out = 101))
+surrogate_pred <- optimizer$surrogate$predict(xdt)
+xdt[, c("y", "se") := surrogate_pred]
+
+# plot true function in red, surrogate prediction (mean +- se in black/ grey)
+instance$archive$data %>%
+  as_tibble() %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(data = tibble(x = log(x), y), col = "red") +
+  geom_line(data = xdt, col = "black") +
+  geom_ribbon(data = xdt, aes(x = x, ymin = y - se, ymax = y + se), fill = "grey", alpha = 0.2) +
+  theme_minimal()
+```
+
+## Try different surrogates on same data
+
+```{r}
+
+
+sf <- function(type, data) {
+  lrn_gp <- lrn("regr.km",
+    covtype = type, optim.method = "BFGS",
+    control = list(trace = FALSE)
+  )
+
+  surrogate <- srlrn(lrn_gp, archive = data)
+
+  surrogate$update()
+  surrogate$learner$model
+
+  xdt <- data.table(x = seq_range(log(c(0.01, 2)), length.out = 101))
+  surrogate_pred <- surrogate$predict(xdt)
+ 
+  bind_cols(
+    xdt |> as_tibble(),
+    surrogate_pred |>as_tibble()
+  ) |>
+  rename(y = mean) |>
+  select(-se) |> mutate(type = type) 
+}
+
+types <- c("matern5_2", "matern3_2", "exp")
+
+vals <- purrr:::map_df(types, ~sf(.x, instance$archive))
+
+instance$archive$data %>% as_tibble() %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(data = tibble(x = log(x), y), col = "red") +
+  geom_line(data = vals, aes(col = type)) +
+  theme_minimal()
+```
 
 # Solving 1D attractors 
+
+for this suggest building gp of Sg then passing to root finder
 
 ## Bayesian optimisation
 
@@ -348,14 +521,14 @@ community0 <-
   community_start(
     p0,
     bounds(lma = c(0.01, 2)),
-    fitness_approximate_control = list(type = "grid")
+    fitness_control = list(type = "grid")
   )
 
 community_eq <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(plant::trait_matrix(traits, c("lma"))) %>%
+  community_add(trait_matrix(traits, c("lma"))) %>%
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
@@ -373,7 +546,7 @@ make_f <- function(community0) {
       # Empty community
       community0 %>%
       # Add a startegy specified by it's trait value
-      community_add(plant::trait_matrix(exp(x), c("lma")), birth_rate = birth_rate) %>%
+      community_add(trait_matrix(exp(x), c("lma")), birth_rate = birth_rate) %>%
       # solve euqilibrium density
       community_run_to_equilibrium() %>%
       # calculate fitness gradient

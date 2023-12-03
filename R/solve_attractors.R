@@ -28,7 +28,7 @@ community_solve_singularity_1D <- function(community, bounds = NULL, tol = 1e-04
   f <- function(x) {
     out <- 
       community %>%
-      community_add(plant::trait_matrix(x, community$trait_names)) %>%
+      community_add(trait_matrix(x, community$trait_names)) %>%
       community_run_to_equilibrium() %>%
       community_selection_gradient()
     
@@ -120,8 +120,9 @@ community_selection_gradient <- function(community, dx=1e-04,
       community$traits,
       points
     )
+  
   # calculate fitness
-  ff <- community_fitness(community, xx)
+  ff <- community$fitness_function(xx)
 
   # extract points for derivative
   y <- ff[-1]  
@@ -136,7 +137,7 @@ community_selection_gradient <- function(community, dx=1e-04,
   )
   plant_log_assembler(msg)
 
-  community[["fitness"]] <- ff[1]
+  community[["resident_fitness"]] <- ff[1]
   community[["selection_gradient"]] <- ret
   community
 }

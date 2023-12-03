@@ -86,7 +86,7 @@ assembler_control <- function(control=NULL) {
                   ## rate (can happen!).  This should be "quite 
                   ## large", but obviously that number depends on
                   ## the situation.
-                  equilibrium_eps = 0.001
+                  equilibrium_eps = 0.0001
                   )
   if (identical(control[["birth_type"]], "stochastic")) {
     defaults$run_type <- "single"
@@ -112,7 +112,8 @@ assembler_initialise <- function(obj, community) {
     stop("Expecting a community object")
   }
   plant_log_assembler("Starting empty assembler")
-  obj$community <- community
+  obj$community <- community %>% community_run()
+  
   if (isTRUE(obj$control$compute_viable_fitness)) {
     plant_log_assembler("Computing viable bounds")
     obj$community <- community_viable_bounds(obj$community)
@@ -155,18 +156,12 @@ assembler_restore <- function(obj, community, prev) {
   prev
 }
 
-assembler_prepare_fitness <- function(obj) {
-  plant_log_assembler("Computing ode times")
-  obj$community <- community_prepare_fitness(obj$community)
-  if (obj$control$birth_type == "maximum") {
-    plant_log_assembler("Computing approximate fitness")
-    obj$community <- community_prepare_approximate_fitness(obj$community)
-  }
-  obj
-}
-
 assembler_append_history <- function(obj) {
-  obj <- assembler_prepare_fitness(obj)
+
+  if (obj$control$birth_type == "maximum") {
+    obj$community <- community_fitness_landscape(obj$community)
+  }
+
   obj$history <- c(obj$history, list(obj$community))
   if (isTRUE(obj$done)) {
     attr(obj$history, "done") <- TRUE

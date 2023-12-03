@@ -31,21 +31,13 @@ devtools::load_all()
 # logging of output
 plant_log_console()
 
-# set controls on plant package 
-plant_control <- function() {
-  ctrl <- scm_base_control()
-  ctrl$equilibrium_nsteps <- 20
-  ctrl$equilibrium_solver_name <- "hybrid"
-  ctrl
-}
-
 # set baseline parameters
-p <- scm_base_parameters("FF16")
-p$strategy_default$a_l1 <- 2.17
-p$strategy_default$a_l2 <- 0.5
-p$strategy_default$hmat <- 10
-p$max_patch_lifetime <- 60
+p <- plant_default_assembly_pars()
 
+model_support <- list(
+  p = plant_default_assembly_pars(),
+  plant_control = plant_default_assembly_control()
+)
 
 ```
 
@@ -63,22 +55,22 @@ trait <- 0.04045
 # setup the assembler to start with empty community
 community0 <-
   community_start(
-    p,
     bounds(lma = c(0.01, 2)),
-    fitness_approximate_control = list(type = "grid")
+    fitness_control = list(type = "grid", n = 20),
+    model_support = model_support
   )
 
 community_eq <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(plant::trait_matrix(trait, "lma")) %>%
+  community_add(trait_matrix(trait, "lma"), birth_rate = 200) %>%
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
   community_selection_gradient()
 
-community_eq$fitness
+community_eq$resident_fitness
 community_eq$selection_gradient
 ```
 
@@ -88,11 +80,10 @@ Let's visualise this by calculating a fitness landscape:
 
 ```{r}
 community_eq <- community_eq %>%
-  community_prepare_approximate_fitness()
+  community_fitness_landscape()
 
 data <- 
-  community_eq$fitness_approximate_points %>% as_tibble() %>% 
-  mutate(resident = ifelse(lma %in% community_eq$traits, TRUE, FALSE))
+  community_eq$fitness_points
 
 ggplot(data, aes(lma, fitness)) +
   geom_line() +
@@ -107,7 +98,7 @@ I'll make a worker function that runs the above routines.
 ```{r}
 f <- function(x, community) {
   community %>%
-    community_add(plant::trait_matrix(x, "lma")) %>%
+    community_add(trait_matrix(x, "lma")) %>%
     community_run_to_equilibrium() %>%
     community_selection_gradient() 
 }
@@ -121,7 +112,7 @@ data_communities <-
     # solve commuities
     communities = parallel::mclapply(
       traits, function(x) f(x, community0),
-      mc.cores = detectCores() - 2
+      mc.cores = parallel::detectCores() - 2
     ),
     # extract gradient
     selection_gradient = map_dbl(communities, ~ .x$selection_gradient)
@@ -131,7 +122,7 @@ data_communities <-
 plot_sg <- 
   ggplot(data_communities, aes(traits, selection_gradient)) +
   geom_line(col="red") +
-  geom_point(col="red", pch="x") +
+  geom_point(col="red") +
   geom_abline(intercept = 0, linetype = "dashed") +
   ylim(-10000, 10000) +
   scale_x_log10()
@@ -139,7 +130,7 @@ plot_sg <-
 plot_sg
 ```
 
-## Using a root solver to find the attractor
+## Using a root solver to find the 1D attractor
 
 We've wrapped up the above routines to enable solving of the 1D attractor
 
@@ -175,24 +166,22 @@ traits <- c(0.04045, 10)
 # setup the assembler to start with empty community
 community0 <-
   community_start(
-    p,
     bounds(lma = c(0.01, 2), hmat = c(0.01, 100)),
-    fitness_approximate_control = list(type = "grid")
+    fitness_control = list(type = "grid"),
+    model_support = model_support
   )
 
 community_eq <-
   # Empty community
   community0 %>%
   # Add a startegy specified by it's trait value
-  community_add(plant::trait_matrix(traits, c("lma", "hmat"))) %>%
+  community_add(trait_matrix(traits, c("lma", "hmat")), birth_rate = 200) %>%
   # solve euqilibrium density
   community_run_to_equilibrium() %>%
   # calculate fitness gradient
   community_selection_gradient()
 
-community_eq <- community_eq %>% community_selection_gradient()
-
-community_eq$fitness
+community_eq$resident_fitness
 community_eq$selection_gradient
 ```
 
@@ -205,13 +194,12 @@ I'll make a worker function that runs the above routines.
 ```{r}
 f <- function(x, community) {
   community %>%
-    community_add(plant::trait_matrix(x, c("lma", "hmat"))) %>%
+    community_add(trait_matrix(x, c("lma", "hmat"))) %>%
     community_run_to_equilibrium() %>%
     community_selection_gradient() 
 }
 
 # Create a data frame with range of trait values and solve
-
 data_communities <- 
   # trait matix
   expand_grid(
@@ -224,7 +212,7 @@ data_communities <-
     # solve commuities
     communities = parallel::mclapply(
       traits, function(x) f(as.matrix(x), community0),
-      mc.cores = detectCores() - 2
+      mc.cores = parallel::detectCores() - 2
     ))
 
 data_communities2 <-
@@ -241,6 +229,7 @@ saveRDS(data_communities2, filename)
 data_communities2 <- readRDS(filename)
 
 # plot - DIY
+rescale <- function(x, s = 1) {x / max(abs(range(x))) * s }
 
 plot_sg <- 
   data_communities2 %>% 
@@ -267,24 +256,6 @@ plot_sg <-
 plot_sg
 ```
 
-## Using a root solver to find the attractor
+## Using a root solver to find the 2D attractor
 
-We've wrapped up the above routines to enable solving of the 1D attractor
-
-```{r}
-community_attractor <- community0 %>%
- community_solve_singularity_1D(bounds = c(0.035, 0.045), tol = 1e-4)
-
-community_attractor$traits
-```
-
-Let's add this to our previous plot
-```{r}
-plot_sg +
-  geom_point(col="red",
-    data = tibble(
-      traits = community_attractor$traits, selection_gradient = community_attractor$selection_gradient 
-    )
-  )
-```
-
+....

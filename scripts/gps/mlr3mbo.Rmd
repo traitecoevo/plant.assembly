@@ -32,6 +32,16 @@ Lots of sophisticated options, and focussed on black-box models
 More details
 
 - Black Box Optimization: https://mlr3book.mlr-org.com/chapters/chapter5/advanced_tuning_methods_and_black_box_optimization.html#sec-black-box-optimization
+- Details on learners: https://mlr3learners.mlr-org.com/
+  - For GPRs using `DiceKriging::km`, for details on pars see https://mlr3learners.mlr-org.com/reference/mlr_learners_regr.km.html
+    - covtype: matern5_2	gauss, matern5_2, matern3_2, exp, powexp
+    - see original paper Roustant et al 2012: doi.org/10.18637/jss.v051.i01
+- different surrogates, e.g. GPs and Randomeforest both possible
+  - see https://mlr3book.mlr-org.com/chapters/appendices/solutions.html#solutions-to-sec-optimization-advanced
+- can paraellise calls to model
+  - this will be useful when building a model of selection gradient
+  - see https://mlr3book.mlr-org.com/chapters/appendices/solutions.html#solutions-to-sec-optimization-advanced
+
 
 Refs
 
@@ -39,10 +49,10 @@ Refs
 
 - Bischl, Bernd, Martin Binder, Michel Lang, Tobias Pielok, Jakob Richter, Stefan Coors, Janek Thomas, et al. 2023. “Hyperparameter Optimization: Foundations, Algorithms, Best Practices, and Open Challenges.” Wiley Interdisciplinary Reviews: Data Mining and Knowledge Discovery, e1484.
 - Bischl, Bernd, Raphael Sonabend, Lars Kotthoff, and Michel Lang, eds. 2023. Flexible and Robust Machine Learning Using mlr3 in R. https://mlr3book.mlr-org.com.
+- Roustant O, Ginsbourger D, Deville Y (2012). “DiceKriging, DiceOptim: Two R Packages for the Analysis of Computer Experiments by Kriging-Based Metamodeling and Optimization.” Journal of Statistical Software, 51(1), 1--55. doi:10.18637/jss.v051.i01 .
 
 
 Efficient Global Optimization of Expensive Black-Box Functions
-
 
 ```{r}
 library(bbotk)

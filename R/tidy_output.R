@@ -12,7 +12,7 @@ tidy_assembly <- function(assembly){
   community <- tidy_community(assembly$community)
   history_landscape <- NA
   community_landscape <- NA
-  if(!is.null(assembly$community$fitness_approximate_points)){
+  if(!is.null(assembly$community$fitness_points)){
     history_landscape <- tidy_landscape(assembly$history)
     community_landscape <- tidy_landscape(assembly$community)
     
@@ -74,6 +74,6 @@ tidy_landscape <- function(community){
 }
 
 tidy_landscape_community <- function(community){
-  community$fitness_approximate_points %>%
+  community$fitness_points %>%
     as_tibble()
 }

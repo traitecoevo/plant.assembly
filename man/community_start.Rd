@@ -9,7 +9,7 @@ community_start(
   bounds,
   birth_rate_initial = 0.001,
   hyperpar = NULL,
-  fitness_approximate_control = NULL
+  fitness_control = NULL
 )
 }
 \arguments{
@@ -22,9 +22,9 @@ in \code{plant}..}
 
 \item{hyperpar}{A plant hyperparameter function to be used when calling \code{strategy_list}}
 
-\item{fitness_approximate_control}{List of parameters controlling
+\item{fitness_control}{List of parameters controlling
 how approximate fitness landscapes are generated. See function
-\code{fitness_approximate_control} for an example.}
+\code{fitness_control} for an example.}
 }
 \value{
 An \code{community} object.
@@ -35,7 +35,7 @@ Initialise a community object
 \details{
 Used to store full description of community. Is a list
 with elements parameters, bounds, birth_rate_initial,
-trait_names, traits, birth_rate, fitness_approximate_control.
+trait_names, traits, birth_rate, fitness_control.
 }
 \author{
 Rich FitzJohn, Daniel Falster

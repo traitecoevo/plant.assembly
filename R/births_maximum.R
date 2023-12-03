@@ -3,7 +3,7 @@ community_new_types_maximum_fitness <- function(sys, control) {
   ## fitness search, such as approxiate fitness points, gets copied
   ## back so we can work with it.
   empty <- function(sys, m=NULL) {
-    ret <- plant::trait_matrix(numeric(0), sys$trait_names)
+    ret <- trait_matrix(numeric(0), sys$trait_names)
     ret <- copy_attributes(m, ret, exclude=c("dim", "dimnames"))
     attr(ret, "done") <- TRUE
     ret
@@ -41,7 +41,10 @@ community_new_types_maximum_fitness <- function(sys, control) {
 ##   want to set them.
 ## * We want to get the full approximate fitness landscape
 find_max_fitness <- function(sys, eps_too_close=1e-3) {
-  bounds <- plant::check_bounds(sys$bounds)
+
+  plant_log_assembler("Finding maximum in fitness landscape")
+
+  bounds <- check_bounds(sys$bounds)
   if (nrow(bounds) == 1L) {
     find_max_fitness_1D(sys, eps_too_close)
   } else {
@@ -53,25 +56,21 @@ find_max_fitness <- function(sys, eps_too_close=1e-3) {
 ## might miss local peaks.  Instead we construct an approximate
 ## landscape and look around the highest point.
 find_max_fitness_1D <- function(sys, eps_too_close) {
-  bounds <- plant::check_bounds(sys$bounds, finite=TRUE)
+  bounds <- check_bounds(sys$bounds, finite=TRUE)
 
-  ## This should be cheap, but will be lost if the calling function
-  ## didn't arrange it:
-  sys <- community_prepare_approximate_fitness(sys)
-  fitness_approximate <- community_fitness_approximate(sys)
+  # xx <- seq_log_range(sys$bounds, 500)
+  # yy <- fitness_approximate(xx)
+  i <- which.max(sys$fitness_points$fitness)
 
-  xx <- seq_log_range(sys$bounds, 500)
-  yy <- fitness_approximate(xx)
-  i <- which.max(yy)
-
+  xx <- sys$fitness_points[,1, drop = TRUE]
   ## If we want to polish this point a bit, we could optimise over the
   ## actual fitness function or the approximate; for now I'm using the
   ## approximate as this will be much faster and the optimum should
   ## actually lie in that range.
   r <- xx[c(max(1, i - 1), min(i + 1, length(xx)))]
-  opt <- optimise(fitness_approximate, r, maximum=TRUE)
+  opt <- optimise(sys$fitness_function, r, maximum = TRUE)
 
-  ret <- plant::trait_matrix(opt$maximum, sys$trait_names)
+  ret <- trait_matrix(opt$maximum, sys$trait_names)
   attr(ret, "fitness") <- opt$objective
   ret
 }
@@ -79,10 +78,10 @@ find_max_fitness_1D <- function(sys, eps_too_close) {
 find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   do_fit <- function(p) {
     f <- function(x) {
-      community_fitness(sys, plant::trait_matrix(x, sys$trait_names))
+      community_fitness(sys, trait_matrix(x, sys$trait_names))
     }
     fit <- maximize_logspace(f, p, sys$bounds, tol)
-    ret <- plant::trait_matrix(fit$par, sys$trait_names)
+    ret <- trait_matrix(fit$par, sys$trait_names)
     attr(ret, "fitness") <- fit$value
     ret
   }
@@ -101,7 +100,7 @@ find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   } else {
     ret <- NULL
     X <- sys$traits
-    gr_norm <- vnapply(sys$fitness_approximate_slopes, function(x) norm2(x$gr))
+    gr_norm <- vnapply(sys$fitness_slopes, function(x) norm2(x$gr))
     idx <- order(gr_norm, decreasing=TRUE)
     attempts <- list()
 

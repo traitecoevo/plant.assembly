@@ -14,8 +14,7 @@ community_deaths <- function(community, control) {
     community <- community_drop(community, to_drop)
   }
   if (check_inviable && length(community) > 1L) {
-    res <- plant::check_inviable(community_parameters(community),
-              ctrl = scm_base_control())
+    res <- community_check_for_inviable_strategies(community)
     community$birth_rate <- as.numeric(res)
     to_drop2 <- attr(res, "drop")
     if (any(to_drop2)) {
@@ -26,3 +25,4 @@ community_deaths <- function(community, control) {
   }
   community
 }
+
