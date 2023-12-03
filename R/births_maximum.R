@@ -41,6 +41,9 @@ community_new_types_maximum_fitness <- function(sys, control) {
 ##   want to set them.
 ## * We want to get the full approximate fitness landscape
 find_max_fitness <- function(sys, eps_too_close=1e-3) {
+
+  plant_log_assembler("Finding maximum in fitness landscape")
+
   bounds <- check_bounds(sys$bounds)
   if (nrow(bounds) == 1L) {
     find_max_fitness_1D(sys, eps_too_close)

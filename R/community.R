@@ -69,8 +69,8 @@ community_add <- function(obj, traits, birth_rate=NULL) {
   obj
 }
 
-community_drop <- function(obj, which) {
-  n_spp <- length(obj)
+community_drop <- function(community, which) {
+  n_spp <- length(community)
   if (is.logical(which)) {
     if (length(which) != n_spp) {
       stop(sprintf("Invalid length: expected %d, recieved %d",
@@ -87,19 +87,27 @@ community_drop <- function(obj, which) {
     stop("Invalid index")
   }
   if (!all(keep)) {
-    obj$traits <- obj$traits[keep,,drop=FALSE]
-    obj$birth_rate <- obj$birth_rate[keep]
-    obj <- community_reset(obj)
+    community$traits <- community$traits[keep,,drop=FALSE]
+    community$birth_rate <- community$birth_rate[keep]
+    community <- community_reset(community)
   }
-  obj
+
+  if (is.null(community$fitness_function)) {
+    community <- community %>% community_run()
+  }
+
+  community
 }
 
-community_reset <- function(obj) {
-  obj$resident_fitness <- NULL
-  obj$fitness_points <- NULL
-  obj$fitness_slopes <- NULL
-  obj$fitness_function <- NULL
-  obj
+community_reset <- function(community) {
+  community$resident_fitness <- NULL
+  community$fitness_points <- NULL
+  community$fitness_slopes <- NULL
+  community$fitness_function <- NULL
+  
+  community$model_support$node_schedule_times <- NULL
+
+  community
 }
 
 

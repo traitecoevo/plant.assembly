@@ -58,7 +58,7 @@ control <- assembler_control(
 # setup the assembler to start with empty community
 community0 <- 
   community_start(bounds0,
-    fitness_control = list(type = "grid", n = 10),
+    fitness_control = list(type = "grid", n = 50),
     model_support = model_support)
 
 obj <- assembler_start(community0, control = control)

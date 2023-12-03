@@ -11,8 +11,7 @@ community_new_types_stochastic <- function(sys, control) {
   
   to_add <- rbind(mutation(sys), immigration(sys))
   if (control$check_positive && nrow(to_add) > 0) {
-    fitness <- community_make_fitness(sys)
-    w <- fitness(to_add)
+    w <- sys$fitness_function(to_add)#fitness(to_add)
     keep <- w >= 0.0
     to_add <- to_add[keep, , drop=FALSE]
     attr(to_add, "fitness") <- w[keep]

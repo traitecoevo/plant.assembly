@@ -112,7 +112,8 @@ assembler_initialise <- function(obj, community) {
     stop("Expecting a community object")
   }
   plant_log_assembler("Starting empty assembler")
-  obj$community <- community
+  obj$community <- community %>% community_run()
+  
   if (isTRUE(obj$control$compute_viable_fitness)) {
     plant_log_assembler("Computing viable bounds")
     obj$community <- community_viable_bounds(obj$community)
@@ -156,7 +157,7 @@ assembler_restore <- function(obj, community, prev) {
 }
 
 assembler_append_history <- function(obj) {
-  
+
   if (obj$control$birth_type == "maximum") {
     obj$community <- community_fitness_landscape(obj$community)
   }
