@@ -5,26 +5,25 @@
 \title{Initialise a community object}
 \usage{
 community_start(
-  parameters,
   bounds,
   birth_rate_initial = 0.001,
-  hyperpar = NULL,
+  model_support = NULL,
   fitness_control = NULL
 )
 }
 \arguments{
-\item{parameters}{A \code{parameters} object, as specified
-in \code{plant}..}
-
 \item{bounds}{A set of bounds, as specified in \code{plant}.}
 
 \item{birth_rate_initial}{A vector of birth rates.}
 
-\item{hyperpar}{A plant hyperparameter function to be used when calling \code{strategy_list}}
-
 \item{fitness_control}{List of parameters controlling
 how approximate fitness landscapes are generated. See function
 \code{fitness_control} for an example.}
+
+\item{parameters}{A \code{parameters} object, as specified
+in \code{plant}..}
+
+\item{hyperpar}{A plant hyperparameter function to be used when calling \code{strategy_list}}
 }
 \value{
 An \code{community} object.
