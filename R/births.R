@@ -37,7 +37,7 @@ assembler_births_try_move <- function(obj, to_add, i) {
   ## Now, try adding the previous case back in.  First, check
   ## the fitness:
   w_prev <- test$fitness_function(x_prev)
-  if (w_prev > 0) {
+  if (w_prev > obj$control$eps_fitness_invasion) {
     ## Here, there is no need to run anything: the original
     ## resident has positive fitness and will increase
     plant_log_births("Adding original resident back")

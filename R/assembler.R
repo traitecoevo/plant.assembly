@@ -86,7 +86,7 @@ assembler_control <- function(control=NULL) {
                   ## rate (can happen!).  This should be "quite 
                   ## large", but obviously that number depends on
                   ## the situation.
-                  equilibrium_eps = 0.0001
+                  eps_fitness_invasion = 0.01
                   )
   if (identical(control[["birth_type"]], "stochastic")) {
     defaults$run_type <- "single"

@@ -14,7 +14,6 @@ First, basic setup:
 
 # Example of assembly for lma, using maxfit 
 
-
 ```{r, setup}
 library(plant)
 library(plant.assembly)
@@ -58,13 +57,18 @@ control <- assembler_control(
 # setup the assembler to start with empty community
 community0 <- 
   community_start(bounds0,
-    fitness_control = list(type = "grid", n = 50),
+    fitness_control = list(method = "bayes", npts = 40, ninit = 30),
     model_support = model_support)
+
+# community0 <- community0 |> 
+#   community_add(trait_matrix(0.04126846, "lma"), birth_rate = 185.7943) |>
+#   community_add(trait_matrix(0.21911788, "lma"), birth_rate = 5.257214) |>
+#   community_add(trait_matrix(0.11540269, "lma"), birth_rate = 47.48977)
 
 obj <- assembler_start(community0, control = control)
 
 # run assembler
-obj <- assembler_run(obj, nsteps = 20)
+obj <- assembler_run(obj, nsteps = 10)
 ```
 
 Save output
@@ -89,6 +93,7 @@ obj$community$birth_rate
 ```{r}
 library(dplyr)
 library(ggplot2)
+
 landscape <- obj$community$fitness_points
 
 ggplot(landscape, aes(lma, fitness)) + 

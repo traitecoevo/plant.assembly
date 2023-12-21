@@ -1,51 +1,38 @@
 #' Plot fitness landscape
 #'
-#' @param tidy_landscape Landscape object from tidied assembly
+#' @param community XXXX
 #' @param ... 
 #'
 #' @return community_landscape returns one plot, history_landscape returns plots length of timeseries
 #' @export
 #'
 #' @examples
-plot_landscape <- function(tidy_landscape, ...){
+plot_landscape <- function(community, step = NA, xlim = community$bounds, ylim = c(-20, 20)){
 
-  if(is_tibble(tidy_landscape)){
-    
-    ylim_max <- max(tidy_landscape$fitness)
-    ylim_min <- min(tidy_landscape$fitness)
-    ylim <- c(ylim_min, ylim_max)
-    
-    plot_landscape_internal(tidy_landscape, ylim = ylim,...) -> p
-  }
-  if(!is_tibble(tidy_landscape)){
-    
-    ylim_max <- max(map_dbl(tidy_landscape, ~max(.x)))
-    ylim_min <- min(map_dbl(tidy_landscape, ~min(.x)))
-    ylim <- c(ylim_min, ylim_max)
-    purrr::imap(tidy_landscape, ~plot_landscape_internal(tidy_landscape = .x, step = .y, ylim = ylim))-> p
-  }
-  return(p)
-}
+  trait_names <- community$trait_names
+  landscape <- community$fitness_points
+  landscape[["x"]] = landscape[[traits]]
 
-plot_landscape_internal <- function(tidy_landscape, step = NA, xlim = c(0.01, 1), ylim = c(-20, 20)){
+  data_residents <-
+    tibble(
+      x = community$traits[,trait_names], 
+      fitness = approx(landscape[[trait_names]], landscape$fitness, community$traits[, trait_names])$y
+    )
 
-  tidy_landscape %>%
-    select(-fitness, -resident) %>%
-    names() -> traits
-  
-  tidy_landscape %>%
+  p <- 
+    landscape %>%
     mutate(step = step) %>%
-    ggplot(aes_string(x = traits[1], y = "fitness")) +
+    ggplot(aes(x, fitness)) +
     geom_line() +
-    geom_point(data = tidy_landscape %>%
-                 filter(resident == TRUE), col = "red") +
+    geom_point(data = data_residents, col = "red") +
     geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
+    scale_x_log10(limits = xlim) +
     ylab("Fitness") +
+    #scale_y_continuous(limits = ylim) +
+    #ylim(ylim) +
     theme_classic() + 
     theme(text = element_text(size = 16),
-          legend.position = "none") +
-    scale_x_log10(limits = xlim) +
-    ylim(ylim) -> p
+          legend.position = "none")
   
   if(!is.na(step)){
     p +

@@ -85,39 +85,6 @@ plant_community_viable_bounds <- function(community) {
   community
 }
 
-
-##' Construct a fitness landscape.
-##'
-##' @title Fitness Landscape
-##' @param community A community object
-##' @param bounds a bounds object
-##' @param npts number of points 
-##' @author Daniel Falster
-##' @export
-community_fitness_landscape <- function(community, bounds = community$bounds, npts = community$fitness_control$n) {
-
-  if(is.null(community$fitness_function)) {
-    community <- community %>% community_run()
-  }
-  plant_log_assembler(sprintf(
-    "Calulcating fitness landscape for %d strategy communtiy, %d points", nrow(community$traits), npts))
-
-  x <- seq_log_range(bounds, npts)
-
-  # add residents
-  x <- sort(unique(c(x, community$traits)))
-
-  y <- community$fitness_function(x)
-
-  community$fitness_points <- 
-    dplyr::tibble(x = x, fitness = y) %>% 
-    mutate(resident = ifelse(x %in% community$traits, TRUE, FALSE))
-  
-  names(community$fitness_points)[1] <- community$trait_names
- 
-  community
-}
-
 plant_community_update_fitness_function <- function(community) {
   
   p <- plant_community_parameters(community)

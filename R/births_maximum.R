@@ -1,4 +1,5 @@
 community_new_types_maximum_fitness <- function(sys, control) {
+  
   ## This bit of weirdness exists so that extra information from the
   ## fitness search, such as approxiate fitness points, gets copied
   ## back so we can work with it.
@@ -8,16 +9,16 @@ community_new_types_maximum_fitness <- function(sys, control) {
     attr(ret, "done") <- TRUE
     ret
   }
-  eps_too_close <- control$eps_too_close
-  eps_positive_fitness <- control$equilibrium_eps
 
   if (is.null(sys$bounds)) {
+    ## TODO : can we delete `empty` function above
+    browser()
     return(empty(sys))
   }
 
-  ret <- find_max_fitness(sys, eps_too_close)
+  ret <- find_max_fitness(sys, control)
 
-  if (attr(ret, "fitness") < eps_positive_fitness) {
+  if (attr(ret, "fitness") < control$eps_fitness_invasion) {
     plant_log_max_fitness(paste0("Best point had nonpositive fitness: ",
                                  attr(ret, "fitness")))
     return(empty(sys, ret))
@@ -25,7 +26,7 @@ community_new_types_maximum_fitness <- function(sys, control) {
 
   if (length(sys) > 0L) {
     i <- closest_log(drop(ret), sys$traits, sys$bounds)
-    if (attr(i, "distance") < eps_too_close) {
+    if (attr(i, "distance") < control$eps_too_close) {
       plant_log_max_fitness("Best point too close to existing")
       return(empty(sys, ret))
     }
@@ -40,40 +41,41 @@ community_new_types_maximum_fitness <- function(sys, control) {
 ## * We might not have an up-to-date cohort schedule or ode times: we
 ##   want to set them.
 ## * We want to get the full approximate fitness landscape
-find_max_fitness <- function(sys, eps_too_close=1e-3) {
+find_max_fitness <- function(sys, control) {
 
   plant_log_assembler("Finding maximum in fitness landscape")
 
   bounds <- check_bounds(sys$bounds)
   if (nrow(bounds) == 1L) {
-    find_max_fitness_1D(sys, eps_too_close)
+    find_max_fitness_1D(sys, control$eps_too_close)
   } else {
-    find_max_fitness_2d(sys, eps_too_close)
+    find_max_fitness_2d(sys, control$eps_too_close)
   }
 }
 
-## NOTE: In the 1D case we don't use the optimise approach because it
-## might miss local peaks.  Instead we construct an approximate
-## landscape and look around the highest point.
+## Simple function - takes existing maximum and then runs optim. Risks missing maximum
 find_max_fitness_1D <- function(sys, eps_too_close) {
-  bounds <- check_bounds(sys$bounds, finite=TRUE)
 
+  # option 1 - use existing points
+  i <- which.max(sys$fitness_points$fitness)
+  xx <- sys$fitness_points[, 1, drop = TRUE]
+
+  # todo: option 2 - fit 1D GP and use this to find max
   # xx <- seq_log_range(sys$bounds, 500)
   # yy <- fitness_approximate(xx)
-  i <- which.max(sys$fitness_points$fitness)
 
-  xx <- sys$fitness_points[,1, drop = TRUE]
-  ## If we want to polish this point a bit, we could optimise over the
-  ## actual fitness function or the approximate; for now I'm using the
-  ## approximate as this will be much faster and the optimum should
-  ## actually lie in that range.
+  # Polish root by optnmising with actual fitness function
+  ## first find range over which to look 
   r <- xx[c(max(1, i - 1), min(i + 1, length(xx)))]
-  opt <- optimise(sys$fitness_function, r, maximum = TRUE)
+  f <- sys$fitness_function
+  
+  opt <- optimise(f, r, maximum = TRUE)
 
   ret <- trait_matrix(opt$maximum, sys$trait_names)
   attr(ret, "fitness") <- opt$objective
   ret
 }
+
 
 find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   do_fit <- function(p) {

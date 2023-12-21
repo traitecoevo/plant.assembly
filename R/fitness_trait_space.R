@@ -37,7 +37,6 @@ solve_max_fitness <- function(bounds, params, log_scale = TRUE, tol = 1e-3){
   f <- function(x) fundamental_fitness(ff(trait_matrix(x, traits)), params)
 
   ret <- solve_max_worker(bounds, f, tol = 1e-3, outcome ="fitness")
-  #browser()
   if (log_scale) {
     ret <- exp(ret)
   }
@@ -58,7 +57,6 @@ solve_max_worker <- function(bounds, f, tol=1e-3, outcome) {
     ##
     ## which is probably the desired behaviour here.
     out <- suppressWarnings(optimise(f, interval=bounds, maximum=TRUE, tol=tol))
-    # browser()
     ret <- out$maximum
     attr(ret, outcome) <- out$objective
     
@@ -136,7 +134,6 @@ max_fitness <- function(bounds, p, log_scale=TRUE, tol=1e-3) {
 ##' @export
 ##' @author Rich FitzJohn
 viable_fitness <- function(bounds, p, x=NULL, log_scale=TRUE, dx=1) {
-  # browser()
   bounds <- check_bounds(bounds)
   traits <- rownames(bounds)
   if (is.null(x)) {
