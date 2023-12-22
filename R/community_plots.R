@@ -13,17 +13,31 @@ community_plot_fitness_landscape <- function(community, label = NA, xlim = commu
   landscape <- community$fitness_points
   landscape[["x"]] = landscape[[trait_names]]
 
+  if(is.null(community$fitness_surrogate_function)) {
+    stop("No fitness surrogate function available")
+  }
+
+  x <- seq_log_range(xlim, 500)
+
+  data_fitness <-
+    tibble(
+      x = x, 
+      fitness = community$fitness_surrogate_function(x)
+    )
+
   data_residents <-
     tibble(
       x = community$traits[,trait_names], 
-      fitness = approx(landscape[[trait_names]], landscape$fitness, community$traits[, trait_names])$y
+      fitness = community$fitness_surrogate_function(community$traits[, trait_names])
+      #approx(landscape[[trait_names]], landscape$fitness, community$traits[, trait_names])$y
     )
   
   p <- 
     landscape %>%
-    ggplot(aes(x, fitness, col=batch_nr)) +
+    ggplot(aes(x, fitness)) +
     geom_point() +
-    geom_line() +
+#    geom_line(col="grey") +
+    geom_line(data= data_fitness, col="blue") +
     geom_point(data = data_residents, col = "red") +
     geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
     scale_x_log10(limits = xlim) +
