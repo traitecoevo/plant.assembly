@@ -90,30 +90,19 @@ community_fitness_landscape_bayes <- function(community, bounds = community$boun
   optimizer$optimize(instance)
 
   # Store points
+  community$bayes_archive <- instance$archive
+
   community$fitness_points <-
     instance$archive$data %>% 
     dplyr::as_tibble() %>%
     dplyr::mutate(x = exp(x)) %>%  #back transform x
-    dplyr::select(x = x, fitness = y) %>%
+    dplyr::select(x = x, fitness = y, batch_nr) %>%
     dplyr::arrange(x) %>%
     dplyr::mutate(resident = ifelse(x %in% community$traits, TRUE, FALSE))
   names(community$fitness_points)[1] <- community$trait_names
 
   # Store surrogate
-
-  community$fitness_surrogate <- function(x, se = FALSE) {
-    xdt <- data.table::data.table(x = log(x))
-    
-    surrogate_pred <- 
-      surrogate$predict(xdt) %>% 
-      dplyr::as_tibble() %>%
-      dplyr::rename(y = mean)
-    
-    if(!se)
-      surrogate_pred <- surrogate_pred[["y"]]
-
-    surrogate_pred
-  }
+  community <- community_fitness_create_surrogate(community)
 
   #community$fitness_surrogate(0.01)
   #community$fitness_function(0.01)
@@ -136,3 +125,28 @@ community_fitness_landscape_bayes <- function(community, bounds = community$boun
   community
 }
 
+community_fitness_create_surrogate <- function(community) {
+
+  community$fitness_surrogate_obj <- 
+    mlr3mbo::srlrn(mlr3::lrn("regr.km", covtype = "matern3_2", control = list(trace = FALSE)), archive = community$bayes_archive)
+
+  community$fitness_surrogate_obj$update()
+
+    
+  community$fitness_surrogate <- function(x, se = FALSE) {
+    xdt <- data.table::data.table(x = log(x))
+
+    surrogate_pred <-
+      community$fitness_surrogate_obj$predict(xdt) %>%
+      dplyr::as_tibble() %>%
+      dplyr::rename(y = mean)
+
+    if (!se) {
+      surrogate_pred <- surrogate_pred[["y"]]
+    }
+
+    surrogate_pred
+  }
+  
+  community
+}

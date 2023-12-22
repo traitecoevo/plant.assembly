@@ -107,8 +107,8 @@ Now plot.
 ```{r}
 tidied_assembly <- tidy_assembly(obj)
 
-community_landscape_plots <- plot_landscape(tidied_assembly$community_landscape)
-history_landscape_plots <- plot_landscape(tidied_assembly$history_landscape)
+community_landscape_plots <- community_plot_fitness_landscape(tidied_assembly$community_landscape)
+history_landscape_plots <- community_plot_fitness_landscape(tidied_assembly$history_landscape)
 
 # save to file
 imap(history_landscape_plots, ~ggsave(paste0("output/stochastic/stochastic_plot_history_landscape_one_trait/",.y,".png"), .x))

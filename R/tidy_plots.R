@@ -7,11 +7,11 @@
 #' @export
 #'
 #' @examples
-plot_landscape <- function(community, step = NA, xlim = community$bounds, ylim = c(-20, 20)){
+community_plot_fitness_landscape <- function(community, label = NA, xlim = community$bounds, ylim = c(-20, 20)){
 
   trait_names <- community$trait_names
   landscape <- community$fitness_points
-  landscape[["x"]] = landscape[[traits]]
+  landscape[["x"]] = landscape[[trait_names]]
 
   data_residents <-
     tibble(
@@ -21,8 +21,8 @@ plot_landscape <- function(community, step = NA, xlim = community$bounds, ylim =
 
   p <- 
     landscape %>%
-    mutate(step = step) %>%
-    ggplot(aes(x, fitness)) +
+    ggplot(aes(x, fitness, col=batch_nr)) +
+    geom_point() +
     geom_line() +
     geom_point(data = data_residents, col = "red") +
     geom_abline(intercept = 0, slope = 0, linetype = "dashed") +
@@ -34,9 +34,9 @@ plot_landscape <- function(community, step = NA, xlim = community$bounds, ylim =
     theme(text = element_text(size = 16),
           legend.position = "none")
   
-  if(!is.na(step)){
+  if(!is.na(label)){
     p +
-      geom_text(aes(x = xlim[1], y = ylim[2], label = paste0("Step = ",step), vjust = "inward", hjust = "inward"), size = 5) -> p
+      geom_text(aes(x = xlim[1], y = ylim[2], label = label, vjust = "inward", hjust = "inward"), size = 5) -> p
   }
   
   p

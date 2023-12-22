@@ -25,9 +25,10 @@ plant_log_console()
 
 # set baseline parameters
 p <- plant_default_assembly_pars()
+p$max_patch_lifetime <- 30
 
 model_support <- list(
-  p = plant_default_assembly_pars(),
+  p = p,
   plant_control = plant_default_assembly_control()
 )
 
@@ -68,7 +69,7 @@ community0 <-
 obj <- assembler_start(community0, control = control)
 
 # run assembler
-obj <- assembler_run(obj, nsteps = 10)
+obj <- assembler_run(obj, nsteps = 20)
 ```
 
 Save output
@@ -96,6 +97,8 @@ library(ggplot2)
 
 landscape <- obj$community$fitness_points
 
+community_plot_fitness_landscape(obj$community)
+
 ggplot(landscape, aes(lma, fitness)) + 
   geom_line() +
   scale_x_log10() +
@@ -107,7 +110,7 @@ Generate a history of fitness landscapes across steps, as species are introduced
 ```{r}
 assembly <- tidy_assembly(obj)
 
-fitmax_plots <- plot_landscape(assembly$history_landscape)
+fitmax_plots <- community_plot_fitness_landscape(assembly$history_landscape)
 ```
 
 
