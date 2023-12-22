@@ -17,7 +17,7 @@ community_fitness_landscape(
 
 \item{bounds}{a bounds object}
 
-\item{npts}{number of points}
+\item{n_evals}{number of points}
 }
 \description{
 Construct a fitness landscape.

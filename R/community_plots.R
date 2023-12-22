@@ -1,12 +1,12 @@
 #' Plot fitness landscape
 #'
 #' @param community XXXX
-#' @param ... 
+#' @param label XXX 
+#' @param xlim XXX
+#' @param ylim XXX
 #'
 #' @return community_landscape returns one plot, history_landscape returns plots length of timeseries
 #' @export
-#'
-#' @examples
 community_plot_fitness_landscape <- function(community, label = NA, xlim = community$bounds, ylim = c(-20, 20)){
 
   trait_names <- community$trait_names
@@ -18,7 +18,7 @@ community_plot_fitness_landscape <- function(community, label = NA, xlim = commu
       x = community$traits[,trait_names], 
       fitness = approx(landscape[[trait_names]], landscape$fitness, community$traits[, trait_names])$y
     )
-
+  
   p <- 
     landscape %>%
     ggplot(aes(x, fitness, col=batch_nr)) +
@@ -52,7 +52,6 @@ community_plot_fitness_landscape <- function(community, label = NA, xlim = commu
 #' @return Returns one plot if community of, if history, plots length of history timeseries
 #' @export
 #'
-#' @examples
 plot_community <- function(tidy_community, ...){
   if(is_tibble(tidy_community)){plot_community_1d(tidy_community, ...) -> p}
   if(!is_tibble(tidy_community)){purrr::imap(tidy_community, ~plot_community_1d(tidy_community = .x, step = .y), ...)-> p}
@@ -92,7 +91,6 @@ plot_community_1d <- function(tidy_community, step = NA, xlim = c(0.01, 1), ylim
 #' @return Returns one plot if community of, if history, plots length of history timeseries
 #' @export
 #'
-#' @examples
 plot_community_2d <- function(tidy_community, ...){
   if(is_tibble(tidy_community)){
     

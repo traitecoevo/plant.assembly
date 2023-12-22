@@ -5,7 +5,6 @@
 #' @return Returns the birth rate of the final community as well as the historical timeseries of birth rates for residents. If fitness landscapes are available, provides those as well.
 #' @export
 #'
-#' @examples
 tidy_assembly <- function(assembly){
   
   history <- tidy_history_community(assembly$history)

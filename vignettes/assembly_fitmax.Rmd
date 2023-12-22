@@ -58,7 +58,7 @@ control <- assembler_control(
 # setup the assembler to start with empty community
 community0 <- 
   community_start(bounds0,
-    fitness_control = list(method = "bayes", npts = 40, ninit = 30),
+    fitness_control = list(method = "bayesopt", n_evals = 40, n_init = 30),
     model_support = model_support)
 
 # community0 <- community0 |> 
@@ -69,7 +69,7 @@ community0 <-
 obj <- assembler_start(community0, control = control)
 
 # run assembler
-obj <- assembler_run(obj, nsteps = 20)
+obj <- assembler_run(obj, nsteps = 3)
 ```
 
 Save output
@@ -95,14 +95,7 @@ obj$community$birth_rate
 library(dplyr)
 library(ggplot2)
 
-landscape <- obj$community$fitness_points
-
 community_plot_fitness_landscape(obj$community)
-
-ggplot(landscape, aes(lma, fitness)) + 
-  geom_line() +
-  scale_x_log10() +
-  geom_point(data = tibble(lma = obj$community$traits[,1], fitness = approx(landscape$lma, landscape$fitness,  obj$community$traits[,1])$y), col="red")
 ```
 
 Generate a history of fitness landscapes across steps, as species are introduced and removed.
@@ -135,8 +128,8 @@ control <- assembler_control(
 # setup the assembler to start with empty community
 community0 <- 
   community_start(bounds0,
-    fitness_control = list(type = "gp"),
-     model_support = model_support)
+    fitness_control = list(method = "bayesopt", n_evals = 40, n_init = 30),
+    model_support = model_support)
 
 obj <- assembler_start(community0, control = control)
 

@@ -56,7 +56,7 @@ trait <- 0.04045
 community0 <-
   community_start(
     bounds(lma = c(0.01, 2)),
-    fitness_control = list(method = "grid", npts = 20),
+    fitness_control = list(method = "grid", n_evals = 20),
     model_support = model_support
   )
 

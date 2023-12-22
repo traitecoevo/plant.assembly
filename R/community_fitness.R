@@ -4,7 +4,7 @@
 ##' @param community A community object
 ##' @param method used to construct landscape
 ##' @param bounds a bounds object
-##' @param npts number of points
+##' @param n_evals number of points
 ##' @author Daniel Falster
 ##' @rdname community_fitness_landscape
 ##' @export
@@ -18,19 +18,24 @@ community_fitness_landscape <- function(community, method = community$fitness_co
   
   if(method == "grid") {
     community_fitness_landscape_grid(community, ...)
-  } else if(method == "bayes") {
-    community_fitness_landscape_bayes(community, ...)
+  } else if(method == "bayesopt") {
+    community_fitness_landscape_bayesopt(community, ...)
   } else {
     stop("Unknown fitness landscape method")
   }
 }
 
-community_fitness_landscape_grid <- function(community, bounds = community$bounds, npts = community$fitness_control$npts) {
+community_fitness_landscape_grid <- function(community, bounds = community$bounds, n_evals = community$fitness_control$n_evals) {
 
-  x <- seq_log_range(bounds, npts)
+  x <- seq_log_range(bounds, n_evals)
 
-  # add residents
-  x <- sort(unique(c(x, community$traits)))
+  # add residents - also points offset from resident to capture local gradient
+  x <- sort(unique(c(
+    x,
+    0.995 * community$traits[, 1],
+    community$traits[, 1],
+    1.005 * community$traits[, 1]
+  )))
 
   y <- community$fitness_function(x)
 
@@ -46,23 +51,19 @@ community_fitness_landscape_grid <- function(community, bounds = community$bound
 ##' Construct a fitness landscape using Bayesian optimisation.
 ## Uses the mlr3mbo package
 
-community_fitness_landscape_bayes <- function(community, bounds = community$bounds, npts = community$fitness_control$npts, ninit = community$fitness_control$ninit) {
+community_fitness_landscape_bayesopt <- function(community, bounds = community$bounds, n_evals = community$fitness_control$n_evals, n_init = community$fitness_control$n_init) {
  
   set.seed(1)
   
-  require(mlr3learners) # need this to make "regr.km" learner accessible
-
   obfun <- bbotk::ObjectiveRFun$new(
     fun = function(xs) list(community$fitness_function(exp(xs$x))),
     domain = paradox::ps(x = paradox::p_dbl(lower = log(community$bounds[1]), upper = log(community$bounds[2]))),
     codomain = paradox::ps(y = paradox::p_dbl(tags = "maximize"))
   )
 
-  surrogate <- mlr3mbo::srlrn(mlr3::lrn("regr.km", covtype = "matern3_2", control = list(trace = FALSE)))
-
   optimizer <- bbotk::opt("mbo",
     loop_function = mlr3mbo::bayesopt_ego,
-    surrogate = surrogate,
+    surrogate = fitness_surrogate_start(),
     acq_function = mlr3mbo::acqf("ei"),
     acq_optimizer = mlr3mbo::acqo(
       bbotk::opt("nloptr", algorithm = "NLOPT_GN_ORIG_DIRECT"),
@@ -72,25 +73,24 @@ community_fitness_landscape_bayes <- function(community, bounds = community$boun
 
   instance <- bbotk::OptimInstanceSingleCrit$new(
     objective = obfun,
-    terminator = bbotk::trm("evals", n_evals = npts)
+    terminator = bbotk::trm("evals", n_evals = n_evals)
   )
 
   # Initial data -- 
-  # space npts and add residents
-  x <- sort(unique(c(seq_log_range(bounds, min(ninit, npts)), community$traits)))
+  # space n_evals and add residents
+  x <- sort(unique(c(seq_log_range(bounds, min(n_init, n_evals)), 
+    0.995 * community$traits[, 1], 
+    community$traits[, 1],
+    1.005*community$traits[,1])))
 
   initial_design <- data.table::data.table(x = log(x))
   instance$eval_batch(initial_design)
-
-  ##input existing knowledge
-  #initial_design <- data.table(x = log(community$fitness_points[[1]]), y = community$fitness_points[["fitness"]], batch_nr = 1)
-  # instance$archive$data <- initial_design
 
   # run optimisation
   optimizer$optimize(instance)
 
   # Store points
-  community$bayes_archive <- instance$archive
+  community$fitness_surrogate_archive <- instance$archive
 
   community$fitness_points <-
     instance$archive$data %>% 
@@ -102,9 +102,9 @@ community_fitness_landscape_bayes <- function(community, bounds = community$boun
   names(community$fitness_points)[1] <- community$trait_names
 
   # Store surrogate
-  community <- community_fitness_create_surrogate(community)
+  community <- community_fitness_surrogate_create(community)
 
-  #community$fitness_surrogate(0.01)
+  #community$fitness_surrogate_function(0.01)
   #community$fitness_function(0.01)
   
   # # make predictions
@@ -125,19 +125,25 @@ community_fitness_landscape_bayes <- function(community, bounds = community$boun
   community
 }
 
-community_fitness_create_surrogate <- function(community) {
+fitness_surrogate_start <- function(archive = NULL) {
+  mlr3mbo::srlrn(mlr3::lrn("regr.km", covtype = "matern3_2", control = list(trace = FALSE)), archive = archive)
+}
 
-  community$fitness_surrogate_obj <- 
-    mlr3mbo::srlrn(mlr3::lrn("regr.km", covtype = "matern3_2", control = list(trace = FALSE)), archive = community$bayes_archive)
+community_fitness_surrogate_create <- function(community, 
+  archive = community$fitness_surrogate_archive) {
 
-  community$fitness_surrogate_obj$update()
+  require(mlr3learners) # need this to make "regr.km" learner accessible
+  
+  community$fitness_surrogate_object <- fitness_surrogate_start(archive)
 
+  if(!is.null(archive))
+    community$fitness_surrogate_object$update()
     
-  community$fitness_surrogate <- function(x, se = FALSE) {
+  community$fitness_surrogate_function <- function(x, se = FALSE) {
     xdt <- data.table::data.table(x = log(x))
 
     surrogate_pred <-
-      community$fitness_surrogate_obj$predict(xdt) %>%
+      community$fitness_surrogate_object$predict(xdt) %>%
       dplyr::as_tibble() %>%
       dplyr::rename(y = mean)
 
