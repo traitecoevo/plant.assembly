@@ -1,7 +1,7 @@
 Package: plant.assembly
 Title: Package for assembling communities with the plant model
 Version: 0.2
-Author: Richard G. FitzJohn and Daniel S. Falster
+Author: Daniel S. Falster and Richard G. FitzJohn
 Maintainer: Daniel S. Falster <daniel.falster@unsw.edu.au>
 Description: Assembles communities
 License: BSD_2_clause + file LICENSE
@@ -10,13 +10,14 @@ Depends:
     R (>= 4.3.0),
     dplyr,
     tidyr,
+    mlr3learners
 Imports:
     plant,
     lhs,
     mvtnorm,
     dfoptim,
     progress,
-    akima,
+#    akima,
     grader,
     ggplot2
 Suggests:
