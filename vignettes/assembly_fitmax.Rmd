@@ -75,7 +75,6 @@ obj <- assembler_run(obj, nsteps = 3)
 Save output
 ```{r}
 saveRDS(obj, "output/fitmax-lma.rds")
-
 ```
 
 ## Analysis

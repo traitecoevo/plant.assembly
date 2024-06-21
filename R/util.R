@@ -6,6 +6,9 @@ copy_attributes <- function(from, to, exclude=character(0)) {
   to
 }
 
+
+util_rbind_list <- function(x) do.call("rbind", as.list(x))
+
 ## TODO: Get some testing in here so I can drop the asserts and merge
 ## with closest2
 ##

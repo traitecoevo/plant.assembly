@@ -4,7 +4,7 @@
 \alias{tidy_assembly}
 \title{Tidies output from assembler_run.}
 \usage{
-tidy_assembly(assembly)
+tidy_assembly(obj)
 }
 \arguments{
 \item{assembly}{}

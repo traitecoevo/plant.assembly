@@ -1,5 +1,5 @@
 
-plant_default_assembly_control <- function(equilibrium_nsteps = 100,equilibrium_solver_name = "iteration") {
+plant_default_assembly_control <- function(equilibrium_nsteps = 100,solver_name = "iteration") {
   plant_control <- plant::scm_base_control()  
   plant_control$equilibrium_nsteps <- equilibrium_nsteps
   plant_control$equilibrium_solver_name <- "iteration"
@@ -159,14 +159,14 @@ plant_community_check_for_inviable_strategies <- function(community) {
   drop <- logical(length(offspring_production))
 
   for (i in test) {
-    plant:::plant_log_inviable(paste("Testing species", i),
+    plant_log_inviable(paste("Testing species", i),
       stage = "testing", species = i
     )
     x <- offspring_production
     x[i] <- eps
     res <- runner(x)
     if (res[[i]] < eps) {
-      plant:::plant_log_inviable(paste("Removing species", i),
+      plant_log_inviable(paste("Removing species", i),
         stage = "removing", species = i
       )
       drop[[i]] <- TRUE

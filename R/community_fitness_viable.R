@@ -1,3 +1,11 @@
+plant_log_viable <- function(...) {
+  plant_log_info(..., routine = "viable")
+}
+
+plant_log_inviable <- function(...) {
+  plant_log_info(..., routine = "inviable")
+}
+
 ##' Compute region of positive fitness.  This will be the values where
 ##' fitness is approximately zero.
 ##'

@@ -1,3 +1,8 @@
+plant_log_eq <- function(...) {
+  plant_log_info(..., routine = "equilibrium")
+}
+
+
 ##' Run system to offspring arrival equilibrium
 ##'
 ##' @title Run system to offspring arrival equilibrium
@@ -113,7 +118,7 @@ equilibrium_birth_rate_solve <- function(p, ctrl = scm_base_control(),
   ## NOTE: Hard coded minimum of 100 steps here.
   maxit <- max(100,
                p$control$equilibrium_nsteps)
-  sol <- nlsolve(x0, target, tol=tol, maxit=maxit, solver=solver)
+  sol <- util_nlsolve(x0, target, tol = tol, maxit = maxit, solver = solver)
   res <- equilibrium_runner_cleanup(runner, attr(sol, "converged"))
   attr(res, "sol") <- sol
   res
@@ -234,7 +239,7 @@ make_equilibrium_runner <- function(p, ctrl) {
     paste0("{", paste(prettyNum(x), collapse = collapse), "}")
   }
 
-  p <- validate(p)
+#  p <- validate(p)
 
   # default is about 10 ind.m-2
   large_offspring_arriving_change <- ctrl$equilibrium_large_birth_rate_change
@@ -321,7 +326,7 @@ equilibrium_runner_cleanup <- function(runner, converged = TRUE) {
   # but overloading the schedule times because that's what this used to do.
   p$node_schedule_times <- e$last_schedule_times
 
-  attr(p, "progress") <- rbind_list(e$history)
+  attr(p, "progress") <- util_rbind_list(e$history)
   attr(p, "converged") <- converged
   p
 }
