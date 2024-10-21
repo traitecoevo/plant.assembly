@@ -16,7 +16,7 @@ First, basic setup:
 
 ```{r, setup}
 library(plant)
-library(plant.assembly)
+#library(plant.assembly)
 devtools::load_all()
 # devtools::load_all("../plant-dev")
 
@@ -24,12 +24,9 @@ devtools::load_all()
 plant_log_console()
 
 # set baseline parameters
-p <- plant_default_assembly_pars()
-p$max_patch_lifetime <- 30
-
 model_support <- list(
-  p = p,
-  plant_control = plant_default_assembly_control()
+  p = plant_default_assembly_pars(max_patch_lifetime = 30),
+  plant_control =  plant::scm_base_control()
 )
 
 ```
@@ -69,7 +66,7 @@ community0 <-
 obj <- assembler_start(community0, control = control)
 
 # run assembler
-obj <- assembler_run(obj, nsteps = 3)
+obj <- assembler_run(obj, nsteps = 10)
 ```
 
 Save output
@@ -102,7 +99,7 @@ Generate a history of fitness landscapes across steps, as species are introduced
 ```{r}
 assembly <- tidy_assembly(obj)
 
-fitmax_plots <- community_plot_fitness_landscape(assembly$history_landscape)
+fitmax_plots <- community_plot_fitness_landscape(assembly)
 ```
 
 
@@ -140,7 +137,7 @@ saveRDS(obj, "output/fitmax-hmat.rds")
 
 # Appendix
 
-Common mixtures of lma for this distrubance regime
+Common mixtures of lma for this disturbance regime
 
          lma birth_rate
 1 0.03886086   277.2675

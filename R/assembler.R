@@ -81,6 +81,11 @@ assembler_control <- function(control=NULL) {
                    eps_too_close=1e-3,
                    min_birth_rate_initial = 1e-3,
                    max_birth_rate_initial = 500,
+                   ## demographi equilibrium
+                   equilibrium_solver_name = "iteration",
+                   equilibrium_eps = 1e-5,
+                   equilibrium_extinct_seed_rain = 1e-3,
+                   equilibrium_large_seed_rain_change = 10,
                   ## This magic number is not great, but needed to 
                   ## prevent suggesting adding 1e8 as the birth 
                   ## rate (can happen!).  This should be "quite 
@@ -91,6 +96,22 @@ assembler_control <- function(control=NULL) {
   if (identical(control[["birth_type"]], "stochastic")) {
     defaults$run_type <- "single"
   }
+
+  # Add extra pars contingent on demographic method
+  if (defaults[["equilibrium_solver_name"]] %in% c("iteration")) {
+    defaults$equilibrium_nsteps <- 100
+  }
+
+  if (defaults[["equilibrium_solver_name"]] %in% c("hybrid", "nleqslv", "dfsane")) {
+    defaults$equilibrium_solver_logN <- true
+    defaults$equilibrium_solver_try_keep <- true                  
+    defaults$equilibrium_min_offspring_arriving <- 1e-10
+  }
+
+  if (defaults[["equilibrium_solver_name"]] %in% c("hybrid")) {
+    defaults$equilibrium_nattempts <- 5
+  }
+
 
   control <- as.list(control)
   extra <- setdiff(names(control), names(defaults))
@@ -104,6 +125,7 @@ assembler_control <- function(control=NULL) {
   if (ret$birth_type == "stochastic" && is.null(ret$vcv)) {
     stop("vcv must be provided")
   }
+
   ret
 }
 

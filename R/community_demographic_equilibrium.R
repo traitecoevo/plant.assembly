@@ -13,9 +13,12 @@ plant_log_eq <- function(...) {
 ##' @export
 ##' @author Rich FitzJohn
 equilibrium_birth_rate <- function(p, ctrl) {
+  
   solver <- ctrl$equilibrium_solver_name
-  plant_log_info(sprintf("Solving offspring arrival using %s", solver),
+  plant_log_info(sprintf("Solving demographic equilibrium using %s", solver),
                  routine = "equilibrium", stage = "start", solver = solver)
+  
+  browser()
   switch(solver,
          iteration = equilibrium_birth_rate_iteration(p, ctrl = ctrl),
          hybrid = equilibrium_birth_rate_hybrid(p, ctrl = ctrl),
@@ -28,7 +31,7 @@ equilibrium_birth_rate <- function(p, ctrl) {
 ## produced as incoming offspring arrival.  No attempt at projection is made.
 equilibrium_birth_rate_iteration <- function(p, ctrl) {
   
-  check <- function(x_in, x_out, eps, verbose) {
+  check <- function(x_in, x_out, eps) {
     achange <- x_out - x_in
     rchange <- 1 - x_out / x_in
     ## eps > 0 && # <- this was a precondition - seems odd.
@@ -43,18 +46,17 @@ equilibrium_birth_rate_iteration <- function(p, ctrl) {
     converged
   }
 
-  eps <- ctrl$equilibrium_eps
-  verbose <- ctrl$equilibrium_verbose
-  
   birth_rates <- purrr::map_dbl(p$strategies, ~ purrr::pluck(., "birth_rate_y"))
 
   runner <- make_equilibrium_runner(p, ctrl = ctrl)
   
   for (i in seq_len(ctrl$equilibrium_nsteps)) {
+    message("Step ", i)
     offspring_production <- runner(birth_rates)
-    converged <- check(birth_rates, offspring_production, eps, verbose)
+    converged <- check(birth_rates, offspring_production, ctrl$equilibrium_eps)
     birth_rates <- offspring_production
     if (converged) {
+ #     browser()
       break
     }
   }
@@ -67,13 +69,13 @@ equilibrium_birth_rate_solve <- function(p, ctrl = scm_base_control(),
                                          solver="nleqslv") {
   try_keep <- ctrl$equilibrium_solver_try_keep
   logN <- ctrl$equilibrium_solver_logN
-  min_offspring_arriving <- 1e-10 # TODO: should also be in the controls?
+  min_offspring_arriving <- ctrl$min_offspring_arriving
 
   plant_log_eq(paste("Solving offspring arrival using", solver),
                stage="start", solver=solver)
 
   birth_rates <- purrr::map_dbl(p$strategies, ~ purrr::pluck(., "birth_rate_y"))
-  runner <- make_equilibrium_runner(p,ctrl =ctrl)
+  runner <- make_equilibrium_runner(p, ctrl =ctrl)
 
   ## First, we exclude species that have offspring arrivals below some minimum
   ## level.
@@ -110,8 +112,7 @@ equilibrium_birth_rate_solve <- function(p, ctrl = scm_base_control(),
   ## the solution working nicely.
   max_offspring_arriving <- pmax(birth_rates * 100, 10000)
   target <- equilibrium_birth_rate_solve_target(runner, keep, logN,
-                                               min_offspring_arriving, max_offspring_arriving,
-                                               ctrl$equilibrium_verbose)
+                                               min_offspring_arriving, max_offspring_arriving)
   x0 <- if (logN) log(birth_rates) else birth_rates
 
   tol <- ctrl$equilibrium_eps
@@ -192,8 +193,8 @@ equilibrium_birth_rate_hybrid <- function(p, ctrl) {
 
 ## Another layer of runner for the solver code:
 equilibrium_birth_rate_solve_target <- function(runner, keep, logN,
-                                               min_offspring_arriving, max_offspring_arriving,
-                                               verbose) {
+                                               min_offspring_arriving, max_offspring_arriving
+                                               ) {
   force(runner)
   force(keep)
   force(logN)

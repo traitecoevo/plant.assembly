@@ -1,10 +1,4 @@
 
-plant_default_assembly_control <- function(equilibrium_nsteps = 100,solver_name = "iteration") {
-  plant_control <- plant::scm_base_control()  
-  plant_control$equilibrium_nsteps <- equilibrium_nsteps
-  plant_control$equilibrium_solver_name <- "iteration"
-  plant_control
-}
 
 plant_default_assembly_pars <- function(hmat = 10, max_patch_lifetime = 60, fixed_RA = FALSE) {
   p <- scm_base_parameters("FF16")
@@ -149,7 +143,7 @@ plant_community_check_for_inviable_strategies <- function(community) {
   ## NOTE: We don't actually run to equilibrium here; this is just
   ## because it's a useful way of doing incoming -> outgoing offspring
   ## rain.
-  runner <- plant:::make_equilibrium_runner(p, ctrl = ctrl)
+  runner <- make_equilibrium_runner(p, ctrl = ctrl)
   offspring_production <- runner(birth_rate)
 
   test <- which(offspring_production < birth_rate &
