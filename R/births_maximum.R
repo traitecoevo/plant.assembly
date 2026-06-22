@@ -80,7 +80,7 @@ find_max_fitness_1D <- function(sys, eps_too_close) {
 find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   do_fit <- function(p) {
     f <- function(x) {
-      community_fitness(sys, trait_matrix(x, sys$trait_names))
+      sys$fitness_function(x)
     }
     fit <- maximize_logspace(f, p, sys$bounds, tol)
     ret <- trait_matrix(fit$par, sys$trait_names)

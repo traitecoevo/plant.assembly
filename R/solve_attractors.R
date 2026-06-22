@@ -142,53 +142,7 @@ community_selection_gradient <- function(community, dx=1e-04,
   community
 }
 
-##' Find point of maximum fitness in empty fitness landscape within a
-##' specified range.
-##'
-##' @title Find point of maximum fitness within some range.
-##' @param trait Name of the trait (e.g., \code{"lma"})
-##' @param bounds Two element vector specifing range within which to
-##' search
-##' @param p Parameters object to use.  Importantly, the
-##' \code{strategy_default} element gets used here.
-##' @param log_scale Is the parameter naturally on a log scale?  If
-##' so, this will greatly speed things up.
-##' @export
-##' @author Daniel Falster, Rich FitzJohn
-max_fitness <- function(trait, p, bounds=NULL, log_scale=TRUE) {
-  if(length(trait) > 1) {
-    stop("Doesn't yet support multiple traits")
-  }
-  ## These are unlikely to be very good in general.  Bounds must be
-  ## finite.
-  if (is.null(bounds)) {
-    bounds <- c(1e-5, 1e3)
-  }
-  if (log_scale) {
-    bounds <- log(bounds)
-    f <- function(x) max_growth_rate(trait, exp(x), p)
-  } else {
-    f <- function(x) max_growth_rate(trait, x, p)
-  }
-
-  out <- suppressWarnings(optimise(f, interval=bounds, maximum=TRUE, tol=1e-3))
-  structure(if (log_scale) exp(out$maximum) else out$maximum,
-            fitness=out$objective)
-}
-
-##' Compute max growth rate of a given set of values for a trait.
-##' This is the log of per-capita seed production (i.e., fitness).
-##'
-##' Only works in one dimension
-##' @title Compute Max Growth Rate
-##' @param trait Name of the trait (e.g., \code{"lma"})
-##' @param values Values to compute maximum growth rate for
-##' @param p Parameters object to use.  Importantly, the
-##' \code{strategy_default} element gets used here.
-##' @param schedule \code{CohortSchedule} to use, or \code{NULL} to
-##' generate a hopefully reasonable schedule.
-##' @author Rich FitzJohn
-##' @export
-max_growth_rate <- function(trait, values, p, schedule = NULL) {
-  fitness_landscape_empty(trait, values, p, schedule)
-}
+## NOTE: max_fitness() and max_growth_rate() now live in
+## R/community_fitness_solve_max.R, reimplemented on the community machinery.
+## The previous plant-style versions here called the removed plant
+## fitness_landscape_empty()/fundamental_fitness() and have been deleted.
