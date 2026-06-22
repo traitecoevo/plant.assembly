@@ -20,21 +20,26 @@
 ## appropriately?  We use 1 in a couple of places, no?
 community_start <- function(bounds,
                             birth_rate_initial = 1e-3,
-                            model_support = NULL,
-                            fitness_control = NULL) {
+                            demography_control = demographic_step_control(),
+                            fitness_control = NULL,
+                            model_support = NULL
+                            ) {
 
   if (is.character(bounds)) {
     bounds <-  bounds_infinite(bounds)
   }
-  ## TODO: Check parameters is empty.
-  ret <- list(bounds = check_bounds(bounds),
-              birth_rate_initial = birth_rate_initial,
-              model_support = model_support
-              )
-  ret$trait_names <- rownames(bounds)
+  
+  ret <- list(
+    bounds = check_bounds(bounds),
+    birth_rate_initial = birth_rate_initial,
+    demography_control = demography_control,
+    fitness_control = fitness_control,
+    model_support = model_support 
+  )
+  ret$trait_names = rownames(ret$bounds)
   ret$traits <- trait_matrix(numeric(0), ret$trait_names)
   ret$birth_rate <- numeric(0)
-  ret$fitness_control <- fitness_control
+  
   class(ret) <- "community"
   ret
 }
@@ -79,10 +84,10 @@ community_drop <- function(community, which) {
     keep <- !which
   } else if (is.numeric(which) || is.integer(which)) {
     which <- as.integer(which)
-    if (any(which < 1 || which > n_spp)) {
+    if (any(which < 1 | which > n_spp)) {
       stop("Invalid indicies")
     }
-    keep <- !(which %in% seq_len(n_spp))
+    keep <- !(seq_len(n_spp) %in% which)
   } else {
     stop("Invalid index")
   }
@@ -93,7 +98,7 @@ community_drop <- function(community, which) {
   }
 
   if (is.null(community$fitness_function)) {
-    community <- community %>% community_run()
+    community <- community %>% community_demography()
   }
 
   community

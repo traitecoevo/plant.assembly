@@ -11,7 +11,7 @@
 community_fitness_landscape <- function(community, method = community$fitness_control$method, ...) {
 
   if (is.null(community$fitness_function)) {
-    community <- community %>% community_run()
+    community <- community %>% community_demography()
   }
   plant_log_assembler(sprintf(
     "Calulcating fitness landscape for %d strategy communtiy using %s", nrow(community$traits), method))  

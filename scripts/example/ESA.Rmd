@@ -97,7 +97,7 @@ filename <- "output/lma/base/15-1-0.rds"
 obj <- readRDS(filename)
 control <- obj$control
 
-out <- run_scm_collect(obj$community$parameters)
+out <- run_scm(obj$community$parameters, collect = TRUE)
 
 out %>% tidy_patch()
 
@@ -157,7 +157,7 @@ community <- plant.assembly:::community_prepare_fitness(community)
 
 community2 <- plant.assembly:::community_prepare_approximate_fitness(community)
 
-community3 <- plant.assembly:::community_run_to_equilibrium(community)
+community3 <- plant.assembly:::community_demography(community)
 
 community3b <- plant.assembly:::community_prepare_approximate_fitness(community3)
 

@@ -2,32 +2,40 @@
 % Please edit documentation in R/community_fitness_viable.R
 \name{community_viable_fitness_1D}
 \alias{community_viable_fitness_1D}
-\title{Compute Region of Positive Fitness}
+\title{Compute region of positive fitness for a community}
 \usage{
-community_viable_fitness_1D(bounds, p, x = NULL, log_scale = TRUE, dx = 1)
+community_viable_fitness_1D(community, x = NULL, log_scale = TRUE, dx = 1)
 }
 \arguments{
-\item{bounds}{Matrix of bounds; two columns corresponding to the
-lower and upper limits, each row corresponds to a trait (the name
-will be used).}
+\item{community}{A \code{community} object (usually empty).}
 
-\item{p}{Parameters object to use.  Importantly, the
-\code{strategy_default} element gets used here.}
+\item{x}{Initial trait value. If \code{NULL}, the value from the default
+strategy in \code{community$model_support$p} is used.}
 
-\item{x}{Initial value - If not given, then the value from the
-default strategy within \code{p} is used.}
+\item{log_scale}{Is the trait naturally on a log scale? If so this speeds
+up the search considerably.}
 
-\item{log_scale}{Is the parameter naturally on a log scale?  If
-so, this will greatly speed things up.  Can be a vector of length
-`\code{nrow(bounds)}`}
-
-\item{dx}{Amount to step the trait.  If \code{log_scale} is
-\code{TRUE}, this is on a log scale.}
+\item{dx}{Amount to step the trait when bracketing (on the log scale when
+\code{log_scale} is \code{TRUE}).}
+}
+\value{
+A bounds matrix (\code{lower}/\code{upper} columns, one row per
+  trait), or \code{NULL} if no positive-fitness region was found.
 }
 \description{
-Compute region of positive fitness.  This will be the values where
-fitness is approximately zero.
+Compute the region of positive (fundamental) fitness for a community.
+}
+\details{
+Finds the trait range over which a strategy has positive invasion fitness
+into the community's environment. This is normally run on an *empty*
+community, in which case it is the fundamental niche: the range where a lone
+strategy can persist with no competitors.
+
+Reimplemented on the community machinery: it uses
+\code{community$fitness_function} (built by
+\code{plant_community_update_fitness_function}) as the fitness function,
+rather than the removed plant \code{fundamental_fitness()}/\code{viable_fitness()}.
 }
 \author{
-Rich FitzJohn
+Rich FitzJohn, Daniel Falster
 }

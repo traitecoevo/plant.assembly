@@ -7,7 +7,7 @@ Description: Assembles communities
 License: BSD_2_clause + file LICENSE
 LazyData: true
 Depends: 
-    R (>= 4.3.0),
+    R (>= 4.5.0),
     dplyr,
     tidyr,
     mlr3learners
@@ -17,18 +17,16 @@ Imports:
     mvtnorm,
     dfoptim,
     progress,
-    grader,
     ggplot2,
     BB,
-    nleqslv
+    nleqslv,
+    purrr
 Suggests:
     knitr,
     rmarkdown,
     testthat (>= 3.0.0),
-    paralell
-Remotes:
-    richfitz/grader
+    parallel
 VignetteBuilder: knitr
 Encoding: UTF-8
-RoxygenNote: 7.3.1
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.0.0

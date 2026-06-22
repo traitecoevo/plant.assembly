@@ -41,7 +41,7 @@ assembler_start <- function(community, control=assembler_control(control), filen
 ##' Returns a list. Passing in a list of value via \code{
 ##' control} will override the defaults. Options include
 ##' run_type determines whether population is stepped to
-##' demographic equilibrium ("to_equilibrium") or not ("single").
+##' demographic equilibrium ("to_equilibrium") or not ("single_step").
 ##' "birth_type" determines sampling of new types -- "stochastic" or
 ##' "maximum" (on fitness peak). With "stochastic" births,
 ##' "n_mutants" and "n_immigrants" determine the frequency of
@@ -81,11 +81,6 @@ assembler_control <- function(control=NULL) {
                    eps_too_close=1e-3,
                    min_birth_rate_initial = 1e-3,
                    max_birth_rate_initial = 500,
-                   ## demographi equilibrium
-                   equilibrium_solver_name = "iteration",
-                   equilibrium_eps = 1e-5,
-                   equilibrium_extinct_seed_rain = 1e-3,
-                   equilibrium_large_seed_rain_change = 10,
                   ## This magic number is not great, but needed to 
                   ## prevent suggesting adding 1e8 as the birth 
                   ## rate (can happen!).  This should be "quite 
@@ -94,24 +89,8 @@ assembler_control <- function(control=NULL) {
                   eps_fitness_invasion = 0.01
                   )
   if (identical(control[["birth_type"]], "stochastic")) {
-    defaults$run_type <- "single"
+    defaults$run_type <- "single_step"
   }
-
-  # Add extra pars contingent on demographic method
-  if (defaults[["equilibrium_solver_name"]] %in% c("iteration")) {
-    defaults$equilibrium_nsteps <- 100
-  }
-
-  if (defaults[["equilibrium_solver_name"]] %in% c("hybrid", "nleqslv", "dfsane")) {
-    defaults$equilibrium_solver_logN <- true
-    defaults$equilibrium_solver_try_keep <- true                  
-    defaults$equilibrium_min_offspring_arriving <- 1e-10
-  }
-
-  if (defaults[["equilibrium_solver_name"]] %in% c("hybrid")) {
-    defaults$equilibrium_nattempts <- 5
-  }
-
 
   control <- as.list(control)
   extra <- setdiff(names(control), names(defaults))
@@ -134,7 +113,7 @@ assembler_initialise <- function(obj, community) {
     stop("Expecting a community object")
   }
   plant_log_assembler("Starting empty assembler")
-  obj$community <- community %>% community_run()
+  obj$community <- community %>% community_demography()
   
   if (isTRUE(obj$control$compute_viable_fitness)) {
     plant_log_assembler("Computing viable bounds")
@@ -145,18 +124,6 @@ assembler_initialise <- function(obj, community) {
   obj
 }
 
-assembler_run_model <- function(obj) {
-  run_type <- obj$control$run_type
-  plant_log_assembler(sprintf("Running model (%s)", run_type))
-  plant_log_assembler_state(obj$community)
-  run <- switch(run_type,
-                single=community_run,
-                to_equilibrium=community_run_to_equilibrium,
-                stop("Unknown run type ", run_type))
-
-  obj$community <- run(obj$community)
-  obj
-}
 
 assembler_restore <- function(obj, community, prev) {
   plant_log_assembler("Restoring previous community and history")
@@ -205,7 +172,7 @@ assembler_step <- function(obj) {
                   obj$control$run_type))
   plant_log_assembler_state(obj$community)
   if (!obj$done) obj <- assembler_births(obj)
-  if (!obj$done) obj <- assembler_run_model(obj)
+  if (!obj$done) obj$community <- community_demography(obj$community)
   if (!obj$done) obj <- assembler_deaths(obj)
   assembler_append_history(obj)
 }
@@ -217,7 +184,7 @@ assembler_set_traits <- function(obj, traits, birth_rate=NULL) {
   plant_log_assembler("Setting traits")
   obj$community <- community_add(obj$community, traits, birth_rate)
   plant_log_assembler_state(obj$community)
-  obj <- assembler_run_model(obj)
+  obj$community <- community_demography(obj$community)
   obj <- assembler_deaths(obj)
   obj <- assembler_append_history(obj)
   obj

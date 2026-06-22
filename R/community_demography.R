@@ -2,34 +2,118 @@ plant_log_eq <- function(...) {
   plant_log_info(..., routine = "equilibrium")
 }
 
-
-##' Run system to offspring arrival equilibrium
+##' Controls how community assembly works.
 ##'
-##' @title Run system to offspring arrival equilibrium
-##' @param p A \code{Parameters} object
-##' @param ctrl Control object
-##' @return A Parameters object, with offspring arrival and node schedule
-##' elements set.
+##' Returns a list. Passing in a list of value via \code{
+##' control} will override the defaults. Options include
+##' run_type determines whether population is stepped to
+##' demographic equilibrium ("to_equilibrium") or not ("single_step").
+##' "birth_type" determines sampling of new types -- "stochastic" or
+##' "maximum" (on fitness peak). With "stochastic" births,
+##' "n_mutants" and "n_immigrants" determine the frequency of
+##' resident mutations and immigrations from global pool.
+##' "vcv" is variance-covariance matrix for mutations.
+##' If "birth_move_tol" is trait distance
+##' within which we attempt to move an existing resident rather introduce
+##' a new type (this helps reduce the number of types).
+##' "compute_viable_fitness" asks whether to check bounds of viable
+##' trait space. "check_positive" determines whether the fitness of an
+##' invader is checked before it is introduced. If
+##' "check_inviable" causes dead residents to be removed when birth rate
+##' drops below "dead_birth_rate".
+##' "eps_too_close" is tolerance in trait values when searching for maxima.
+##'
+##' @title Options controllings community assembly process.
+##' @param control A list of values to modify from defaults.
+##' @return A list with elements run_type, birth_type, birth_move_tol,
+##' compute_viable_fitness, n_mutants, n_immigrants, check_positive,
+##' vcv, check_inviable, dead_birth_rate, eps_too_close
+##' @author Rich FitzJohn, Daniel Falster
 ##' @export
-##' @author Rich FitzJohn
-equilibrium_birth_rate <- function(p, ctrl) {
-  
-  solver <- ctrl$equilibrium_solver_name
-  plant_log_info(sprintf("Solving demographic equilibrium using %s", solver),
-                 routine = "equilibrium", stage = "start", solver = solver)
-  
-  browser()
-  switch(solver,
-         iteration = equilibrium_birth_rate_iteration(p, ctrl = ctrl),
-         hybrid = equilibrium_birth_rate_hybrid(p, ctrl = ctrl),
-         nleqslv = equilibrium_birth_rate_solve(p, ctrl = ctrl, solver = "nleqslv"),
-         dfsane = equilibrium_birth_rate_solve(p, ctrl = ctrl, solver = "dfsane"),
-         stop("Unknown solver ", solver))
+
+demographic_step_control <- function(control=NULL) {
+
+  ## Demography / equilibrium parameters. These live on the community in
+  ## community$demography_control. (The plant SCM control() lives separately in
+  ## community$model_support$plant_control and is passed to run_scm().)
+  ##
+  ## Note: plant renamed "seed_rain" -> "birth_rate"/"offspring"; the names here
+  ## follow the current plant terminology.
+  defaults <- list(
+    # which solver community_demography() dispatches to:
+    #   "single_step", "equilibrium_iteration",
+    #   "equilibrium_solve_nleqslv", "equilibrium_solve_dfsane",
+    #   "equilibrium_hybrid"
+    equilibrium_solver_name = "equilibrium_iteration",
+    equilibrium_eps = 1e-5,
+    # iteration solver
+    equilibrium_nsteps = 100,
+    # runner: reset the integration schedule when birth rates jump more than this
+    equilibrium_large_birth_rate_change = 10,
+    # birth rate below which a species is treated as extinct
+    equilibrium_extinct_birth_rate = 1e-3,
+    # root-finding solvers (nleqslv / dfsane)
+    equilibrium_min_offspring_arriving = 1e-10,
+    equilibrium_solver_logN = TRUE,
+    equilibrium_solver_try_keep = TRUE,
+    # hybrid solver
+    equilibrium_nattempts = 5
+  )
+
+  control <- as.list(control)
+  extra <- setdiff(names(control), names(defaults))
+  if (length(extra) > 0L) {
+    stop("Unknown control parameters ", paste(extra, collapse=", "))
+  }
+  ret <- modifyList(defaults, control)
+
+  ret
 }
 
-## This is the simplest solver: it simply iterates the outgoing offspring
+##' Update demography of community according to specified rules
+##'
+##' @title Update demography of community
+##' @param community A \code{community} object.
+##' @return  A \code{community} object.
+##' @export
+##' @author Rich FitzJohn, Daniel Falster
+community_demography <- function(community){
+
+  solver <- community$demography_control$equilibrium_solver_name
+
+  plant_log_assembler(sprintf("Updating demography using %s", solver))
+  plant_log_assembler_state(community)
+  
+  if(nrow(community$traits) > 0L) {
+    community <- 
+      switch(solver,
+         single_step = demography_single_step(community),
+         equilibrium_iteration = demography_solve_equilibrium_iteration(community),
+         equilibrium_hybrid = demography_solve_equilibrium_hybrid(community),
+         equilibrium_solve_nleqslv = demography_solve_equilibrium_solve(community, solver = "nleqslv"),
+         equilibrium_solve_dfsane = demography_solve_equilibrium_solve(community, solver = "dfsane"),
+         stop("Unknown solver ", solver))
+    ## community is now the updated community returned by the solver via
+    ## community_demography_runner_cleanup() (birth_rate, schedule times and
+    ## fitness_points are all set there).
+  }
+
+  plant_community_update_fitness_function(community)
+}
+
+## This is the simplest update: it simply takes a single step
+demography_single_step <- function(community) {
+
+  runner <- community_make_demography_runner(community)
+  ## A single step always "converges" (no iteration to assess).
+  runner(community$birth_rate)
+  community_demography_runner_cleanup(community, runner, converged = TRUE)
+}
+
+  
+## This is the simplest equilbrium solver: it simply iterates the outgoing offspring
 ## produced as incoming offspring arrival.  No attempt at projection is made.
-equilibrium_birth_rate_iteration <- function(p, ctrl) {
+demography_solve_equilibrium_iteration <- function(community) {
   
   check <- function(x_in, x_out, eps) {
     achange <- x_out - x_in
@@ -46,9 +130,10 @@ equilibrium_birth_rate_iteration <- function(p, ctrl) {
     converged
   }
 
-  birth_rates <- purrr::map_dbl(p$strategies, ~ purrr::pluck(., "birth_rate_y"))
+  ctrl <- community$demography_control
+  birth_rates <- community$birth_rate
 
-  runner <- make_equilibrium_runner(p, ctrl = ctrl)
+  runner <- community_make_demography_runner(community)
   
   for (i in seq_len(ctrl$equilibrium_nsteps)) {
     message("Step ", i)
@@ -56,26 +141,26 @@ equilibrium_birth_rate_iteration <- function(p, ctrl) {
     converged <- check(birth_rates, offspring_production, ctrl$equilibrium_eps)
     birth_rates <- offspring_production
     if (converged) {
- #     browser()
       break
     }
   }
 
-  # TODO: revisit 'gross' behaviour in cleanup utility
-  equilibrium_runner_cleanup(runner, converged)
+  community_demography_runner_cleanup(community, runner, converged)
 }
 
-equilibrium_birth_rate_solve <- function(p, ctrl = scm_base_control(),
+demography_solve_equilibrium_solve <- function(community,
                                          solver="nleqslv") {
+  ctrl <- community$demography_control
+  
   try_keep <- ctrl$equilibrium_solver_try_keep
   logN <- ctrl$equilibrium_solver_logN
-  min_offspring_arriving <- ctrl$min_offspring_arriving
+  min_offspring_arriving <- ctrl$equilibrium_min_offspring_arriving
 
   plant_log_eq(paste("Solving offspring arrival using", solver),
                stage="start", solver=solver)
 
-  birth_rates <- purrr::map_dbl(p$strategies, ~ purrr::pluck(., "birth_rate_y"))
-  runner <- make_equilibrium_runner(p, ctrl =ctrl)
+  birth_rates <- community$birth_rate
+  runner <- community_make_demography_runner(community)
 
   ## First, we exclude species that have offspring arrivals below some minimum
   ## level.
@@ -105,22 +190,23 @@ equilibrium_birth_rate_solve <- function(p, ctrl = scm_base_control(),
                    paste(which(!to_drop)[keep], collapse=", "))
     plant_log_eq(msg, stage="keep species", keep=which(!to_drop)[keep])
   } else {
-    keep <- rep(FALSE, length(p$strategies))
+    keep <- rep(FALSE, length(birth_rates))
   }
 
   ## TODO: This is annoying, but turns out to be a problem for getting
   ## the solution working nicely.
   max_offspring_arriving <- pmax(birth_rates * 100, 10000)
-  target <- equilibrium_birth_rate_solve_target(runner, keep, logN,
+  target <- demography_solve_equilibrium_solve_target(runner, keep, logN,
                                                min_offspring_arriving, max_offspring_arriving)
   x0 <- if (logN) log(birth_rates) else birth_rates
 
   tol <- ctrl$equilibrium_eps
   ## NOTE: Hard coded minimum of 100 steps here.
-  maxit <- max(100,
-               p$control$equilibrium_nsteps)
+  maxit <- max(100, ctrl$equilibrium_nsteps)
   sol <- util_nlsolve(x0, target, tol = tol, maxit = maxit, solver = solver)
-  res <- equilibrium_runner_cleanup(runner, attr(sol, "converged"))
+  
+  res <- community_demography_runner_cleanup(community, runner, attr(sol, "converged"))
+  
   attr(res, "sol") <- sol
   res
 }
@@ -132,22 +218,25 @@ equilibrium_birth_rate_solve <- function(p, ctrl = scm_base_control(),
 ## will happily select zero offspring arrivals for species that are not
 ## zeros.  So after running a round with the solver, check any species
 ## that were zeroed to make sure they're really dead.
-equilibrium_birth_rate_hybrid <- function(p, ctrl) {
+demography_solve_equilibrium_hybrid <- function(community) {
+
+  ctrl <- community$demography_control
+  
   attempts <- ctrl$equilibrium_nattempts
 
   ## Then expand this out so that we can try alternating solvers
   solver <- rep(c("nleqslv", "dfsane"), length.out=attempts)
 
   for (i in seq_len(attempts)) {
-    eq_solution_iteration <- equilibrium_birth_rate_iteration(p, ctrl = ctrl)
+    eq_solution_iteration <- demography_solve_equilibrium_iteration(community)
     
     converged_it <- isTRUE(attr(eq_solution_iteration, "converged"))
     msg <- sprintf("Iteration %d %s",
                    i, if (converged_it) "converged" else "did not converge")
-    plant_log_eq(msg, step="iteration", converged = converged_it, iteration=i)
+    plant_log_eq(msg, step="equilibrium_iteration", converged = converged_it, iteration=i)
 
     eq_solution <- try(
-      equilibrium_birth_rate_solve(
+      demography_solve_equilibrium_solve(
         eq_solution_iteration, 
         ctrl = ctrl, 
         solver = solver[[i]]
@@ -187,12 +276,12 @@ equilibrium_birth_rate_hybrid <- function(p, ctrl) {
   }
 
   ## This one should be a warning?
-  plant_log_eq("Repeated rounds failed to find optimum; returning solution from equilibrium_birth_rate_iteration")
+  plant_log_eq("Repeated rounds failed to find optimum; returning solution from demography_solve_equilibrium_iteration")
   return(eq_solution_iteration)
 }
 
 ## Another layer of runner for the solver code:
-equilibrium_birth_rate_solve_target <- function(runner, keep, logN,
+demography_solve_equilibrium_solve_target <- function(runner, keep, logN,
                                                min_offspring_arriving, max_offspring_arriving
                                                ) {
   force(runner)
@@ -232,102 +321,4 @@ equilibrium_birth_rate_solve_target <- function(runner, keep, logN,
     }
     xout
   }
-}
-
-## Support code:
-make_equilibrium_runner <- function(p, ctrl) {
-  pretty_num_collapse <- function(x, collapse = ", ") {
-    paste0("{", paste(prettyNum(x), collapse = collapse), "}")
-  }
-
-#  p <- validate(p)
-
-  # default is about 10 ind.m-2
-  large_offspring_arriving_change <- ctrl$equilibrium_large_birth_rate_change
-
-  # traverse list of strategies and pull birth_rates
-  last_arrival_rates <- purrr::map_dbl(
-    p$strategies,
-    ~ purrr::pluck(., "birth_rate_y")
-  )
-
-  default_schedule_times <- rep(
-    list(p$node_schedule_times_default),
-    length(last_arrival_rates)
-  )
-
-  last_schedule_times <- p$node_schedule_times
-  history <- NULL
-  counter <- 1L
-
-  function(birth_rates) {
-    # if a runner has diverged significantly in the last iteration then
-    # reset the schedule to it's defaults and rebuild
-    if (any(abs(birth_rates - last_arrival_rates) > large_offspring_arriving_change)) {
-      p$node_schedule_times <- default_schedule_times
-    }
-
-    # set birth rates
-    for (i in seq_along(p$strategies)) {
-      p$strategies[[i]]$birth_rate_y <- birth_rates[i]
-    }
-
-    # update schedule - starts from prev. schedule so should be fast for fine scale resolution
-    p_new <- build_schedule(p, ctrl = ctrl)
-
-    # TODO: change behaviour of `build_schedule` to objects rather than attributes
-    offspring_production <- attr(p_new, "offspring_production", exact = TRUE)
-
-
-    # (ANDREW) Double arrow modifies counter in parent environment..
-    # I don't love this approach to counting, as it introduces a side effect
-    # to an otherwise functional programming design
-
-    ## These all write up to the containing environment:
-    p <<- p_new
-    last_schedule_times <<- p_new$node_schedule_times
-    history <<- c(history, list(c("in" = birth_rates, "out" = offspring_production)))
-
-    msg <- sprintf(
-      "eq> %d: %s -> %s (delta = %s)", counter,
-      pretty_num_collapse(birth_rates),
-      pretty_num_collapse(offspring_production),
-      pretty_num_collapse(offspring_production - birth_rates)
-    )
-    plant_log_eq(msg,
-      stage = "runner",
-      iteration = counter,
-      birth_rate = birth_rates,
-      offspring_production = offspring_production
-    )
-
-
-    counter <<- counter + 1L
-
-    # TODO: check why returning node schedule as an attribute
-    # attr(offspring_production, "schedule_times") <- last_schedule_times
-
-    offspring_production
-  }
-}
-
-equilibrium_runner_cleanup <- function(runner, converged = TRUE) {
-  # this pulls the history of the runner from the parent environment
-  e <- environment(runner)
-  if (is.function(e$runner_full)) {
-    runner <- e$runner_full
-    e <- environment(runner)
-  }
-
-  # the final solution has a recently built integration schedule
-  p <- e$p
-
-  # ANDREW:
-  # I'm pretty sure this `p` has already been through `build_schedule`
-  # but overloading the schedule times because that's what this used to do.
-  p$node_schedule_times <- e$last_schedule_times
-
-  attr(p, "progress") <- util_rbind_list(e$history)
-  attr(p, "converged") <- converged
-  p
 }

@@ -58,7 +58,7 @@ plant_log_console()
 
 # set controls on plant package
 plant_control <- function() {
-  ctrl <- scm_base_control()
+  ctrl <- control()
   ctrl$equilibrium_nsteps <- 20
   ctrl$equilibrium_solver_name <- "hybrid"
   ctrl
@@ -71,7 +71,7 @@ p0$strategy_default$a_l2 <- 0.5
 p0$strategy_default$hmat <- 10
 p0$max_patch_lifetime <- 60
 
-ctrl <- scm_base_control()
+ctrl <- control()
 ctrl$save_RK45_cache <- T
 
 ```
@@ -94,7 +94,7 @@ community <-
   # Add a startegy specified by it's trait value
   community_add(trait_matrix(trait, "lma")) %>%
   # solve euqilibrium density
-  community_run_to_equilibrium()
+  community_demography()
 
 p <- community_parameters(community)
 ```
@@ -574,7 +574,7 @@ community_eq <-
   # Add a startegy specified by it's trait value
   community_add(trait_matrix(traits, c("lma"))) %>%
   # solve euqilibrium density
-  community_run_to_equilibrium() %>%
+  community_demography() %>%
   # calculate fitness gradient
   community_selection_gradient()
 
@@ -592,7 +592,7 @@ make_f <- function(community0) {
       # Add a startegy specified by it's trait value
       community_add(trait_matrix(exp(x), c("lma")), birth_rate = birth_rate) %>%
       # solve euqilibrium density
-      community_run_to_equilibrium() %>%
+      community_demography() %>%
       # calculate fitness gradient
       community_selection_gradient()
 

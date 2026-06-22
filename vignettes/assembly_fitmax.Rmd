@@ -23,12 +23,6 @@ devtools::load_all()
 # logging of output
 plant_log_console()
 
-# set baseline parameters
-model_support <- list(
-  p = plant_default_assembly_pars(max_patch_lifetime = 30),
-  plant_control =  plant::scm_base_control()
-)
-
 ```
 
 
@@ -39,9 +33,6 @@ Now let's run the assembly for a single trait
 ## Assembly
 
 ```{r}
-# Set absolute bounds
-bounds0 <- bounds(lma = c(0.01, 2))
-
 # set controls on assembly
 control <- assembler_control(
   list(
@@ -54,9 +45,14 @@ control <- assembler_control(
 
 # setup the assembler to start with empty community
 community0 <- 
-  community_start(bounds0,
-    fitness_control = list(method = "bayesopt", n_evals = 40, n_init = 30),
-    model_support = model_support)
+  community_start(
+    bounds = bounds(lma = c(0.01, 2)),
+    fitness_control = list(method = "bayesopt", n_evals = 10, n_init = 5),
+    demography_control = demographic_step_control(list(equilibrium_solver_name ="equilibrium_iteration", equilibrium_nsteps = 10)),
+    model_support = list(
+      p = plant_default_assembly_pars(max_patch_lifetime = 30),
+      plant_control =  plant::control())
+    )
 
 # community0 <- community0 |> 
 #   community_add(trait_matrix(0.04126846, "lma"), birth_rate = 185.7943) |>
@@ -66,7 +62,7 @@ community0 <-
 obj <- assembler_start(community0, control = control)
 
 # run assembler
-obj <- assembler_run(obj, nsteps = 10)
+obj2 <- assembler_run(obj, nsteps = 10)
 ```
 
 Save output
