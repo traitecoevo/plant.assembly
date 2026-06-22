@@ -23,7 +23,7 @@ a community with selection gradient added.
 Adds selection gradient to a single-species community
 with given trait value. This is derivative of fitness
 with respect to trait value. You should first solv for
-using \code{community_run_to_equilibrium}
+using \code{community_demography}
 }
 \author{
 Daniel Falster

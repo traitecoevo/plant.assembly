@@ -16,21 +16,12 @@ First, basic setup:
 
 ```{r, setup}
 library(plant)
-library(plant.assembly)
+#library(plant.assembly)
 devtools::load_all()
 # devtools::load_all("../plant-dev")
 
 # logging of output
 plant_log_console()
-
-# set baseline parameters
-p <- plant_default_assembly_pars()
-p$max_patch_lifetime <- 30
-
-model_support <- list(
-  p = p,
-  plant_control = plant_default_assembly_control()
-)
 
 ```
 
@@ -42,9 +33,6 @@ Now let's run the assembly for a single trait
 ## Assembly
 
 ```{r}
-# Set absolute bounds
-bounds0 <- bounds(lma = c(0.01, 2))
-
 # set controls on assembly
 control <- assembler_control(
   list(
@@ -57,9 +45,14 @@ control <- assembler_control(
 
 # setup the assembler to start with empty community
 community0 <- 
-  community_start(bounds0,
-    fitness_control = list(method = "bayesopt", n_evals = 40, n_init = 30),
-    model_support = model_support)
+  community_start(
+    bounds = bounds(lma = c(0.01, 2)),
+    fitness_control = list(method = "bayesopt", n_evals = 10, n_init = 5),
+    demography_control = demographic_step_control(list(equilibrium_solver_name ="equilibrium_iteration", equilibrium_nsteps = 10)),
+    model_support = list(
+      p = plant_default_assembly_pars(max_patch_lifetime = 30),
+      plant_control =  plant::control())
+    )
 
 # community0 <- community0 |> 
 #   community_add(trait_matrix(0.04126846, "lma"), birth_rate = 185.7943) |>
@@ -69,13 +62,12 @@ community0 <-
 obj <- assembler_start(community0, control = control)
 
 # run assembler
-obj <- assembler_run(obj, nsteps = 3)
+obj2 <- assembler_run(obj, nsteps = 10)
 ```
 
 Save output
 ```{r}
 saveRDS(obj, "output/fitmax-lma.rds")
-
 ```
 
 ## Analysis
@@ -103,7 +95,7 @@ Generate a history of fitness landscapes across steps, as species are introduced
 ```{r}
 assembly <- tidy_assembly(obj)
 
-fitmax_plots <- community_plot_fitness_landscape(assembly$history_landscape)
+fitmax_plots <- community_plot_fitness_landscape(assembly)
 ```
 
 
@@ -141,7 +133,7 @@ saveRDS(obj, "output/fitmax-hmat.rds")
 
 # Appendix
 
-Common mixtures of lma for this distrubance regime
+Common mixtures of lma for this disturbance regime
 
          lma birth_rate
 1 0.03886086   277.2675

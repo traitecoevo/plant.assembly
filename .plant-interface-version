@@ -1,0 +1,12 @@
+migrated_on: 2026-06-23
+plant_ref: develop (post-#459; build_schedule/run_scm_collect/scm_base_control removed)
+applied_breaking_changes:
+  - scm-consolidation        # build_schedule -> run_scm(refine_schedule=TRUE); run_scm_collect -> run_scm(collect=TRUE)
+  - control-defaults         # scm_base_control() -> control(); fast settings now the Control() default
+notes: >-
+  run_scm() call sites already used named args, so the arg-order change needed
+  no edits. The build_schedule() site in R/community_plant.R relied on
+  attr(p_new, "offspring_production"); migrated to read scm$parameters and
+  scm$offspring_production off the SCM object. Migrated expressions verified
+  against installed plant; full test suite not run (missing `grader` dependency,
+  pre-existing on this WIP branch).

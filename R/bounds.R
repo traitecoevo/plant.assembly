@@ -17,7 +17,7 @@ bounds <- function(...) {
   if (is.null(names(x)) || any(names(x) == "")) {
     stop("All elements must be named")
   }
-  ret <- rbind_list(x)
+  ret <- util_rbind_list(x)
   colnames(ret) <- c("lower", "upper")
   ret
 }

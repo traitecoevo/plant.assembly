@@ -32,7 +32,7 @@ assembler_births_try_move <- function(obj, to_add, i) {
 
   test <- community
   test$traits[i, ] <- to_add
-  test <- community_run_to_equilibrium(test)
+  test <- community_demography(test)
 
   ## Now, try adding the previous case back in.  First, check
   ## the fitness:
@@ -66,7 +66,7 @@ community_new_types <- function(community, control) {
 
 ## First order birth rate approximation based on fitness.
 initial_birth_rate <- function(fitness, obj) {
-  if (is.null(fitness) || obj$control$run_type == "single") {
+  if (is.null(fitness) || obj$control$run_type == "single_step") {
     birth_rate <- NULL
   } else {
     birth_rate <- pmin(exp(fitness), obj$control$max_birth_rate_initial)

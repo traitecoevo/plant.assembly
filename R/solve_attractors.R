@@ -29,7 +29,7 @@ community_solve_singularity_1D <- function(community, bounds = NULL, tol = 1e-04
     out <- 
       community %>%
       community_add(trait_matrix(x, community$trait_names)) %>%
-      community_run_to_equilibrium() %>%
+      community_demography() %>%
       community_selection_gradient()
     
     ret <- out$selection_gradient
@@ -92,7 +92,7 @@ community_solve_singularity_1D <- function(community, bounds = NULL, tol = 1e-04
 #' Adds selection gradient to a single-species community
 #' with given trait value. This is derivative of fitness
 #' with respect to trait value. You should first solv for
-#' using \code{community_run_to_equilibrium}
+#' using \code{community_demography}
 #' @param community community object to use. 
 #' @param dx Interval over which derivative is calculated
 #' @param log_scale (currently disabled) Determines whether derivative is taken
@@ -112,7 +112,7 @@ community_selection_gradient <- function(community, dx=1e-04,
   
   trait_names <- community$trait_names
   # get points needed for gradient
-  points <- grader:::gradient_points(community$traits, d = dx, r = 1)
+  points <- gradient_points(community$traits, d = dx, r = 1)
  
   # bind on current traits so we can return current fitness too
   xx <- 
@@ -128,7 +128,7 @@ community_selection_gradient <- function(community, dx=1e-04,
   y <- ff[-1]  
   dim(y) <- attr(points, "dim_y")
   # caluclate gradient using forward difference
-  ret <- grader:::gradient_extrapolate(y, points)
+  ret <- gradient_extrapolate(y, points)
 
   msg <- sprintf("Solved! Selection gradient for [%s] = [%s] is [%s]", 
     paste(community$trait_names, collapse = ", "), 

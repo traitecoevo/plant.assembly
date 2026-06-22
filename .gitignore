@@ -5,3 +5,6 @@ inst/doc
 *.rds
 .Rproj.user
 %
+
+# Claude Code personal settings
+.claude/settings.local.json

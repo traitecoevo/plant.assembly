@@ -8,8 +8,6 @@ plot_community_2d(tidy_community, ...)
 }
 \arguments{
 \item{tidy_community}{Community or history object from tidied assembly with two traits}
-
-\item{...}{}
 }
 \value{
 Returns one plot if community of, if history, plots length of history timeseries

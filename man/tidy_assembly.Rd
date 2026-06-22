@@ -2,16 +2,16 @@
 % Please edit documentation in R/tidy_output.R
 \name{tidy_assembly}
 \alias{tidy_assembly}
-\title{Tidies output from assembler_run.}
+\title{Tidies output from assembler_run into tidy dataframe.}
 \usage{
-tidy_assembly(assembly)
+tidy_assembly(obj)
 }
 \arguments{
-\item{assembly}{}
+\item{obj}{ouytput of an assembly run}
 }
 \value{
-Returns the birth rate of the final community as well as the historical timeseries of birth rates for residents. If fitness landscapes are available, provides those as well.
+A tibble of the assembly
 }
 \description{
-Tidies output from assembler_run.
+Tidies output from assembler_run into tidy dataframe.
 }

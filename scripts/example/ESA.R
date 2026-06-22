@@ -1,10 +1,10 @@
 # Establish baseline parameters
 plant_control <- function() {
-  ctrl <- scm_base_control()
+  ctrl <- control()
   #  ctrl$equilibrium_nsteps <- 20
   #  ctrl$equilibrium_solver_name <- "hybrid"
   ctrl$equilibrium_nsteps <- 20
-  ctrl$equilibrium_solver_name <- "iteration"
+  ctrl$equilibrium_solver_name <- "equilibrium_iteration"
   ctrl
 }
 
@@ -24,7 +24,7 @@ f_assemble <- function(trait, disturbance_interval,
       "; B_lf1 = ", B_lf1,"; saving to ", filename))
 
   # Establish baseline parameters
-  ctrl_plant <- scm_base_control()
+  ctrl_plant <- control()
   p <- scm_base_parameters("FF16")
   p$strategy_default$a_l1 <- 2.17
   p$strategy_default$a_l2 <- 0.5

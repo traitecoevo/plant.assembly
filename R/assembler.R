@@ -41,7 +41,7 @@ assembler_start <- function(community, control=assembler_control(control), filen
 ##' Returns a list. Passing in a list of value via \code{
 ##' control} will override the defaults. Options include
 ##' run_type determines whether population is stepped to
-##' demographic equilibrium ("to_equilibrium") or not ("single").
+##' demographic equilibrium ("to_equilibrium") or not ("single_step").
 ##' "birth_type" determines sampling of new types -- "stochastic" or
 ##' "maximum" (on fitness peak). With "stochastic" births,
 ##' "n_mutants" and "n_immigrants" determine the frequency of
@@ -89,7 +89,7 @@ assembler_control <- function(control=NULL) {
                   eps_fitness_invasion = 0.01
                   )
   if (identical(control[["birth_type"]], "stochastic")) {
-    defaults$run_type <- "single"
+    defaults$run_type <- "single_step"
   }
 
   control <- as.list(control)
@@ -104,6 +104,7 @@ assembler_control <- function(control=NULL) {
   if (ret$birth_type == "stochastic" && is.null(ret$vcv)) {
     stop("vcv must be provided")
   }
+
   ret
 }
 
@@ -112,7 +113,7 @@ assembler_initialise <- function(obj, community) {
     stop("Expecting a community object")
   }
   plant_log_assembler("Starting empty assembler")
-  obj$community <- community %>% community_run()
+  obj$community <- community %>% community_demography()
   
   if (isTRUE(obj$control$compute_viable_fitness)) {
     plant_log_assembler("Computing viable bounds")
@@ -123,18 +124,6 @@ assembler_initialise <- function(obj, community) {
   obj
 }
 
-assembler_run_model <- function(obj) {
-  run_type <- obj$control$run_type
-  plant_log_assembler(sprintf("Running model (%s)", run_type))
-  plant_log_assembler_state(obj$community)
-  run <- switch(run_type,
-                single=community_run,
-                to_equilibrium=community_run_to_equilibrium,
-                stop("Unknown run type ", run_type))
-
-  obj$community <- run(obj$community)
-  obj
-}
 
 assembler_restore <- function(obj, community, prev) {
   plant_log_assembler("Restoring previous community and history")
@@ -183,7 +172,7 @@ assembler_step <- function(obj) {
                   obj$control$run_type))
   plant_log_assembler_state(obj$community)
   if (!obj$done) obj <- assembler_births(obj)
-  if (!obj$done) obj <- assembler_run_model(obj)
+  if (!obj$done) obj$community <- community_demography(obj$community)
   if (!obj$done) obj <- assembler_deaths(obj)
   assembler_append_history(obj)
 }
@@ -195,7 +184,7 @@ assembler_set_traits <- function(obj, traits, birth_rate=NULL) {
   plant_log_assembler("Setting traits")
   obj$community <- community_add(obj$community, traits, birth_rate)
   plant_log_assembler_state(obj$community)
-  obj <- assembler_run_model(obj)
+  obj$community <- community_demography(obj$community)
   obj <- assembler_deaths(obj)
   obj <- assembler_append_history(obj)
   obj

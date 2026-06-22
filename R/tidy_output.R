@@ -1,68 +1,32 @@
-#' Tidies output from assembler_run.
+#' Tidies output from assembler_run into tidy dataframe.
 #'
-#' @param assembly 
+#' @param obj ouytput of an assembly run
 #'
-#' @return Returns the birth rate of the final community as well as the historical timeseries of birth rates for residents. If fitness landscapes are available, provides those as well.
+#' @return A tibble of the assembly
 #' @export
 #'
-tidy_assembly <- function(assembly){
-  
-  history <- tidy_history_community(assembly$history)
-  community <- tidy_community(assembly$community)
-  history_landscape <- NA
-  community_landscape <- NA
-  if(!is.null(assembly$community$fitness_points)){
-    history_landscape <- tidy_landscape(assembly$history)
-    community_landscape <- tidy_landscape(assembly$community)
-    
-    community_landscape <- community_landscape %>%
-      dplyr::mutate(resident = ifelse(community_landscape$lma %in% community$lma, TRUE, FALSE)) 
-    
-    history_landscape <- purrr::map2(history_landscape, history, ~.x %>%
-                                dplyr::mutate(resident = ifelse(.x$lma %in% .y$lma, TRUE, FALSE)))
-  }
-  
-  
-  tidied_assembly = list(history = history,
-                         community = community,
-                         history_landscape = history_landscape,
-                         community_landscape = community_landscape)
-  return(tidied_assembly)
+tidy_assembly <- function(obj){
+  obj$history %>%
+    purrr::map(tidy_community) %>%
+    dplyr::bind_rows(.id = "step") %>%
+    mutate(strategy_id = strategy_id %>% as.factor() %>% as.character())
 }
 
 tidy_community <- function(community){
-  dplyr::tibble(community$traits %>% as_tibble(), 
-         births = community$birth_rate,
-         resident = TRUE)
-}
+  
+  out <- community$traits %>% dplyr::as_tibble()
+  
+  traits <- names(out)
 
-tidy_history_community <- function(community_history){
-  out <- purrr::map(community_history, tidy_community)
-  
-  out[[1]] %>%
-    dplyr::select(-births, -resident) %>%
-    names() -> traits
-
-  
-  for(i in seq_along(out)){
-    if(i == 1){
-      out[[i]] <- out[[i]] %>%
-        dplyr::mutate(resident = FALSE)
-    } else{
-      trait_previous <- out[[i - 1]] %>%
-        dplyr::unite(trait_whole, any_of(traits))
-      
-      trait_current <- out[[i]] %>%
-        dplyr::unite(trait_whole, any_of(traits))
-      
-      out[[i]] <- out[[i]] %>%
-        dplyr::mutate(resident = ifelse(trait_current$trait_whole %in% trait_previous$trait_whole,
-                                TRUE, FALSE))
-    }
-    
-  }
-  
-  
-  out
+  out %>%
+    dplyr::mutate(
+      resident = TRUE,
+      births = community$birth_rate
+    ) %>%
+    tidyr::unite("strategy_id", any_of(traits), remove = FALSE) %>%
+    tidyr::nest(data = dplyr::any_of(traits)) %>%
+    dplyr::rename("traits" = data) %>%
+    dplyr::mutate(fitness_landscape = list(community$fitness_points)) %>%
+    relocate(strategy_id, .before = resident)
 }
 
