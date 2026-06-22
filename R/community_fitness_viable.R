@@ -55,7 +55,7 @@ community_viable_fitness_1D <- function(community, x = NULL,
 
   if (w < 0) {
     plant_log_viable("Starting value had negative fitness, looking for max")
-    x <- community_max_fitness_1D(fitness, bounds, log_scale)
+    x <- max_fitness(community, bounds = bounds, log_scale = log_scale)
     w <- attr(x, "fitness")
     plant_log_viable(sprintf("\t...found max fitness at %s (w=%2.5f)",
                              paste(formatC(x), collapse = ", "), w))
@@ -82,29 +82,6 @@ community_viable_fitness_1D <- function(community, x = NULL,
   }
   colnames(ret) <- c("lower", "upper")
   rownames(ret) <- traits
-  ret
-}
-
-## 1D maximisation of a fitness function over `bounds`, used when the default
-## starting point has negative fitness. Operates directly on the community
-## fitness function (no dependency on the removed plant max_fitness()).
-community_max_fitness_1D <- function(fitness, bounds, log_scale = TRUE) {
-  if (log_scale) {
-    bounds[bounds[, 1] == -Inf, 1] <- 0
-    b <- log(bounds)
-    f <- function(z) fitness(exp(z))
-  } else {
-    b <- bounds
-    f <- function(z) fitness(z)
-  }
-  if (!all(is.finite(b))) {
-    stop("Starting value did not have finite fitness; finite bounds required")
-  }
-  ## suppressWarnings: optimise warns "NA/Inf replaced by maximum positive
-  ## value" for inviable trait values, which is the behaviour we want.
-  out <- suppressWarnings(optimise(f, interval = b, maximum = TRUE, tol = 1e-3))
-  ret <- if (log_scale) exp(out$maximum) else out$maximum
-  attr(ret, "fitness") <- out$objective
   ret
 }
 

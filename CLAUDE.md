@@ -36,8 +36,11 @@ is *exactly* the job of bringing these into this package. The intended approach
 is to **reimplement on the community machinery** (run the SCM via the community's
 `fitness_function` / `community_demography`) rather than copy plant's old code
 verbatim. Done so far: equilibrium (→ `community_demography`), viable bounds
-(→ `community_viable_fitness_1D`), and `positive_1d`/`positive_1d_bracket` (pure
-numeric helpers, now in `R/community_fitness_viable.R`).
+(→ `community_viable_fitness_1D`), `positive_1d`/`positive_1d_bracket` (pure
+numeric helpers, in `R/community_fitness_viable.R`), and the fitness-max
+functions `max_fitness()` / `max_growth_rate()` (`R/community_fitness_solve_max.R`,
+operating on `community$fitness_function`). The package no longer references any
+removed/undefined plant symbol (verified with `codetools::findGlobals`).
 
 `HANDOFF.md` is an ephemeral note from the previous session (not committed);
 this file supersedes it for durable guidance.
@@ -166,7 +169,7 @@ here follow current plant terminology.
 
 ## Test baseline
 
-`devtools::test()` is **green: 71 pass, 0 fail, 0 skip, 0 warn**.
+`devtools::test()` is **green: 79 pass, 0 fail, 0 skip, 0 warn**.
 
 - `test-community.R` (new) — covers the community interface: `trait_matrix`,
   `bounds`, `demographic_step_control`, `community_start/add/drop`,
@@ -185,19 +188,10 @@ duplicate `test-fitness-support.R` were deleted.
 
 ## Known issues / TODO
 
-- **Fitness-max subsystem is still half-ported** (not yet reimplemented on the
-  community machinery):
-  - **Two conflicting `max_fitness` definitions** — `R/solve_attractors.R:158`
-    `max_fitness(trait, p, bounds, log_scale)` and
-    `R/community_fitness_solve_max.R:74` `max_fitness(bounds, p, ...)`. Same
-    exported name, different signatures; file load order decides which wins.
-  - `R/solve_attractors.R` `max_growth_rate()` calls `fitness_landscape_empty()`,
-    which is **not defined** anywhere → `community_solve_singularity_1D` will
-    error.
-  - `R/community_fitness_solve_max.R` (`solve_max_fitness`, `max_fitness`,
-    `solve_max_worker`) still calls the removed plant `fundamental_fitness()`.
-    Rework to use the community `fitness_function` (as `community_viable_fitness_1D`
-    now does), or fold into `community_max_fitness_1D`.
+- **2D maximum-fitness births (`find_max_fitness_2d`) are unverified** — the path
+  is now self-contained (uses `sys$fitness_function`) but relies on
+  `fitness_slopes`/`maximize_logspace` and is commented as "not very well tested".
+  Only 1D fitmax births are exercised.
 - **`equilibrium_hybrid` solver is broken**: it treats the iteration result as a
   plant `Parameters` (`eq_solution$strategies`) but it is now a `community`, and
   it passes a `ctrl=` arg that `demography_solve_equilibrium_solve(community,
