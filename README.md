@@ -25,6 +25,43 @@ Envisioned future capabilities:
 - more tools for 1D analysis, e.g. pairwise invasibility plots (PIPs)
 - attractor solving in 2D / 3D trait space
 
+## The plant model family
+
+`{plant.assembly}` is one of three companion repositories, with work coordinated
+on a shared [project board](https://github.com/orgs/traitecoevo/projects/5)
+("Plant model development"):
+
+| Repository | Role |
+|---|---|
+| [**plant**](https://github.com/traitecoevo/plant) | Core C++/R model: size- and trait-structured demography, the SCM solver, and the physiological strategies (FF16, TF24, …). |
+| [**plant.assembly**](https://github.com/traitecoevo/plant.assembly) | Evolutionary community assembly on top of `plant` — invasion fitness, demographic equilibria, and selection gradients (this repo). |
+| [**overstorey**](https://github.com/traitecoevo/overstorey) | The narrative documentation / field guide site (user guides, theory, worked reproductions). |
+
+Issues from all three repositories feed into the
+[project board](https://github.com/orgs/traitecoevo/projects/5), which is the
+single place to see what is planned, in progress, or done across the family.
+
+## Reporting issues
+
+Bug reports and feature requests are welcome via the
+[GitHub issue tracker](https://github.com/traitecoevo/plant.assembly/issues). New
+issues are automatically added to the
+[project board](https://github.com/orgs/traitecoevo/projects/5) with status
+**Backlog**.
+
+To keep the board sortable, please:
+
+1. **Apply one type label** — the three repositories share the same set:
+   - `bug` — an existing feature not functioning as intended
+   - `task` — a discrete piece of work needed for a feature
+   - `epic` — a new feature or capability, usually an umbrella over several tasks
+2. **Prefix the title with a theme tag** in square brackets. Assembly work is
+   usually `[evol assembly]`; use another existing theme where it fits, or
+   `[other]`:
+
+   `[TF24 hydraulics]` · `[TF24 allometry]` · `[TF24 nsc]` · `[acclimation]` ·
+   `[simplify interface]` · `[evol assembly]` · `[Env drivers]` · `[speed]` ·
+   `[patch variations]` · `[documentation]` · `[other]`
 
 ## Installation
 
