@@ -207,4 +207,40 @@ duplicate `test-fitness-support.R` were deleted.
   warn on `document()`.
 - Nothing in the working tree is committed yet — ~70 dirty files mixing the port
   WIP and the plant-interface migration. Stage deliberately.
-```
+
+## Issue & project-board conventions
+
+Development across `plant`, `plant.assembly`, and `overstorey` is tracked on a
+shared [project board](https://github.com/orgs/traitecoevo/projects/5). New issues
+are auto-added to the board with status **Backlog** by a workflow, so you do not
+need to set status manually.
+
+When opening an issue (including whenever the user asks you to create one), always:
+
+- **Set exactly one type label.** Only three labels exist in these repos — do not
+  invent new ones:
+  - `bug` — an existing feature not functioning as intended
+  - `task` — a discrete task needed for a feature (the default for normal work)
+  - `epic` — a new feature or capability, usually an umbrella over several tasks
+- **Prefix the title with a theme tag** in square brackets so the board sorts
+  cleanly. Assembly work is usually `[evol assembly]`; reuse another existing
+  theme where it fits, or fall back to `[other]`:
+
+  | Tag | Scope |
+  |---|---|
+  | `[evol assembly]` | Evolutionary assembly linking plant to plant.assembly |
+  | `[TF24 hydraulics]` | Hydraulics component of the TF24 strategy |
+  | `[TF24 allometry]` | Flexible allometry for the TF24 model |
+  | `[TF24 nsc]` | Non-structural carbohydrate storage in TF24 |
+  | `[acclimation]` | Acclimation of leaf and other traits |
+  | `[simplify interface]` | Consistent interface to the plant & plant.assembly models |
+  | `[Env drivers]` | Driving the model with environmental drivers |
+  | `[speed]` | Performance — making the model run faster |
+  | `[patch variations]` | Multiple patch setups (multi-patch, stochastic metapopulation, continuous patch) |
+  | `[documentation]` | Documenting model capabilities (any of the three repos) |
+  | `[other]` | Anything not covered above |
+
+  A title may carry more than one tag when it genuinely spans themes.
+
+Create issues with `gh issue create -R traitecoevo/plant.assembly
+--title "[evol assembly] …" --label task` (swap in `bug`/`epic` as appropriate).
