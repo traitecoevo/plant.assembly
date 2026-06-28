@@ -83,12 +83,11 @@ community_start(bounds, model_support = list(p = ..., plant_control = ...)) |>
 
 ### plant bridge (`R/community_plant.R`)
 
-All direct `plant` coupling lives here. The package-internal generic names
-(`community_parameters`, `community_make_demography_runner`,
-`community_demography_runner_cleanup`, `community_viable_bounds`,
-`community_check_for_inviable_strategies`) are **aliased** at the bottom of the
-file to their `plant_community_*` implementations. This indirection is so the
-plant-specific layer could in principle be swapped.
+All direct `plant` coupling lives here, in the `plant_community_*` functions.
+These are no longer wired up by aliases at the bottom of the file; instead
+`harness_plant()` (in `R/harness.R`) points the model-agnostic connectors at
+them. See **Model harnesses** below — the plant layer is now one harness among
+several, and the connectors dispatch through `community$harness`.
 
 - `plant_default_assembly_pars(hmat, max_patch_lifetime, fixed_RA)` — base FF16
   `Parameters`. **Important:** it regenerates `node_schedule_times_default` to
@@ -169,8 +168,8 @@ here follow current plant terminology.
 
 ## Test baseline
 
-`devtools::test()` is **green: 177 pass, 0 fail, 0 skip, 0 warn** (133 plant +
-44 toy-model/harness). Tests run in parallel (`Config/testthat/parallel: true`);
+`devtools::test()` is **green: 197 pass, 0 fail, 0 skip, 0 warn** (133 plant +
+64 toy-model/harness). Tests run in parallel (`Config/testthat/parallel: true`);
 `test-solve-attractors.R` dominates the wall-clock as it runs the full SCM per
 `uniroot` step. The `test-harness-*.R` files run no SCM and are fast.
 
@@ -260,11 +259,16 @@ offspring rate. Three models ship, each with analytic test oracles:
   branches iff `σ_C < σ_K`, else ESS.
 - **`harness_geritz98()`** — Geritz et al. 1998 soft-selection (Levene) model.
   `x* =` capacity-weighted mean optimum (0 for the symmetric 3-patch default);
-  branches iff `d/σ > √(3/2) ≈ 1.2247`. **Note:** this is the 1998 paper's
-  *soft-selection* worked example, NOT the Geritz *1999* seed-size safe-site model
-  (the one in Daniel's MATLAB at
-  `OneDrive/.../Offspring-SmithFretwellReview/models/Geritz/`); that remains a
-  possible future addition. See also `x_misc/Revolve/doc/models.md`.
+  branches iff `d/σ > √(3/2) ≈ 1.2247`.
+- **`harness_geritz99()`** — Geritz, van der Meijden & Metz 1999 seed-size
+  safe-site model (Poisson sites, size-asymmetric seedling competition; the model
+  in Daniel's MATLAB at
+  `OneDrive/.../Offspring-SmithFretwellReview/models/Geritz/`). Only `α·R` and
+  `β·R` matter; no closed-form `x*` (numerical), and size-asymmetric competition
+  (large `α`) drives branching — Fig. 5: `αR=4.5` gives a CSS, `αR=7` branches at
+  `βR=15`. The strong oracle is the equilibrium invariant `W_m(m)=1`
+  (log fitness 0). **Distinct from `harness_geritz98`** (1998 soft-selection).
+  See also `x_misc/Revolve/doc/models.md`.
 
 Tests live in `tests/testthat/test-harness-{bird,dd99,geritz98}.R`; they assert
 each singular strategy is recovered by `community_solve_singularity_1D` and that

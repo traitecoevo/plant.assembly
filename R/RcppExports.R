@@ -83,3 +83,32 @@ geritz_equilibrium <- function(x_res, pars, max_iter = 5000L, eps = 1e-12) {
     .Call(`_regnans_geritz_equilibrium`, x_res, pars, max_iter, eps)
 }
 
+#' Geritz 1999 seed-size model: log invasion fitness of mutants
+#'
+#' @param x_mut numeric vector of mutant seed sizes
+#' @param x_res numeric vector of resident seed sizes
+#' @param n_res numeric vector of resident equilibrium densities (seeds/site)
+#' @param pars list with R, alpha, beta
+#' @return numeric vector of log invasion fitness (=0 for resident at equilibrium;
+#'   -Inf for non-viable mutants where s(x) = 0)
+#' @keywords internal
+geritz99_log_fitness <- function(x_mut, x_res, n_res, pars) {
+    .Call(`_regnans_geritz99_log_fitness`, x_mut, x_res, n_res, pars)
+}
+
+#' Geritz 1999 seed-size model: resident equilibrium densities (seeds/site)
+#'
+#' Single resident: solve (R/x) s(x) (1 - exp(-N))/N = 1 by bisection (N* = 0 if
+#' the strategy is non-viable). Many residents: iterate the population recursion
+#' N_i <- N_i W_i to its fixed point.
+#'
+#' @param x_res numeric vector of resident seed sizes
+#' @param pars list with R, alpha, beta
+#' @param max_iter maximum iterations (multi-resident case)
+#' @param eps convergence tolerance (multi-resident case)
+#' @return numeric vector of equilibrium densities
+#' @keywords internal
+geritz99_equilibrium <- function(x_res, pars, max_iter = 10000L, eps = 1e-12) {
+    .Call(`_regnans_geritz99_equilibrium`, x_res, pars, max_iter, eps)
+}
+

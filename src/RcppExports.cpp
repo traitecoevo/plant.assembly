@@ -92,6 +92,34 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// geritz99_log_fitness
+NumericVector geritz99_log_fitness(NumericVector x_mut, NumericVector x_res, NumericVector n_res, List pars);
+RcppExport SEXP _regnans_geritz99_log_fitness(SEXP x_mutSEXP, SEXP x_resSEXP, SEXP n_resSEXP, SEXP parsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x_mut(x_mutSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type x_res(x_resSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type n_res(n_resSEXP);
+    Rcpp::traits::input_parameter< List >::type pars(parsSEXP);
+    rcpp_result_gen = Rcpp::wrap(geritz99_log_fitness(x_mut, x_res, n_res, pars));
+    return rcpp_result_gen;
+END_RCPP
+}
+// geritz99_equilibrium
+NumericVector geritz99_equilibrium(NumericVector x_res, List pars, int max_iter, double eps);
+RcppExport SEXP _regnans_geritz99_equilibrium(SEXP x_resSEXP, SEXP parsSEXP, SEXP max_iterSEXP, SEXP epsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type x_res(x_resSEXP);
+    Rcpp::traits::input_parameter< List >::type pars(parsSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iter(max_iterSEXP);
+    Rcpp::traits::input_parameter< double >::type eps(epsSEXP);
+    rcpp_result_gen = Rcpp::wrap(geritz99_equilibrium(x_res, pars, max_iter, eps));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_regnans_bird_log_fitness", (DL_FUNC) &_regnans_bird_log_fitness, 4},
@@ -100,6 +128,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_regnans_dd99_equilibrium", (DL_FUNC) &_regnans_dd99_equilibrium, 2},
     {"_regnans_geritz_log_fitness", (DL_FUNC) &_regnans_geritz_log_fitness, 4},
     {"_regnans_geritz_equilibrium", (DL_FUNC) &_regnans_geritz_equilibrium, 4},
+    {"_regnans_geritz99_log_fitness", (DL_FUNC) &_regnans_geritz99_log_fitness, 4},
+    {"_regnans_geritz99_equilibrium", (DL_FUNC) &_regnans_geritz99_equilibrium, 4},
     {NULL, NULL, 0}
 };
 

@@ -291,6 +291,40 @@ harness_geritz98 <- function(d = 1.5, sigma = 1, mu = c(-d, 0, d),
   )
 }
 
+##' Geritz, van der Meijden & Metz 1999 seed-size safe-site model.
+##'
+##' Plants compete for safe sites; seeds arrive by a Poisson process and
+##' seedlings undergo size-asymmetric lottery competition. Pre-competitive
+##' survival \code{s(x) = max(0, 1 - 2 exp(-beta x))}, competitive ability
+##' \code{c(x) = exp(alpha x)}, invasion fitness (a lifetime reproductive ratio)
+##' \code{W = (R/x) s(x) g(x', x, N)} averaged over the Poisson number of
+##' competitors. Only the products \code{alpha*R} and \code{beta*R} matter. There
+##' is no closed-form singular strategy; size-asymmetric competition
+##' (large \code{alpha}) drives evolutionary branching in seed size (the paper's
+##' Fig. 5: e.g. \code{alpha*R = 4.5} vs \code{7.0} at \code{beta*R = 15}).
+##'
+##' This is the Geritz \emph{1999} seed-size model (the one in Daniel's MATLAB),
+##' distinct from the Geritz 1998 soft-selection model (\code{\link{harness_geritz98}}).
+##'
+##' @title Geritz et al. 1999 seed-size harness
+##' @param alpha competitive asymmetry (larger = more size-asymmetric)
+##' @param beta habitat parameter controlling pre-competitive survival
+##' @param R resources per safe site (only alpha*R and beta*R matter)
+##' @param trait_name name of the evolving trait (seed size)
+##' @return a `harness` object
+##' @author Daniel Falster
+##' @export
+harness_geritz99 <- function(alpha = 6, beta = 25, R = 1, trait_name = "x") {
+  pars <- list(R = R, alpha = alpha, beta = beta)
+  harness_analytic(
+    fitness     = geritz99_log_fitness,
+    equilibrium = function(x_res, pars) geritz99_equilibrium(x_res, pars),
+    pars        = pars,
+    trait_names = trait_name,
+    label       = "geritz99"
+  )
+}
+
 ##' @export
 print.harness <- function(x, ...) {
   cat(sprintf("<harness: %s>\n", paste(class(x)[-length(class(x))], collapse = ", ")))
