@@ -136,7 +136,6 @@ demography_solve_equilibrium_iteration <- function(community) {
   runner <- community_make_demography_runner(community)
   
   for (i in seq_len(ctrl$equilibrium_nsteps)) {
-    message("Step ", i)
     offspring_production <- runner(birth_rates)
     converged <- check(birth_rates, offspring_production, ctrl$equilibrium_eps)
     birth_rates <- offspring_production

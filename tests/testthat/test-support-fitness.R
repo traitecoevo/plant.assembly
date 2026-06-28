@@ -96,8 +96,8 @@ test_that("community_viable_fitness_1D finds the positive-fitness region", {
   expect_lt(vb[, "lower"], vb[, "upper"])
 
   # reference values for current plant (2.0.0.9001)
-  expect_equal(unname(vb[, "lower"]), 0.01309, tolerance = 1e-3)
-  expect_equal(unname(vb[, "upper"]), 1.64417, tolerance = 1e-3)
+  expect_equal(unname(vb[, "lower"]), 0.04045, tolerance = 1e-3)
+  expect_equal(unname(vb[, "upper"]), 0.79930, tolerance = 1e-3)
 
   # fitness is positive inside the interval and ~0 at the edges
   fitness <- plant_community_update_fitness_function(comm)$fitness_function

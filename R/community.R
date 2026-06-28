@@ -9,7 +9,7 @@
 ##' in \code{plant}..
 ##' @param bounds A set of bounds, as specified in \code{plant}.
 ##' @param birth_rate_initial A vector of birth rates.
-##' @param hyperpar A plant hyperparameter function to be used when calling \code{strategy_list}
+##' @param hyperpar A plant hyperparameter function to be used when calling \code{generate_strategy}
 ##' @param fitness_control List of parameters controlling
 ##' how approximate fitness landscapes are generated. See function
 ##' \code{fitness_control} for an example.
@@ -117,7 +117,7 @@ community_reset <- function(community) {
 
 
 ##' Helper function to create trait matrices suitable for
-##' \code{\link{strategy_list}}.
+##' \code{\link[plant]{generate_strategy}}.
 ##'
 ##' @title Create trait matrix
 ##' @param x Values

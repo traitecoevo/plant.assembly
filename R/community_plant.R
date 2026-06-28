@@ -54,7 +54,7 @@ plant_community_parameters <- function(community) {
   hyperpar <- plant_community_hyperpar(community)
 
   if(nrow(community$traits) > 0)
-    p$strategies <- plant::strategy_list(community$traits, p, birth_rate_list = community$birth_rate, hyperpar = hyperpar)
+    p$strategies <- plant::generate_strategy(p, community$traits, hyperpar = hyperpar, birth_rate = community$birth_rate)
 
   if (!is.null(community$model_support$node_schedule_times)) {
     p$node_schedule_times <- community$model_support$node_schedule_times
@@ -206,8 +206,8 @@ plant_community_update_fitness_function <- function(community) {
     function(x) {
       traits <- trait_matrix(x, community$trait_names)
 
-      p_mutants <- mutant_parameters(traits, p, hyperpar,
-        birth_rate_list = rep(0, nrow(traits)))
+      p_mutants <- plant::add_mutant(p, traits, hyperpar,
+        birth_rate = rep(0, nrow(traits)))
       
       if (length(p$strategies) > 0L) {
         scm$run_mutant(p_mutants)

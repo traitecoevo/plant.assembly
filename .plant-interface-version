@@ -3,6 +3,8 @@ plant_ref: develop (post-#459; build_schedule/run_scm_collect/scm_base_control r
 applied_breaking_changes:
   - scm-consolidation        # build_schedule -> run_scm(refine_schedule=TRUE); run_scm_collect -> run_scm(collect=TRUE)
   - control-defaults         # scm_base_control() -> control(); fast settings now the Control() default
+  - strategy-api-rename      # strategy_list -> generate_strategy(p first, birth_rate=); mutant_parameters -> add_mutant(p first, birth_rate=) [2026-06-28]
+  - strategy-default-pars    # strategy_default traits moved under $pars: strategy_default[trait] -> strategy_default$pars[trait] [2026-06-28]
 notes: >-
   run_scm() call sites already used named args, so the arg-order change needed
   no edits. The build_schedule() site in R/community_plant.R relied on

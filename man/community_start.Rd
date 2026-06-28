@@ -24,7 +24,7 @@ how approximate fitness landscapes are generated. See function
 \item{parameters}{A \code{parameters} object, as specified
 in \code{plant}..}
 
-\item{hyperpar}{A plant hyperparameter function to be used when calling \code{strategy_list}}
+\item{hyperpar}{A plant hyperparameter function to be used when calling \code{generate_strategy}}
 }
 \value{
 An \code{community} object.

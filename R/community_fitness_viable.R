@@ -48,7 +48,7 @@ community_viable_fitness_1D <- function(community, x = NULL,
 
   ## Default starting point: the default strategy's trait value.
   if (is.null(x)) {
-    x <- unlist(community$model_support$p$strategy_default[traits])
+    x <- unlist(community$model_support$p$strategy_default$pars[traits])
   }
   x <- check_point(x, bounds)
   w <- fitness(x)

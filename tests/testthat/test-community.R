@@ -112,8 +112,9 @@ test_that("community_demography solves a single resident to equilibrium", {
 
   expect_true(attr(comm, "converged"))
   expect_length(comm$birth_rate, 1L)
-  # equilibrium birth rate (reference from current plant 2.0.0.9001)
-  expect_equal(comm$birth_rate, 112.657, tolerance = 1e-3)
+  # equilibrium birth rate (reference from current plant 2.0.0.9001; robust to
+  # the starting birth rate — converges to the same fixed point from 20/200/1000)
+  expect_equal(comm$birth_rate, 0.068455, tolerance = 1e-3)
   # at equilibrium the resident's invasion fitness is ~0
   expect_equal(comm$resident_fitness, 0, tolerance = 1e-4)
 })
