@@ -105,11 +105,10 @@ find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
     ret <- do_fit(centre)
   } else {
     ## Multistart hill-climb on invasion fitness: from each resident and from
-    ## the centre of trait space. (The old code ordered starts by
-    ## `sys$fitness_slopes`, which is never populated, so it only ever searched
-    ## the centre.) Prefer the highest-fitness optimum that is viable and not too
-    ## close to an existing resident; otherwise return the global best so the
-    ## caller (community_new_types_maximum_fitness) can decide it is "done".
+    ## the centre of trait space. Prefer the highest-fitness optimum that is
+    ## viable and not too close to an existing resident; otherwise return the
+    ## global best so the caller (community_new_types_maximum_fitness) can decide
+    ## it is "done".
     X <- sys$traits
     starts <- rbind(X, matrix(centre, nrow = 1))
     fits <- lapply(seq_len(nrow(starts)), function(i) do_fit(starts[i, ]))
