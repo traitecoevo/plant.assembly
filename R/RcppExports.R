@@ -10,7 +10,7 @@
 #' @return numeric vector of log invasion fitness, one per mutant
 #' @keywords internal
 bird_log_fitness <- function(x_mut, x_res, n_res, pars) {
-    .Call('_regnans_bird_log_fitness', PACKAGE = 'regnans', x_mut, x_res, n_res, pars)
+    .Call(`_regnans_bird_log_fitness`, x_mut, x_res, n_res, pars)
 }
 
 #' Bird model: resident demographic equilibrium densities
@@ -27,6 +27,59 @@ bird_log_fitness <- function(x_mut, x_res, n_res, pars) {
 #' @return numeric vector of equilibrium densities, one per resident
 #' @keywords internal
 bird_equilibrium <- function(x_res, pars, max_iter = 5000L, eps = 1e-12) {
-    .Call('_regnans_bird_equilibrium', PACKAGE = 'regnans', x_res, pars, max_iter, eps)
+    .Call(`_regnans_bird_equilibrium`, x_res, pars, max_iter, eps)
+}
+
+#' DD99 model: invasion fitness of mutants (a per-capita growth rate)
+#'
+#' @param x_mut numeric vector of mutant trait values
+#' @param x_res numeric vector of resident trait values
+#' @param n_res numeric vector of resident equilibrium densities
+#' @param pars list with r, K0, x0, sigma_K, sigma_C
+#' @return numeric vector of invasion fitness (=0 for a resident at equilibrium)
+#' @keywords internal
+dd99_fitness <- function(x_mut, x_res, n_res, pars) {
+    .Call(`_regnans_dd99_fitness`, x_mut, x_res, n_res, pars)
+}
+
+#' DD99 model: resident demographic equilibrium densities
+#'
+#' Single resident: N* = K(x). Many residents: solve the linear system
+#' A N = K with A_ij = C(x_i - x_j) (negative densities, i.e. strategies that
+#' cannot coexist, are clamped to zero).
+#'
+#' @param x_res numeric vector of resident trait values
+#' @param pars list with r, K0, x0, sigma_K, sigma_C
+#' @return numeric vector of equilibrium densities
+#' @keywords internal
+dd99_equilibrium <- function(x_res, pars) {
+    .Call(`_regnans_dd99_equilibrium`, x_res, pars)
+}
+
+#' Geritz 1998 soft-selection model: log invasion fitness of mutants
+#'
+#' @param x_mut numeric vector of mutant trait values
+#' @param x_res numeric vector of resident trait values
+#' @param n_res numeric vector of resident equilibrium abundances
+#' @param pars list with sigma, mu (patch optima), K (patch capacities)
+#' @return numeric vector of log invasion fitness (=0 for resident at equilibrium)
+#' @keywords internal
+geritz_log_fitness <- function(x_mut, x_res, n_res, pars) {
+    .Call(`_regnans_geritz_log_fitness`, x_mut, x_res, n_res, pars)
+}
+
+#' Geritz 1998 soft-selection model: resident equilibrium abundances
+#'
+#' Iterates the soft-selection recursion (Eq 19) to its fixed point; total
+#' abundance is conserved at sum(K). Single resident: N* = sum(K).
+#'
+#' @param x_res numeric vector of resident trait values
+#' @param pars list with sigma, mu (patch optima), K (patch capacities)
+#' @param max_iter maximum fixed-point iterations
+#' @param eps convergence tolerance
+#' @return numeric vector of equilibrium abundances
+#' @keywords internal
+geritz_equilibrium <- function(x_res, pars, max_iter = 5000L, eps = 1e-12) {
+    .Call(`_regnans_geritz_equilibrium`, x_res, pars, max_iter, eps)
 }
 

@@ -227,6 +227,70 @@ harness_bird <- function(a = 0.1, x_opt = 0, sigma = 1, R0 = 1, K = 1, p = 0.5,
   )
 }
 
+##' Dieckmann & Doebeli 1999 competition model (Nature 400:354-357).
+##'
+##' Continuous-time logistic competition for a Gaussian resource: carrying
+##' capacity \code{K(x) = K0 exp(-(x-x0)^2/(2 sigma_K^2))} and competition kernel
+##' \code{C(d) = exp(-d^2/(2 sigma_C^2))}. Invasion fitness
+##' \code{s(y) = r (1 - sum_i N_i C(y-x_i)/K(y))}. The singular strategy is
+##' \code{x* = x0}; it is an evolutionary \emph{branching point} iff
+##' \code{sigma_C < sigma_K} and an ESS iff \code{sigma_C > sigma_K} -- the
+##' classic disruptive-selection oracle.
+##'
+##' @title Dieckmann & Doebeli 1999 harness
+##' @param r intrinsic growth rate
+##' @param K0 maximum carrying capacity
+##' @param x0 trait optimising the resource (singular strategy)
+##' @param sigma_K width of the resource/carrying-capacity kernel
+##' @param sigma_C width of the competition kernel
+##' @param trait_name name of the evolving trait
+##' @return a `harness` object
+##' @author Daniel Falster
+##' @export
+harness_dd99 <- function(r = 1, K0 = 500, x0 = 0, sigma_K = 1, sigma_C = 0.4,
+                         trait_name = "x") {
+  pars <- list(r = r, K0 = K0, x0 = x0, sigma_K = sigma_K, sigma_C = sigma_C)
+  harness_analytic(
+    fitness     = dd99_fitness,
+    equilibrium = function(x_res, pars) dd99_equilibrium(x_res, pars),
+    pars        = pars,
+    trait_names = trait_name,
+    label       = "dd99"
+  )
+}
+
+##' Geritz, Kisdi, Meszena & Metz 1998 soft-selection model (Evol. Ecol.
+##' 12:35-57; the worked Levene example).
+##'
+##' \code{m} patches with optima \code{mu} and capacities \code{K}; Gaussian
+##' within-patch survival of width \code{sigma}. Invasion fitness reduces, for a
+##' single resident, to \code{S(y) = log sum_j c_j f_j(y)/f_j(x)} with
+##' \code{c_j = K_j/sum K}. For the symmetric three-patch default
+##' (\code{mu = (-d, 0, d)}, equal \code{K}) the singular strategy is
+##' \code{x* = 0}: convergence stable for all \code{d/sigma}, and an evolutionary
+##' branching point iff \code{d/sigma > sqrt(3/2) ~= 1.2247} (a CSS below that).
+##'
+##' @title Geritz et al. 1998 soft-selection harness
+##' @param d patch-optimum spacing for the symmetric default (optima -d, 0, d)
+##' @param sigma within-patch survival width
+##' @param mu patch optima (overrides the symmetric default built from \code{d})
+##' @param K patch capacities (defaults to equal capacities)
+##' @param trait_name name of the evolving trait
+##' @return a `harness` object
+##' @author Daniel Falster
+##' @export
+harness_geritz98 <- function(d = 1.5, sigma = 1, mu = c(-d, 0, d),
+                             K = rep(1, length(mu)), trait_name = "x") {
+  pars <- list(sigma = sigma, mu = mu, K = K)
+  harness_analytic(
+    fitness     = geritz_log_fitness,
+    equilibrium = function(x_res, pars) geritz_equilibrium(x_res, pars),
+    pars        = pars,
+    trait_names = trait_name,
+    label       = "geritz98"
+  )
+}
+
 ##' @export
 print.harness <- function(x, ...) {
   cat(sprintf("<harness: %s>\n", paste(class(x)[-length(class(x))], collapse = ", ")))
