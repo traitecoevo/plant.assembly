@@ -76,6 +76,31 @@ maximize_logspace <- function(f, x, bounds, tol) {
   fit
 }
 
+## Trait-space transform used when spacing/searching during assembly. Strictly
+## positive traits (plant) are best handled on a log scale; traits that span
+## zero (e.g. DD99/GK98) need a linear scale. Returns forward/inverse maps that
+## are applied to trait values and bounds throughout the assembly machinery
+## (fitness landscape grid, nearest-resident distance, fitness maximisation).
+community_trait_transform <- function(community) {
+  scale <- if (is.null(community$trait_scale)) "log" else community$trait_scale
+  if (identical(scale, "linear")) {
+    list(fwd = function(x) x, inv = function(x) x, scale = "linear")
+  } else {
+    list(fwd = log, inv = exp, scale = "log")
+  }
+}
+
+## Scale-aware maximisation (generalises maximize_logspace): optimise f over
+## `bounds` working in the transformed coordinates given by `tf`.
+maximize_scaled <- function(f, x, bounds, tol, tf) {
+  lb <- tf$fwd(bounds)
+  fit <- dfoptim::nmkb(tf$fwd(x), function(z) f(tf$inv(z)),
+                       lower = lb[, 1], upper = lb[, 2],
+                       control = list(tol = tol, maximize = TRUE))
+  fit$par <- tf$inv(fit$par)
+  fit
+}
+
 has_attr <- function(x, which) {
   !is.null(attr(x, which, exact=TRUE))
 }

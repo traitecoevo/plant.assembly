@@ -23,7 +23,8 @@ community_start <- function(bounds,
                             demography_control = demographic_step_control(),
                             fitness_control = NULL,
                             model_support = NULL,
-                            harness = NULL
+                            harness = NULL,
+                            trait_scale = c("log", "linear")
                             ) {
 
   if (is.character(bounds)) {
@@ -37,13 +38,20 @@ community_start <- function(bounds,
     harness <- harness_plant()
   }
 
+  ## How trait space is spaced/searched during assembly. "log" suits strictly
+  ## positive biological traits (plant: lma, height, seed mass); "linear" suits
+  ## traits that span zero or are naturally additive (e.g. DD99/GK98, whose
+  ## optima sit at 0). See community_trait_transform().
+  trait_scale <- match.arg(trait_scale)
+
   ret <- list(
     bounds = check_bounds(bounds),
     birth_rate_initial = birth_rate_initial,
     demography_control = demography_control,
     fitness_control = fitness_control,
     model_support = model_support,
-    harness = harness
+    harness = harness,
+    trait_scale = trait_scale
   )
   ret$trait_names = rownames(ret$bounds)
   ret$traits <- trait_matrix(numeric(0), ret$trait_names)

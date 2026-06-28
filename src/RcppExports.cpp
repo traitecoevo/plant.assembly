@@ -36,6 +36,32 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// dd99_nd_fitness
+NumericVector dd99_nd_fitness(NumericMatrix x_mut, NumericMatrix x_res, NumericVector n_res, List pars);
+RcppExport SEXP _regnans_dd99_nd_fitness(SEXP x_mutSEXP, SEXP x_resSEXP, SEXP n_resSEXP, SEXP parsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x_mut(x_mutSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type x_res(x_resSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type n_res(n_resSEXP);
+    Rcpp::traits::input_parameter< List >::type pars(parsSEXP);
+    rcpp_result_gen = Rcpp::wrap(dd99_nd_fitness(x_mut, x_res, n_res, pars));
+    return rcpp_result_gen;
+END_RCPP
+}
+// dd99_nd_equilibrium
+NumericVector dd99_nd_equilibrium(NumericMatrix x_res, List pars);
+RcppExport SEXP _regnans_dd99_nd_equilibrium(SEXP x_resSEXP, SEXP parsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type x_res(x_resSEXP);
+    Rcpp::traits::input_parameter< List >::type pars(parsSEXP);
+    rcpp_result_gen = Rcpp::wrap(dd99_nd_equilibrium(x_res, pars));
+    return rcpp_result_gen;
+END_RCPP
+}
 // gk98_fitness
 NumericVector gk98_fitness(NumericVector x_mut, NumericVector x_res, NumericVector n_res, List pars);
 RcppExport SEXP _regnans_gk98_fitness(SEXP x_mutSEXP, SEXP x_resSEXP, SEXP n_resSEXP, SEXP parsSEXP) {
@@ -124,6 +150,8 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_regnans_dd99_fitness", (DL_FUNC) &_regnans_dd99_fitness, 4},
     {"_regnans_dd99_equilibrium", (DL_FUNC) &_regnans_dd99_equilibrium, 2},
+    {"_regnans_dd99_nd_fitness", (DL_FUNC) &_regnans_dd99_nd_fitness, 4},
+    {"_regnans_dd99_nd_equilibrium", (DL_FUNC) &_regnans_dd99_nd_equilibrium, 2},
     {"_regnans_gk98_fitness", (DL_FUNC) &_regnans_gk98_fitness, 4},
     {"_regnans_gk98_equilibrium", (DL_FUNC) &_regnans_gk98_equilibrium, 4},
     {"_regnans_gm99_fitness", (DL_FUNC) &_regnans_gm99_fitness, 4},

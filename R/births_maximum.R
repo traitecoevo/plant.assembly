@@ -25,7 +25,8 @@ community_new_types_maximum_fitness <- function(sys, control) {
   }
 
   if (length(sys) > 0L) {
-    i <- closest_log(drop(ret), sys$traits, sys$bounds)
+    tf <- community_trait_transform(sys)
+    i <- closest(tf$fwd(drop(ret)), tf$fwd(sys$traits), tf$fwd(sys$bounds))
     if (attr(i, "distance") < control$eps_too_close) {
       plant_log_max_fitness("Best point too close to existing")
       return(empty(sys, ret))
@@ -78,17 +79,18 @@ find_max_fitness_1D <- function(sys, eps_too_close) {
 
 
 find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
+  tf <- community_trait_transform(sys)
   do_fit <- function(p) {
     f <- function(x) {
       sys$fitness_function(x)
     }
-    fit <- maximize_logspace(f, p, sys$bounds, tol)
+    fit <- maximize_scaled(f, p, sys$bounds, tol, tf)
     ret <- trait_matrix(fit$par, sys$trait_names)
     attr(ret, "fitness") <- fit$value
     ret
   }
   check <- function(fit, X) {
-    j <- closest(log(drop(fit)), log(X), log(sys$bounds))
+    j <- closest(tf$fwd(drop(fit)), tf$fwd(X), tf$fwd(sys$bounds))
     w <- attr(fit, "fitness")
     d <- attr(j, "distance")
     plant_log_max_fitness(sprintf("\t...fitness: %s, distance: %s from %d",
@@ -97,7 +99,7 @@ find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   }
 
   if (length(sys) == 0L) {
-    p0 <- exp(rowMeans(log(sys$bounds)))
+    p0 <- tf$inv(rowMeans(tf$fwd(sys$bounds)))
     ret <- do_fit(p0)
   } else {
     ret <- NULL
@@ -118,7 +120,7 @@ find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
     if (is.null(ret)) {
       ## For want of a better thing to try:
       plant_log_max_fitness("Searching from the middle of occupied space")
-      p0 <- exp(rowMeans(log(sys$bounds)))
+      p0 <- tf$inv(rowMeans(tf$fwd(sys$bounds)))
       ret <- do_fit(p0)
       ## Note that we don't check this point: we'll do that in the
       ## make_births_maximum_fitness.

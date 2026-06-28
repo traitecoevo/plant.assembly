@@ -236,8 +236,7 @@ demography_solve_equilibrium_hybrid <- function(community) {
 
     eq_solution <- try(
       demography_solve_equilibrium_solve(
-        eq_solution_iteration, 
-        ctrl = ctrl, 
+        eq_solution_iteration,
         solver = solver[[i]]
         )
       )

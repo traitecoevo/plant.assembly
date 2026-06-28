@@ -156,12 +156,18 @@ explicit_community_parameters <- function(community) {
        pars       = community$harness$pars)
 }
 
+## Resident traits in the shape a model primitive expects: a plain vector for a
+## one-trait model, the full trait matrix for a multi-trait (nD) model.
+explicit_resident_traits <- function(community) {
+  if (length(community$trait_names) == 1L) community$traits[, 1] else community$traits
+}
+
 explicit_community_make_demography_runner <- function(community) {
   h <- community$harness
   last_offspring_production <- NULL
   history <- list()
   function(birth_rates) {
-    x_res <- community$traits[, 1]
+    x_res <- explicit_resident_traits(community)
     out <- h$equilibrium(x_res)
     last_offspring_production <<- out
     history[[length(history) + 1L]] <<- list(`in` = birth_rates, out = out)
@@ -181,15 +187,22 @@ explicit_community_demography_runner_cleanup <- function(community, runner,
 
 explicit_community_update_fitness_function <- function(community) {
   h <- community$harness
-  x_res <- community$traits[, 1]
+  k <- length(community$trait_names)
+  x_res <- explicit_resident_traits(community)
   n_res <- community$birth_rate
 
   community$resident_fitness <-
-    if (length(x_res) > 0L) h$fitness(x_res, x_res, n_res) else numeric()
+    if (nrow(community$traits) > 0L) h$fitness(x_res, x_res, n_res) else numeric()
 
   community$fitness_function <- function(x) {
-    if (is.matrix(x)) x <- x[, 1]
-    h$fitness(as.numeric(x), x_res, n_res)
+    if (k == 1L) {
+      if (is.matrix(x)) x <- x[, 1]
+      h$fitness(as.numeric(x), x_res, n_res)
+    } else {
+      # mutants as rows of a k-column matrix (a bare vector is one mutant)
+      xm <- if (is.matrix(x)) x else matrix(x, nrow = 1L)
+      h$fitness(xm, x_res, n_res)
+    }
   }
   community
 }
@@ -244,6 +257,43 @@ harness_dd99 <- function(r = 1, K0 = 500, x0 = 0, sigma_K = 1, sigma_C = 0.4,
   )
 }
 
+##' DD99 in two (or more) trait dimensions (cf. Ito & Dieckmann 2007).
+##'
+##' The multi-trait extension of \code{\link{harness_dd99}}: the resource and
+##' competition kernels are products of per-dimension Gaussians, so each trait
+##' dimension `d` has its own optimum \code{x0[d]} and widths
+##' \code{sigma_K[d]}, \code{sigma_C[d]}. The singular strategy is \code{x* = x0}
+##' and dimension `d` is a branching direction iff
+##' \code{sigma_C[d] < sigma_K[d]}. Use \code{trait_scale = "linear"} in
+##' \code{community_start()} since the optima sit at 0.
+##'
+##' @title DD99 multi-trait harness
+##' @param r intrinsic growth rate
+##' @param K0 maximum carrying capacity
+##' @param x0 length-k vector of per-dimension optima (the singular strategy)
+##' @param sigma_K length-k vector of resource-kernel widths
+##' @param sigma_C length-k vector of competition-kernel widths
+##' @param trait_names length-k character vector naming the traits
+##' @return a `harness` object
+##' @author Daniel Falster
+##' @export
+harness_dd99_nd <- function(r = 1, K0 = 500, x0 = c(0, 0),
+                            sigma_K = c(1, 1), sigma_C = c(0.4, 0.4),
+                            trait_names = c("x1", "x2")) {
+  k <- length(trait_names)
+  if (length(x0) != k || length(sigma_K) != k || length(sigma_C) != k) {
+    stop("x0, sigma_K, sigma_C must each have length length(trait_names)")
+  }
+  pars <- list(r = r, K0 = K0, x0 = x0, sigma_K = sigma_K, sigma_C = sigma_C)
+  harness_explicit(
+    fitness     = dd99_nd_fitness,
+    equilibrium = function(x_res, pars) dd99_nd_equilibrium(x_res, pars),
+    pars        = pars,
+    trait_names = trait_names,
+    label       = "dd99_nd"
+  )
+}
+
 ##' GK98: Geritz, Kisdi, Meszena & Metz 1998 soft-selection model (Evol. Ecol.
 ##' 12:35-57; the worked Levene example).
 ##'
@@ -282,13 +332,14 @@ harness_gk98 <- function(d = 1.5, sigma = 1, mu = c(-d, 0, d),
 ##' seedlings undergo size-asymmetric lottery competition. Pre-competitive
 ##' survival \code{s(x) = max(0, 1 - 2 exp(-beta x))}, competitive ability
 ##' \code{c(x) = exp(alpha x)}, invasion fitness (a lifetime reproductive ratio)
-##' \code{W = (R/x) s(x) g(x', x, N)} averaged over the Poisson number of
+##' \code{W = (R/x) s(x) g(x_mut, x, N)} (mutant trait \code{x_mut} against
+##' resident \code{x}) averaged over the Poisson number of
 ##' competitors. Only the products \code{alpha*R} and \code{beta*R} matter. There
 ##' is no closed-form singular strategy; size-asymmetric competition
-##' (large \code{alpha}) drives evolutionary branching in seed size (the paper's
-##' Fig. 5: e.g. \code{alpha*R = 4.5} vs \code{7.0} at \code{beta*R = 15}).
+##' (large \code{alpha}) drives evolutionary branching in seed size (see
+##' Fig. 5 of the paper: e.g. \code{alpha*R = 4.5} vs \code{7.0} at \code{beta*R = 15}).
 ##'
-##' This is the Geritz \emph{1999} seed-size model (the one in Daniel's MATLAB),
+##' This is the Geritz \emph{1999} seed-size model (the one in the original MATLAB code),
 ##' distinct from the GK98 1998 soft-selection model (\code{\link{harness_gk98}}).
 ##'
 ##' @title GM99 (Geritz et al. 1999 seed-size) harness

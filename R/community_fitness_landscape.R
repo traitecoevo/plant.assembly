@@ -27,15 +27,20 @@ community_fitness_landscape <- function(community, method = community$fitness_co
 
 community_fitness_landscape_grid <- function(community, bounds = community$bounds, n_evals = community$fitness_control$n_evals) {
 
-  x <- seq_log_range(bounds, n_evals)
+  ## Space the grid on the community's trait scale (log for positive plant
+  ## traits, linear for traits spanning zero). seq_log_range() is the log case.
+  tf <- community_trait_transform(community)
+  lo <- tf$fwd(bounds[1, 1])
+  hi <- tf$fwd(bounds[1, 2])
+  x <- tf$inv(seq(lo, hi, length.out = n_evals))
 
   # add residents - also points offset from resident to capture local gradient
-  x <- sort(unique(c(
-    x,
-    0.995 * community$traits[, 1],
-    community$traits[, 1],
-    1.005 * community$traits[, 1]
-  )))
+  res <- community$traits[, 1]
+  if (length(res) > 0L) {
+    eps <- 0.005 * (hi - lo)
+    x <- c(x, tf$inv(tf$fwd(res) - eps), res, tf$inv(tf$fwd(res) + eps))
+  }
+  x <- sort(unique(x))
 
   y <- community$fitness_function(x)
 

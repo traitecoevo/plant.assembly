@@ -26,13 +26,14 @@ Plants compete for safe sites; seeds arrive by a Poisson process and
 seedlings undergo size-asymmetric lottery competition. Pre-competitive
 survival \code{s(x) = max(0, 1 - 2 exp(-beta x))}, competitive ability
 \code{c(x) = exp(alpha x)}, invasion fitness (a lifetime reproductive ratio)
-\code{W = (R/x) s(x) g(x', x, N)} averaged over the Poisson number of
+\code{W = (R/x) s(x) g(x_mut, x, N)} (mutant trait \code{x_mut} against
+resident \code{x}) averaged over the Poisson number of
 competitors. Only the products \code{alpha*R} and \code{beta*R} matter. There
 is no closed-form singular strategy; size-asymmetric competition
-(large \code{alpha}) drives evolutionary branching in seed size (the paper's
-Fig. 5: e.g. \code{alpha*R = 4.5} vs \code{7.0} at \code{beta*R = 15}).
+(large \code{alpha}) drives evolutionary branching in seed size (see
+Fig. 5 of the paper: e.g. \code{alpha*R = 4.5} vs \code{7.0} at \code{beta*R = 15}).
 
-This is the Geritz \emph{1999} seed-size model (the one in Daniel's MATLAB),
+This is the Geritz \emph{1999} seed-size model (the one in the original MATLAB code),
 distinct from the GK98 1998 soft-selection model (\code{\link{harness_gk98}}).
 }
 \author{

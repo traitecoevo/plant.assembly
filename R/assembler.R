@@ -229,7 +229,8 @@ should_move <- function(obj, to_add) {
       length(obj$community) > 0L &&
       obj$control$run_type == "to_equilibrium") {
     ## NOTE: not rescaled by obj$bounds?
-    i <- closest_log(to_add, obj$community$traits)
+    tf <- community_trait_transform(obj$community)
+    i <- closest(tf$fwd(to_add), tf$fwd(obj$community$traits))
     if (attr(i, "distance") < obj$control$birth_move_tol) {
       ret <- i
     }

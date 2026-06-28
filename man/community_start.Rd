@@ -10,7 +10,8 @@ community_start(
   demography_control = demographic_step_control(),
   fitness_control = NULL,
   model_support = NULL,
-  harness = NULL
+  harness = NULL,
+  trait_scale = c("log", "linear")
 )
 }
 \arguments{

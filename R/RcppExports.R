@@ -27,6 +27,28 @@ dd99_equilibrium <- function(x_res, pars) {
     .Call(`_regnans_dd99_equilibrium`, x_res, pars)
 }
 
+#' DD99 model (nD): invasion fitness of mutants (a per-capita growth rate)
+#'
+#' @param x_mut numeric matrix of mutant trait values (rows = mutants, cols = traits)
+#' @param x_res numeric matrix of resident trait values
+#' @param n_res numeric vector of resident equilibrium densities
+#' @param pars list with r, K0, x0, sigma_K, sigma_C (the last three length-k)
+#' @return numeric vector of invasion fitness (=0 for a resident at equilibrium)
+#' @keywords internal
+dd99_nd_fitness <- function(x_mut, x_res, n_res, pars) {
+    .Call(`_regnans_dd99_nd_fitness`, x_mut, x_res, n_res, pars)
+}
+
+#' DD99 model (nD): resident demographic equilibrium densities
+#'
+#' @param x_res numeric matrix of resident trait values
+#' @param pars list with r, K0, x0, sigma_K, sigma_C (the last three length-k)
+#' @return numeric vector of equilibrium densities
+#' @keywords internal
+dd99_nd_equilibrium <- function(x_res, pars) {
+    .Call(`_regnans_dd99_nd_equilibrium`, x_res, pars)
+}
+
 #' GK98 soft-selection model: log invasion fitness of mutants
 #'
 #' @param x_mut numeric vector of mutant trait values

@@ -98,3 +98,102 @@ NumericVector dd99_equilibrium(NumericVector x_res, List pars) {
   for (int i = 0; i < nr; i++) n[i] = std::max(0.0, A[i][nr]);
   return n;
 }
+
+// --- multi-trait (nD) DD99 (cf. Ito & Dieckmann 2007) ----------------------
+// Traits and optima are k-dimensional; the resource and competition kernels are
+// products of per-dimension Gaussians:
+//   K(x) = K0 exp(-sum_d (x_d - x0_d)^2 / (2 sigma_K_d^2))
+//   C(x',x) = exp(-sum_d (x'_d - x_d)^2 / (2 sigma_C_d^2))
+// x_mut, x_res are matrices (rows = individuals, cols = traits); x0, sigma_K,
+// sigma_C are length-k vectors. Same invasion fitness and equilibrium as the 1D
+// case. Singular strategy x* = x0; branching in dimension d iff sigma_C_d <
+// sigma_K_d.
+
+namespace dd99 {
+
+static inline double K_nd(const NumericMatrix& X, int i, double K0,
+                          const NumericVector& x0, const NumericVector& sK) {
+  int k = X.ncol();
+  double e = 0.0;
+  for (int d = 0; d < k; d++) {
+    double z = X(i, d) - x0[d];
+    e += z * z / (2.0 * sK[d] * sK[d]);
+  }
+  return K0 * std::exp(-e);
+}
+
+static inline double C_nd(const NumericMatrix& A, int i,
+                          const NumericMatrix& B, int j,
+                          const NumericVector& sC) {
+  int k = A.ncol();
+  double e = 0.0;
+  for (int d = 0; d < k; d++) {
+    double z = A(i, d) - B(j, d);
+    e += z * z / (2.0 * sC[d] * sC[d]);
+  }
+  return std::exp(-e);
+}
+
+} // namespace dd99
+
+//' DD99 model (nD): invasion fitness of mutants (a per-capita growth rate)
+//'
+//' @param x_mut numeric matrix of mutant trait values (rows = mutants, cols = traits)
+//' @param x_res numeric matrix of resident trait values
+//' @param n_res numeric vector of resident equilibrium densities
+//' @param pars list with r, K0, x0, sigma_K, sigma_C (the last three length-k)
+//' @return numeric vector of invasion fitness (=0 for a resident at equilibrium)
+//' @keywords internal
+// [[Rcpp::export]]
+NumericVector dd99_nd_fitness(NumericMatrix x_mut, NumericMatrix x_res,
+                              NumericVector n_res, List pars) {
+  double r = pars["r"], K0 = pars["K0"];
+  NumericVector x0 = pars["x0"], sK = pars["sigma_K"], sC = pars["sigma_C"];
+  int nm = x_mut.nrow();
+  int nr = x_res.nrow();
+  NumericVector out(nm);
+  for (int i = 0; i < nm; i++) {
+    double Ky = dd99::K_nd(x_mut, i, K0, x0, sK);
+    double comp = 0.0;
+    for (int j = 0; j < nr; j++)
+      comp += n_res[j] * dd99::C_nd(x_mut, i, x_res, j, sC);
+    out[i] = r * (1.0 - comp / Ky);
+  }
+  return out;
+}
+
+//' DD99 model (nD): resident demographic equilibrium densities
+//'
+//' @param x_res numeric matrix of resident trait values
+//' @param pars list with r, K0, x0, sigma_K, sigma_C (the last three length-k)
+//' @return numeric vector of equilibrium densities
+//' @keywords internal
+// [[Rcpp::export]]
+NumericVector dd99_nd_equilibrium(NumericMatrix x_res, List pars) {
+  double K0 = pars["K0"];
+  NumericVector x0 = pars["x0"], sK = pars["sigma_K"], sC = pars["sigma_C"];
+  int nr = x_res.nrow();
+  NumericVector n(nr);
+  if (nr == 0) return n;
+  if (nr == 1) { n[0] = dd99::K_nd(x_res, 0, K0, x0, sK); return n; }
+  std::vector<std::vector<double> > A(nr, std::vector<double>(nr + 1));
+  for (int i = 0; i < nr; i++) {
+    for (int j = 0; j < nr; j++) A[i][j] = dd99::C_nd(x_res, i, x_res, j, sC);
+    A[i][nr] = dd99::K_nd(x_res, i, K0, x0, sK);
+  }
+  for (int col = 0; col < nr; col++) {
+    int piv = col;
+    for (int i = col + 1; i < nr; i++)
+      if (std::abs(A[i][col]) > std::abs(A[piv][col])) piv = i;
+    std::swap(A[col], A[piv]);
+    double d = A[col][col];
+    for (int j = col; j <= nr; j++) A[col][j] /= d;
+    for (int i = 0; i < nr; i++) {
+      if (i == col) continue;
+      double f = A[i][col];
+      for (int j = col; j <= nr; j++) A[i][j] -= f * A[col][j];
+    }
+  }
+  for (int i = 0; i < nr; i++) n[i] = std::max(0.0, A[i][nr]);
+  return n;
+}
