@@ -1,11 +1,11 @@
-# {plant.assembly}: Modelling community assembly with the {plant} model
+# {regnans}: Modelling community assembly with the {plant} model
 
 <!-- badges: start -->
-<!-- [![R-CMD-check](https://github.com/traitecoevo/plant.assembly/workflows/R-CMD-check/badge.svg)](https://github.com/traitecoevo/plant.assembly/master) -->
-<!-- [![Codecov test coverage](https://codecov.io/gh/traitecoevo/plant.assembly/branch/master/graph/badge.svg)](https://codecov.io/gh/traitecoevo/plant?branch=master) -->
+<!-- [![R-CMD-check](https://github.com/traitecoevo/regnans/workflows/R-CMD-check/badge.svg)](https://github.com/traitecoevo/regnans/master) -->
+<!-- [![Codecov test coverage](https://codecov.io/gh/traitecoevo/regnans/branch/master/graph/badge.svg)](https://codecov.io/gh/traitecoevo/plant?branch=master) -->
 <!-- badges: end -->
 
-The [{plant}](https://github.com/traitecoevo/plant) package for R is an extensible framework for modelling size-, patch- and trait-structured demography. The [{plant.assembly}](https://github.com/traitecoevo/plant.assembly) package extends {plant} to model community assembly and trait evolution, by repeatedly invading trait space, solving each community to demographic equilibrium, and following selection gradients to evolutionary attractors.
+The [{plant}](https://github.com/traitecoevo/plant) package for R is an extensible framework for modelling size-, patch- and trait-structured demography. The [{regnans}](https://github.com/traitecoevo/regnans) package extends {plant} to model community assembly and trait evolution, by repeatedly invading trait space, solving each community to demographic equilibrium, and following selection gradients to evolutionary attractors.
 
 > **Status:** under active development. The fitness and equilibrium machinery was
 > recently moved out of {plant} into this package, so a compatible recent {plant}
@@ -27,14 +27,14 @@ Envisioned future capabilities:
 
 ## The plant model family
 
-`{plant.assembly}` is one of three companion repositories, with work coordinated
+`{regnans}` is one of three companion repositories, with work coordinated
 on a shared [project board](https://github.com/orgs/traitecoevo/projects/5)
 ("Plant model development"):
 
 | Repository | Role |
 |---|---|
 | [**plant**](https://github.com/traitecoevo/plant) | Core C++/R model: size- and trait-structured demography, the SCM solver, and the physiological strategies (FF16, TF24, …). |
-| [**plant.assembly**](https://github.com/traitecoevo/plant.assembly) | Evolutionary community assembly on top of `plant` — invasion fitness, demographic equilibria, and selection gradients (this repo). |
+| [**regnans**](https://github.com/traitecoevo/regnans) | Evolutionary community assembly on top of `plant` — invasion fitness, demographic equilibria, and selection gradients (this repo). |
 | [**overstorey**](https://github.com/traitecoevo/overstorey) | The narrative documentation / field guide site (user guides, theory, worked reproductions). |
 
 Issues from all three repositories feed into the
@@ -44,7 +44,7 @@ single place to see what is planned, in progress, or done across the family.
 ## Reporting issues
 
 Bug reports and feature requests are welcome via the
-[GitHub issue tracker](https://github.com/traitecoevo/plant.assembly/issues). New
+[GitHub issue tracker](https://github.com/traitecoevo/regnans/issues). New
 issues are automatically added to the
 [project board](https://github.com/orgs/traitecoevo/projects/5) with status
 **Backlog**.
@@ -71,28 +71,28 @@ To keep the board sortable, please:
 
 **Option 1, using `remotes::install_github`**
 
-The `{plant.assembly}` package can be installed direct from GitHub using the [`remotes`](https://cran.r-project.org/web/packages/remotes/index.html) package:
+The `{regnans}` package can be installed direct from GitHub using the [`remotes`](https://cran.r-project.org/web/packages/remotes/index.html) package:
 
 ```r
-remotes::install_github("traitecoevo/plant.assembly", dependencies=TRUE)
+remotes::install_github("traitecoevo/regnans", dependencies=TRUE)
 ```
 
-To install a specific (older) release, decide for the version number that you want to install in https://github.com/traitecoevo/plant.assembly/releases  e.g.
+To install a specific (older) release, decide for the version number that you want to install in https://github.com/traitecoevo/regnans/releases  e.g.
 
 ```r
-remotes::install_github("traitecoevo/plant.assembly@v1.0.0", dependencies=TRUE)
+remotes::install_github("traitecoevo/regnans@v1.0.0", dependencies=TRUE)
 ```
 
 with `"v1.0.0"` replaced by the appropriate version number.
 
 **Option 2, building from source**
 
-If familiar with [git](https://git-scm.com/) you might find it easiest to build `plant.assembly` directly from the source code. This is most useful if developing new models or strategies, or to contribute new features.
+If familiar with [git](https://git-scm.com/) you might find it easiest to build `regnans` directly from the source code. This is most useful if developing new models or strategies, or to contribute new features.
 
-First, clone the `plant.assembly` repository
+First, clone the `regnans` repository
 
 ```
-git clone https://github.com/traitecoevo/plant.assembly
+git clone https://github.com/traitecoevo/regnans
 ```
 
 Open an R session in the folder, then to install dependencies run
@@ -114,7 +114,7 @@ devtools::load_all()
 
 ## Plant family
 
-`plant.assembly` is part of the **plant family** of packages in the
+`regnans` is part of the **plant family** of packages in the
 [`traitecoevo`](https://github.com/traitecoevo) org, built around the
 [`plant`](https://github.com/traitecoevo/plant) forest model. Docs hub:
 <https://traitecoevo.github.io/overstorey/>.

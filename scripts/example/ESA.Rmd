@@ -6,7 +6,7 @@
 #devtools::load_all()
 
 library(plant)
-library(plant.assembly)
+library(regnans)
 library(dplyr)
 library(tidyr)
 library(readr)
@@ -153,13 +153,13 @@ fitness1 <-
 community$hyperpar <- make_FF16_hyperpar(B_lf1 = B_lf1_new)
 
 community$fitness_points <- NULL
-community <- plant.assembly:::community_prepare_fitness(community)
+community <- regnans:::community_prepare_fitness(community)
 
-community2 <- plant.assembly:::community_prepare_approximate_fitness(community)
+community2 <- regnans:::community_prepare_approximate_fitness(community)
 
-community3 <- plant.assembly:::community_demography(community)
+community3 <- regnans:::community_demography(community)
 
-community3b <- plant.assembly:::community_prepare_approximate_fitness(community3)
+community3b <- regnans:::community_prepare_approximate_fitness(community3)
 
 residents1 <- tibble(lma = community$traits[, 1], fitness = approx(fitness1[[1]], fitness1[[2]], community$traits[, 1])$y) %>% mutate(step=1, trait_value=lma)
 

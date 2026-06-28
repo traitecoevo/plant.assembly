@@ -21,7 +21,7 @@ First, some basic setup
 
 ```{r, setup}
 library(plant)
-library(plant.assembly)
+library(regnans)
 library(parallel)
 library(tidyverse)
 

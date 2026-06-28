@@ -1,5 +1,5 @@
 # Tests for the community interface (community_start/add/drop, demography,
-# selection gradient). These target plant.assembly's own API, unlike the older
+# selection gradient). These target regnans's own API, unlike the older
 # test files which call plant's (now removed) internal functions directly.
 
 assembly_model_support <- function(max_patch_lifetime = 30) {

@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(plant.assembly)
+library(regnans)
 
-test_check("plant.assembly")
+test_check("regnans")

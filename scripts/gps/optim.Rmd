@@ -49,7 +49,7 @@ Note point about nugget = 0 --> important when using GP as emulator
 ```{r}
 
 library(plant)
-library(plant.assembly)
+library(regnans)
 devtools::load_all()
 # devtools::load_all("../plant-dev")
 

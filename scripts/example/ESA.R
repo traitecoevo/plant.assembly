@@ -19,7 +19,7 @@ f_assemble <- function(trait, disturbance_interval,
   logfile <- gsub(".rds", ".txt", filename)
   plant_log_console(logfile)
 
-  plant.assembly:::plant_log_assembler(
+  regnans:::plant_log_assembler(
     paste0("starting assembly with disturbance_interval = ", disturbance_interval,
       "; B_lf1 = ", B_lf1,"; saving to ", filename))
 

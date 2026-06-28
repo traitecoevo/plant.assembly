@@ -1,4 +1,4 @@
-# plant.assembly — developer guide for Claude
+# regnans — developer guide for Claude
 
 R package for **assembling ecological communities with the `plant` model**: it
 repeatedly invades empty/occupied trait space, solves each community to
@@ -7,7 +7,7 @@ evolutionary attractors (selection gradients, singular strategies).
 
 It is a thin evolutionary-assembly layer **on top of `plant`**. `plant` provides
 the demographic model (the SCM — Size- and Patch-structured Cohort Model);
-`plant.assembly` orchestrates many `plant` runs.
+`regnans` orchestrates many `plant` runs.
 
 ## Status (June 2026)
 
@@ -29,7 +29,7 @@ breaking interface changes. As of now:
 ### Important: plant removed the whole fitness/equilibrium subsystem (#388)
 
 plant NEWS (#388): "All fitness/equilibrium functionality was removed from plant;
-it now lives in `plant.assembly`." Removed from plant: `fitness_landscape()`,
+it now lives in `regnans`." Removed from plant: `fitness_landscape()`,
 `solve_max_fitness()`, `viable_fitness()`, `fundamental_fitness()`,
 `equilibrium_birth_rate()`, `positive_1d()`, `max_growth_rate()`, etc. The port
 is *exactly* the job of bringing these into this package. The intended approach
@@ -210,7 +210,7 @@ duplicate `test-fitness-support.R` were deleted.
 
 ## Issue & project-board conventions
 
-Development across `plant`, `plant.assembly`, and `overstorey` is tracked on a
+Development across `plant`, `regnans`, and `overstorey` is tracked on a
 shared [project board](https://github.com/orgs/traitecoevo/projects/5). New issues
 are auto-added to the board with **no Status** — that's the triage queue. A maintainer
 sets Status (e.g. Backlog) during triage, so you don't need to set it yourself.
@@ -228,12 +228,12 @@ When opening an issue (including whenever the user asks you to create one), alwa
 
   | Tag | Scope |
   |---|---|
-  | `[evol assembly]` | Evolutionary assembly linking plant to plant.assembly |
+  | `[evol assembly]` | Evolutionary assembly linking plant to regnans |
   | `[TF24 hydraulics]` | Hydraulics component of the TF24 strategy |
   | `[TF24 allometry]` | Flexible allometry for the TF24 model |
   | `[TF24 nsc]` | Non-structural carbohydrate storage in TF24 |
   | `[acclimation]` | Acclimation of leaf and other traits |
-  | `[simplify interface]` | Consistent interface to the plant & plant.assembly models |
+  | `[simplify interface]` | Consistent interface to the plant & regnans models |
   | `[Env drivers]` | Driving the model with environmental drivers |
   | `[speed]` | Performance — making the model run faster |
   | `[patch variations]` | Multiple patch setups (multi-patch, stochastic metapopulation, continuous patch) |
@@ -243,13 +243,13 @@ When opening an issue (including whenever the user asks you to create one), alwa
 
   A title may carry more than one tag when it genuinely spans themes.
 
-Create issues with `gh issue create -R traitecoevo/plant.assembly
+Create issues with `gh issue create -R traitecoevo/regnans
 --title "[evol assembly] …" --label task` (swap in `bug`/`epic` as appropriate).
 
 
 ## Plant family
 
-`plant.assembly` is part of the **plant family** in the [`traitecoevo`](https://github.com/traitecoevo)
+`regnans` is part of the **plant family** in the [`traitecoevo`](https://github.com/traitecoevo)
 org — a hub-and-spoke set of packages built around the
 [`plant`](https://github.com/traitecoevo/plant) size- and trait-structured forest model.
 

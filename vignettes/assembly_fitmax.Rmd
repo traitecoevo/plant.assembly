@@ -8,7 +8,7 @@ vignette: >
 ---
 
 
-This vignette provides an example of running community assembly using the max_fitness method in  plant.assembly. Below we consider both a 1 and 2 trait example.
+This vignette provides an example of running community assembly using the max_fitness method in  regnans. Below we consider both a 1 and 2 trait example.
 
 First, basic setup:
 
@@ -16,7 +16,7 @@ First, basic setup:
 
 ```{r, setup}
 library(plant)
-#library(plant.assembly)
+#library(regnans)
 devtools::load_all()
 # devtools::load_all("../plant-dev")
 
