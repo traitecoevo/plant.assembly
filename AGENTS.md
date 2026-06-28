@@ -220,8 +220,22 @@ duplicate `test-fitness-support.R` were deleted.
   direct plant dependency and reuse the community fitness functions.
 - Two malformed `@param` roxygen tags in `R/community_plots.R` (lines 64, 103)
   warn on `document()`.
-- Nothing in the working tree is committed yet — ~70 dirty files mixing the port
-  WIP and the plant-interface migration. Stage deliberately.
+
+## Planned: fast toy models for dev (#33)
+
+Every fitness/equilibrium evaluation currently runs the full `plant` SCM, which
+is slow and has no closed-form answer to validate algorithms against. #33 plans a
+non-plant `model_support` backend supplying a `fitness_function(x_new, x, y)` plus
+a (cheap) equilibrium solve, so the assembly/attractor machinery can be developed
+and unit-tested against models with **known analytic answers**. Two starters:
+
+- **Bird arrival-time model** (Brännström et al. 2013, §4) — discrete-time, 1D,
+  fully analytic singular strategy `x* = x_opt - a·σ²` (a CSS). The benchmark for
+  testing numerical gradient/singularity solvers against an exact solution.
+- **Geritz seed-size safe-site model** (Geritz et al. 1999) — 1D branching on a
+  real plant trait. A MATLAB implementation to port lives in Daniel's OneDrive
+  (`Offspring-SmithFretwellReview/models/Geritz/`); see also
+  `x_misc/Revolve/doc/models.md` and the Revolve DD99/Kisdi ports.
 
 ## Issue & project-board conventions
 
