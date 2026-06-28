@@ -1,0 +1,2 @@
+## -*- makefile -*-
+CXX_STD = CXX17

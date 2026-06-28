@@ -18,7 +18,7 @@
 ##' @author Daniel Falster, Rich FitzJohn
 max_growth_rate <- function(community, values) {
   if (is.null(community$fitness_function)) {
-    community <- plant_community_update_fitness_function(community)
+    community <- community_update_fitness_function(community)
   }
   community$fitness_function(values)
 }
@@ -50,7 +50,7 @@ max_fitness <- function(community, bounds = NULL, log_scale = TRUE, tol = 1e-3) 
   traits <- rownames(bounds)
 
   if (is.null(community$fitness_function)) {
-    community <- plant_community_update_fitness_function(community)
+    community <- community_update_fitness_function(community)
   }
   fitness <- community$fitness_function
 

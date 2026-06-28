@@ -8,3 +8,8 @@ inst/doc
 
 # Claude Code personal settings
 .claude/settings.local.json
+
+# Compiled C++ artifacts
+src/*.o
+src/*.so
+src/*.dll

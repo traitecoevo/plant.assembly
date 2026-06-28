@@ -98,7 +98,7 @@ community_demography <- function(community){
     ## fitness_points are all set there).
   }
 
-  plant_community_update_fitness_function(community)
+  community_update_fitness_function(community)
 }
 
 ## This is the simplest update: it simply takes a single step

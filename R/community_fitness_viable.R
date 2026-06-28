@@ -40,7 +40,7 @@ community_viable_fitness_1D <- function(community, x = NULL,
 
   ## Fundamental fitness == invasion fitness into this (empty) community.
   if (is.null(community$fitness_function)) {
-    community <- plant_community_update_fitness_function(community)
+    community <- community_update_fitness_function(community)
   }
   fitness <- function(trait_value) {
     community$fitness_function(as.numeric(trait_value))

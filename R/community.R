@@ -22,19 +22,28 @@ community_start <- function(bounds,
                             birth_rate_initial = 1e-3,
                             demography_control = demographic_step_control(),
                             fitness_control = NULL,
-                            model_support = NULL
+                            model_support = NULL,
+                            harness = NULL
                             ) {
 
   if (is.character(bounds)) {
     bounds <-  bounds_infinite(bounds)
   }
-  
+
+  ## A harness wires the community to a model backend (see R/harness.R). Default
+  ## to the plant SCM, so existing callers that pass only `model_support` keep
+  ## working unchanged.
+  if (is.null(harness)) {
+    harness <- harness_plant()
+  }
+
   ret <- list(
     bounds = check_bounds(bounds),
     birth_rate_initial = birth_rate_initial,
     demography_control = demography_control,
     fitness_control = fitness_control,
-    model_support = model_support 
+    model_support = model_support,
+    harness = harness
   )
   ret$trait_names = rownames(ret$bounds)
   ret$traits <- trait_matrix(numeric(0), ret$trait_names)

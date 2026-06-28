@@ -13,6 +13,7 @@ Depends:
     mlr3learners
 Imports:
     plant,
+    Rcpp,
     lhs,
     mvtnorm,
     dfoptim,
@@ -21,6 +22,8 @@ Imports:
     BB,
     nleqslv,
     purrr
+LinkingTo:
+    Rcpp
 Suggests:
     knitr,
     rmarkdown,

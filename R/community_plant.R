@@ -282,9 +282,8 @@ plant_community_check_for_inviable_strategies <- function(community) {
   offspring_production
 }
 
-# connect functions
-community_parameters <- plant_community_parameters
-community_viable_bounds <- plant_community_viable_bounds
-community_check_for_inviable_strategies <- plant_community_check_for_inviable_strategies
-community_make_demography_runner <- plant_community_make_demography_runner
-community_demography_runner_cleanup <- plant_community_demography_runner_cleanup
+# The model-agnostic connectors (community_parameters, community_*_runner*,
+# community_viable_bounds, community_check_for_inviable_strategies,
+# community_update_fitness_function) live in R/harness.R and forward to the
+# harness on the community. harness_plant() (also in R/harness.R) points them
+# back at the plant_community_* implementations above.

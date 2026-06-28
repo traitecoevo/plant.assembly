@@ -9,7 +9,8 @@ community_start(
   birth_rate_initial = 0.001,
   demography_control = demographic_step_control(),
   fitness_control = NULL,
-  model_support = NULL
+  model_support = NULL,
+  harness = NULL
 )
 }
 \arguments{
