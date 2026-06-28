@@ -96,7 +96,7 @@ plant-specific layer could in principle be swapped.
   ~105 and the SCM errors with "time_max must be greater than current time").
 - `plant_default_assembly_control(...)` — wrapper around `plant::control()`.
 - `plant_community_parameters(community)` — builds a `plant` `Parameters` from
-  the community (strategies via `plant::strategy_list`, restores cached schedule
+  the community (strategies via `plant::generate_strategy`, restores cached schedule
   times).
 - `plant_community_make_demography_runner(community)` — returns a closure
   `runner(birth_rates) -> offspring_production` that runs the SCM once. It
@@ -169,15 +169,30 @@ here follow current plant terminology.
 
 ## Test baseline
 
-`devtools::test()` is **green: 79 pass, 0 fail, 0 skip, 0 warn**.
+`devtools::test()` is **green: 133 pass, 0 fail, 0 skip, 0 warn**. Tests run in
+parallel (`Config/testthat/parallel: true`); `test-solve-attractors.R` dominates
+the wall-clock as it runs the full SCM per `uniroot` step.
 
 - `test-community.R` (new) — covers the community interface: `trait_matrix`,
   `bounds`, `demographic_step_control`, `community_start/add/drop`,
   `length.community`, the `max_patch_lifetime` schedule regression, and
   integration tests for `community_demography` (empty + single resident,
-  reference birth rate ≈ 112.66) and `community_selection_gradient`.
+  reference birth rate ≈ 0.06846) and `community_selection_gradient`.
 - `test-support-fitness.R` — `positive_1d`, `bounds`/`check_bounds`/`check_point`,
-  and `community_viable_fitness_1D` (viable interval ≈ [0.0131, 1.644] for lma).
+  and `community_viable_fitness_1D` (viable interval ≈ [0.0405, 0.7993] for lma).
+- `test-solve-attractors.R` (new, #27) — `community_solve_singularity_1D`: 1D
+  attractor (≈0.1417 for lma) plus the non-bracketing `edge_ok` warning/error
+  branches.
+- `test-fitness-landscape.R` (new, #27) — `community_fitness_landscape` grid
+  method (resident flagged, fitness ~0 at the equilibrium resident, auto-solves
+  demography, rejects unknown methods). The bayesopt/surrogate method is not
+  covered.
+- `test-assembler.R` (new, #27) — `assembler_control` defaults/validation,
+  `mutational_vcv_proportion` (diagonal log-scale vcv), the maximum-fitness and
+  stochastic assembly loops (`assembler_start`/`assembler_run`), and
+  `tidy_assembly` output shape.
+- `helper-assembly.R` (new) — shared `assembly_model_support(max_patch_lifetime
+  = 30)` used by the integration tests (previously inlined in test-community.R).
 
 The five old test files that called plant's removed API were resolved
 (drop-or-implement, not skipped): `positive_1d` was reimplemented so its test was

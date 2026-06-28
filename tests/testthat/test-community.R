@@ -2,10 +2,7 @@
 # selection gradient). These target regnans's own API, unlike the older
 # test files which call plant's (now removed) internal functions directly.
 
-assembly_model_support <- function(max_patch_lifetime = 30) {
-  list(p = plant_default_assembly_pars(max_patch_lifetime = max_patch_lifetime),
-       plant_control = plant_default_assembly_control())
-}
+# `assembly_model_support()` is defined in helper-assembly.R.
 
 # ---- fast unit tests (no SCM runs) ----------------------------------------
 
