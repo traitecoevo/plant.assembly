@@ -246,11 +246,21 @@ When opening an issue (including whenever the user asks you to create one), alwa
 Create issues with `gh issue create -R traitecoevo/plant.assembly
 --title "[evol assembly] …" --label task` (swap in `bug`/`epic` as appropriate).
 
-## Cross-package context
 
-This repo is part of the **plant family** in the `traitecoevo` org (community assembly + trait evolution on top of plant). For
-cross-package orientation — how the family fits together, dependency direction,
-source-of-truth rules, and the shared label/board conventions — see
-**[`plant-meta`](https://github.com/traitecoevo/plant-meta)** (start with its
-`AGENTS.md`). Don't restate family-wide concerns here; link to plant-meta and
-keep this file about `plant.assembly`-local matters.
+## Plant family
+
+`plant.assembly` is part of the **plant family** in the [`traitecoevo`](https://github.com/traitecoevo)
+org — a hub-and-spoke set of packages built around the
+[`plant`](https://github.com/traitecoevo/plant) size- and trait-structured forest model.
+
+- **Docs hub** — family user guides & theory: <https://traitecoevo.github.io/overstorey/>
+- **Cross-package orientation** — how the family fits together (who depends on whom,
+  source-of-truth rules, cross-repo gotchas) lives in
+  [`plant-meta`](https://github.com/traitecoevo/plant-meta); start with its
+  [`AGENTS.md`](https://github.com/traitecoevo/plant-meta/blob/main/AGENTS.md). Keep
+  family-wide concerns there, not here.
+- **Issues & board** — follow the
+  [issue guide](https://github.com/traitecoevo/plant-meta/blob/main/governance/issue-guide.md);
+  work is tracked on [board #5](https://github.com/orgs/traitecoevo/projects/5) (new issues
+  auto-add with no Status = the triage queue). Labels: `bug` / `task` / `epic` plus `blocked`,
+  `needs-info`, `cross-package`, `breaking`, `question`.
