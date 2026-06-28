@@ -2,7 +2,7 @@
 % Please edit documentation in R/harness.R
 \name{harness_dd99}
 \alias{harness_dd99}
-\title{Dieckmann & Doebeli 1999 harness}
+\title{DD99 (Dieckmann & Doebeli 1999) harness}
 \usage{
 harness_dd99(
   r = 1,
@@ -30,7 +30,7 @@ harness_dd99(
 a `harness` object
 }
 \description{
-Dieckmann & Doebeli 1999 competition model (Nature 400:354-357).
+DD99: Dieckmann & Doebeli 1999 competition model (Nature 400:354-357).
 }
 \details{
 Continuous-time logistic competition for a Gaussian resource: carrying

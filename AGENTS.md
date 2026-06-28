@@ -241,38 +241,48 @@ wires it to a backend. The pipeline only ever calls six connectors (defined in
 | `community_check_for_inviable_strategies()` | residents to drop |
 | `community_update_fitness_function()` | the invasion-fitness closure |
 
-`harness_plant()` (the default) forwards these to the existing `plant_community_*`
-code, so callers passing only `model_support` are unchanged. `version=` is a hook
-for supporting different plant interfaces side by side.
+`harness_plant(model, version)` (the default) forwards these to the existing
+`plant_community_*` code, so callers passing only `model_support` are unchanged.
+It is identified by the plant physiological model (`FF16`, the current default,
+or `TF24`) and the plant package `version` — a hook for supporting different
+plant models/interfaces side by side. (The plant `Parameters` themselves still
+come from `community_start(model_support = ...)`; `model`/`version` are recorded
+metadata for now.)
 
-`harness_analytic()` implements all six connectors generically from two
-primitives — a vectorised **log-invasion-fitness** function and an **equilibrium
-solve** — both backed by C++ in `src/toy_models.cpp` (the package's first C++;
-Rcpp via `LinkingTo`, `@useDynLib` in `R/zzz.R`, `src/Makevars` C++17). For these
-backends `community$birth_rate` holds resident **abundance/density**, not a plant
-offspring rate. Three models ship, each with analytic test oracles:
+`harness_explicit(fitness, equilibrium, ...)` implements all six connectors
+generically from two primitives — a vectorised **invasion-fitness** function and
+an **equilibrium solve** — each backed by C++ in its own file under `src/`
+(`DD99.cpp`, `GK98.cpp`, `GM99.cpp`, `JJ12.cpp`; the package's first C++, Rcpp via
+`LinkingTo`, `@useDynLib` in `R/zzz.R`, `src/Makevars` C++17). "Explicit" is about
+the mechanism (fitness/equilibrium computed directly, not via the SCM), **not** a
+claim that every quantity is closed-form. For these backends `community$birth_rate`
+holds resident **abundance/density**, not a plant offspring rate. Four models
+ship (named by author/year), each with test oracles:
 
-- **`harness_bird()`** — migratory-bird arrival time (Johansson & Jonzén 2012;
-  Brännström et al. 2013 §4). CSS, no branching; `x* = x_opt - a·σ²`. The
-  benchmark for testing numerical gradient/singularity solvers vs. an exact answer.
 - **`harness_dd99()`** — Dieckmann & Doebeli 1999 Gaussian competition. `x* = x0`;
-  branches iff `σ_C < σ_K`, else ESS.
-- **`harness_geritz98()`** — Geritz et al. 1998 soft-selection (Levene) model.
-  `x* =` capacity-weighted mean optimum (0 for the symmetric 3-patch default);
-  branches iff `d/σ > √(3/2) ≈ 1.2247`.
-- **`harness_geritz99()`** — Geritz, van der Meijden & Metz 1999 seed-size
-  safe-site model (Poisson sites, size-asymmetric seedling competition; the model
-  in Daniel's MATLAB at
+  branches iff `σ_C < σ_K`, else ESS. (fitness is a per-capita rate, ~0 at resident)
+- **`harness_gk98()`** — Geritz, Kisdi, Meszéna & Metz 1998 soft-selection
+  (Levene) model. `x* =` capacity-weighted mean optimum (0 for the symmetric
+  3-patch default); branches iff `d/σ > √(3/2) ≈ 1.2247`.
+- **`harness_gm99()`** — Geritz, van der Meijden & Metz 1999 seed-size safe-site
+  model (Poisson sites, size-asymmetric seedling competition; the model in
+  Daniel's MATLAB at
   `OneDrive/.../Offspring-SmithFretwellReview/models/Geritz/`). Only `α·R` and
-  `β·R` matter; no closed-form `x*` (numerical), and size-asymmetric competition
-  (large `α`) drives branching — Fig. 5: `αR=4.5` gives a CSS, `αR=7` branches at
-  `βR=15`. The strong oracle is the equilibrium invariant `W_m(m)=1`
-  (log fitness 0). **Distinct from `harness_geritz98`** (1998 soft-selection).
-  See also `x_misc/Revolve/doc/models.md`.
+  `β·R` matter; no closed-form `x*` (numerical) and fitness is a Poisson series;
+  size-asymmetric competition drives branching — Fig. 5: `αR=4.5` gives a CSS,
+  `αR=7` branches at `βR=15`. Strong oracle: equilibrium invariant `W_m(m)=1`.
+  **Distinct from `harness_gk98`** (1998 soft-selection).
+- **`harness_jj12()`** — Johansson & Jonzén 2012 migratory-bird arrival time
+  (simplified analytic form of Brännström et al. 2013 §4). CSS, no branching;
+  closed form `x* = x_opt − a·σ²`. The benchmark for testing numerical
+  gradient/singularity solvers vs. an exact answer.
 
-Tests live in `tests/testthat/test-harness-{bird,dd99,geritz98}.R`; they assert
-each singular strategy is recovered by `community_solve_singularity_1D` and that
-the invasion-fitness curvature flips sign at the analytic ESS/branching boundary.
+(fitness returns a log ratio for jj12/gk98/gm99; a per-capita rate for dd99 —
+both ~0 at the resident.) Tests live in
+`tests/testthat/test-harness-{dd99,gk98,gm99,jj12}.R`; they assert each singular
+strategy is recovered by `community_solve_singularity_1D` and that the
+invasion-fitness curvature flips sign at the ESS/branching boundary. See also
+`x_misc/Revolve/doc/models.md` and the per-model write-ups in `overstorey_staging/`.
 
 ## Issue & project-board conventions
 

@@ -15,8 +15,8 @@ dd99_equilibrium(x_res, pars)
 numeric vector of equilibrium densities
 }
 \description{
-Single resident: N* = K(x). Many residents: solve the linear system
-A N = K with A_ij = C(x_i - x_j) (negative densities, i.e. strategies that
-cannot coexist, are clamped to zero).
+Single resident: N* = K(x). Many residents: solve the linear system A N = K
+with A_ij = C(x_i - x_j) (negative densities, i.e. strategies that cannot
+coexist, are clamped to zero).
 }
 \keyword{internal}

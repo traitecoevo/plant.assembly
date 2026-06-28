@@ -4,10 +4,15 @@
 \alias{harness_plant}
 \title{plant model harness}
 \usage{
-harness_plant(version = "current")
+harness_plant(
+  model = c("FF16", "TF24"),
+  version = as.character(utils::packageVersion("plant"))
+)
 }
 \arguments{
-\item{version}{plant-interface version label (informational for now)}
+\item{model}{plant physiological model: "FF16" or "TF24"}
+
+\item{version}{plant package version (defaults to the installed version)}
 }
 \value{
 a `harness` object
@@ -17,8 +22,14 @@ The default model harness: the full `plant` SCM.
 }
 \details{
 Forwards each connector to the existing `plant_community_*` implementation,
-so the working plant path is unchanged. The `version` argument is a hook for
-supporting different plant interfaces side by side (currently informational).
+so the working plant path is unchanged. It is identified by the plant
+physiological model (`FF16`, the current default, or `TF24`) and the plant
+package `version`, mirroring how the toy harnesses are named by author/year.
+
+The actual `plant` `Parameters` are still supplied via
+`community_start(model_support = ...)`; `model`/`version` here are recorded
+metadata and a hook for model-specific dispatch (TF24 support depends on the
+installed `plant`).
 }
 \author{
 Daniel Falster
