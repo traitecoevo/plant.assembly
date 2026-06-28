@@ -169,9 +169,13 @@ here follow current plant terminology.
 
 ## Test baseline
 
-`devtools::test()` is **green: 133 pass, 0 fail, 0 skip, 0 warn**. Tests run in
-parallel (`Config/testthat/parallel: true`); `test-solve-attractors.R` dominates
-the wall-clock as it runs the full SCM per `uniroot` step.
+`devtools::test()` is **green: 177 pass, 0 fail, 0 skip, 0 warn** (133 plant +
+44 toy-model/harness). Tests run in parallel (`Config/testthat/parallel: true`);
+`test-solve-attractors.R` dominates the wall-clock as it runs the full SCM per
+`uniroot` step. The `test-harness-*.R` files run no SCM and are fast.
+
+Note: the testthat parallel workers may fail to find `plant` on startup in some
+shells; run `TESTTHAT_PARALLEL=FALSE Rscript -e 'devtools::test()'` if so.
 
 - `test-community.R` (new) — covers the community interface: `trait_matrix`,
   `bounds`, `demographic_step_control`, `community_start/add/drop`,
@@ -221,21 +225,50 @@ duplicate `test-fitness-support.R` were deleted.
 - Two malformed `@param` roxygen tags in `R/community_plots.R` (lines 64, 103)
   warn on `document()`.
 
-## Planned: fast toy models for dev (#33)
+## Model harnesses: plant vs fast toy models (#33)
 
-Every fitness/equilibrium evaluation currently runs the full `plant` SCM, which
-is slow and has no closed-form answer to validate algorithms against. #33 plans a
-non-plant `model_support` backend supplying a `fitness_function(x_new, x, y)` plus
-a (cheap) equilibrium solve, so the assembly/attractor machinery can be developed
-and unit-tested against models with **known analytic answers**. Two starters:
+Running the full `plant` SCM for every fitness/equilibrium evaluation is slow and
+has no closed-form answer to validate algorithms against. The pipeline is now
+**model-agnostic**: a community carries a `harness` (`community$harness`) that
+wires it to a backend. The pipeline only ever calls six connectors (defined in
+`R/harness.R`), each forwarding to the harness's own implementation:
 
-- **Bird arrival-time model** (Brännström et al. 2013, §4) — discrete-time, 1D,
-  fully analytic singular strategy `x* = x_opt - a·σ²` (a CSS). The benchmark for
-  testing numerical gradient/singularity solvers against an exact solution.
-- **Geritz seed-size safe-site model** (Geritz et al. 1999) — 1D branching on a
-  real plant trait. A MATLAB implementation to port lives in Daniel's OneDrive
-  (`Offspring-SmithFretwellReview/models/Geritz/`); see also
-  `x_misc/Revolve/doc/models.md` and the Revolve DD99/Kisdi ports.
+| connector | builds |
+|---|---|
+| `community_parameters()` | model parameters |
+| `community_make_demography_runner()` | closure `birth_rates -> offspring` |
+| `community_demography_runner_cleanup()` | writes equilibrium state back |
+| `community_viable_bounds()` | viable trait region (empty community) |
+| `community_check_for_inviable_strategies()` | residents to drop |
+| `community_update_fitness_function()` | the invasion-fitness closure |
+
+`harness_plant()` (the default) forwards these to the existing `plant_community_*`
+code, so callers passing only `model_support` are unchanged. `version=` is a hook
+for supporting different plant interfaces side by side.
+
+`harness_analytic()` implements all six connectors generically from two
+primitives — a vectorised **log-invasion-fitness** function and an **equilibrium
+solve** — both backed by C++ in `src/toy_models.cpp` (the package's first C++;
+Rcpp via `LinkingTo`, `@useDynLib` in `R/zzz.R`, `src/Makevars` C++17). For these
+backends `community$birth_rate` holds resident **abundance/density**, not a plant
+offspring rate. Three models ship, each with analytic test oracles:
+
+- **`harness_bird()`** — migratory-bird arrival time (Johansson & Jonzén 2012;
+  Brännström et al. 2013 §4). CSS, no branching; `x* = x_opt - a·σ²`. The
+  benchmark for testing numerical gradient/singularity solvers vs. an exact answer.
+- **`harness_dd99()`** — Dieckmann & Doebeli 1999 Gaussian competition. `x* = x0`;
+  branches iff `σ_C < σ_K`, else ESS.
+- **`harness_geritz98()`** — Geritz et al. 1998 soft-selection (Levene) model.
+  `x* =` capacity-weighted mean optimum (0 for the symmetric 3-patch default);
+  branches iff `d/σ > √(3/2) ≈ 1.2247`. **Note:** this is the 1998 paper's
+  *soft-selection* worked example, NOT the Geritz *1999* seed-size safe-site model
+  (the one in Daniel's MATLAB at
+  `OneDrive/.../Offspring-SmithFretwellReview/models/Geritz/`); that remains a
+  possible future addition. See also `x_misc/Revolve/doc/models.md`.
+
+Tests live in `tests/testthat/test-harness-{bird,dd99,geritz98}.R`; they assert
+each singular strategy is recovered by `community_solve_singularity_1D` and that
+the invasion-fitness curvature flips sign at the analytic ESS/branching boundary.
 
 ## Issue & project-board conventions
 
