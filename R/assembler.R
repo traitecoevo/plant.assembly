@@ -147,7 +147,11 @@ assembler_restore <- function(obj, community, prev) {
 
 assembler_append_history <- function(obj) {
 
-  if (obj$control$birth_type == "maximum") {
+  ## The fitness-landscape grid is 1D (it feeds find_max_fitness_1D and 1D
+  ## plotting). For multi-trait communities the nD max search
+  ## (find_max_fitness_2d) does not need it, so skip it.
+  if (obj$control$birth_type == "maximum" &&
+      length(obj$community$trait_names) == 1L) {
     obj$community <- community_fitness_landscape(obj$community)
   }
 

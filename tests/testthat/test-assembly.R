@@ -67,6 +67,18 @@ test_that("DD99 2D multi-resident equilibrium zeroes resident fitness", {
   expect_equal(dd99_nd_fitness(xr, xr, n, p), rep(0, 3), tolerance = 1e-8)
 })
 
+test_that("DD99 assembles a 2D community warning-free via the assembler", {
+  h <- harness_dd99_nd(x0 = c(0, 0), sigma_K = c(1, 1), sigma_C = c(0.6, 0.6))
+  comm <- community_start(bounds(x1 = c(-3, 3), x2 = c(-3, 3)), harness = h,
+                          trait_scale = "linear",
+                          fitness_control = list(method = "grid", n_evals = 40))
+  a <- assembler_start(comm, assembler_control(list(birth_type = "maximum")))
+  expect_no_warning(a <- assembler_run(a, 8))
+  expect_gt(length(a$community), 3L)            # builds a multi-species community
+  expect_true(all(a$community$birth_rate > 0))
+  expect_equal(ncol(a$community$traits), 2L)    # genuinely two traits
+})
+
 test_that("harness_dd99_nd validates parameter lengths", {
   expect_error(harness_dd99_nd(x0 = c(0, 0, 0), trait_names = c("x1", "x2")),
                "length")

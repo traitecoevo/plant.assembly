@@ -82,11 +82,12 @@ find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
   tf <- community_trait_transform(sys)
   do_fit <- function(p) {
     f <- function(x) {
-      sys$fitness_function(x)
+      w <- sys$fitness_function(x)
+      if (is.finite(w)) w else -1e6   # keep the optimiser away from blow-ups
     }
     fit <- maximize_scaled(f, p, sys$bounds, tol, tf)
     ret <- trait_matrix(fit$par, sys$trait_names)
-    attr(ret, "fitness") <- fit$value
+    attr(ret, "fitness") <- if (is.finite(fit$value)) fit$value else -Inf
     ret
   }
   check <- function(fit, X) {
@@ -95,38 +96,33 @@ find_max_fitness_2d <- function(sys, eps_too_close, tol=1e-2) {
     d <- attr(j, "distance")
     plant_log_max_fitness(sprintf("\t...fitness: %s, distance: %s from %d",
                                   prettyNum(w), prettyNum(d), j))
-    d > eps_too_close && w > 0.0
+    isTRUE(is.finite(w) && d > eps_too_close && w > 0.0)
   }
 
-  if (length(sys) == 0L) {
-    p0 <- tf$inv(rowMeans(tf$fwd(sys$bounds)))
-    ret <- do_fit(p0)
-  } else {
-    ret <- NULL
-    X <- sys$traits
-    gr_norm <- vnapply(sys$fitness_slopes, function(x) norm2(x$gr))
-    idx <- order(gr_norm, decreasing=TRUE)
-    attempts <- list()
+  centre <- tf$inv(rowMeans(tf$fwd(sys$bounds)))
 
-    for (i in idx) {
-      plant_log_max_fitness(paste0("Searching from species ", i))
-      fit <- do_fit(X[i, ])
-      attempts <- c(attempts, list(fit))
-      if (check(fit, X)) {
-        ret <- fit
+  if (length(sys) == 0L) {
+    ret <- do_fit(centre)
+  } else {
+    ## Multistart hill-climb on invasion fitness: from each resident and from
+    ## the centre of trait space. (The old code ordered starts by
+    ## `sys$fitness_slopes`, which is never populated, so it only ever searched
+    ## the centre.) Prefer the highest-fitness optimum that is viable and not too
+    ## close to an existing resident; otherwise return the global best so the
+    ## caller (community_new_types_maximum_fitness) can decide it is "done".
+    X <- sys$traits
+    starts <- rbind(X, matrix(centre, nrow = 1))
+    fits <- lapply(seq_len(nrow(starts)), function(i) do_fit(starts[i, ]))
+    w <- vnapply(fits, function(f) attr(f, "fitness"))
+    ord <- order(w, decreasing = TRUE)
+
+    ret <- fits[[ord[[1]]]]          # global best optimum (default)
+    for (i in ord) {
+      if (check(fits[[i]], X)) {      # viable and distinct from residents
+        ret <- fits[[i]]
         break
       }
     }
-    if (is.null(ret)) {
-      ## For want of a better thing to try:
-      plant_log_max_fitness("Searching from the middle of occupied space")
-      p0 <- tf$inv(rowMeans(tf$fwd(sys$bounds)))
-      ret <- do_fit(p0)
-      ## Note that we don't check this point: we'll do that in the
-      ## make_births_maximum_fitness.
-    }
-
-    attr(ret, "attempts") <- ret
   }
   ret
 }

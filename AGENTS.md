@@ -299,10 +299,13 @@ multi-dim Poisson sum).
 - **`harness_dd99_nd()`** is the multi-trait DD99 (cf. Ito & Dieckmann 2007;
   product-Gaussian kernels). The explicit harness is dimension-aware
   (`explicit_resident_traits()`: vector for 1-trait models, the trait matrix for
-  nD). DD99 assembles ~25 species across a 2D trait plane. NOTE: the built-in
-  assembler's 2D fitness search (`find_max_fitness_2d`) still emits warnings from
-  the vestigial 1D fitness-landscape step — see #9; the `overstorey_staging`
-  assembly demo uses a small public-API max-fitness loop for 2D.
+  nD). `assembler_run()` works in nD warning-free and assembles ~27 species
+  across a 2D trait plane. The nD path was hardened (part of #9):
+  `assembler_append_history()` skips the 1D fitness-landscape grid for nD;
+  `find_max_fitness_2d()` is a real multistart hill-climb (from each resident +
+  the centre; it no longer depends on the never-populated `fitness_slopes`); and
+  `maximize_scaled()` insets boundary start points so residents sitting on a
+  bound don't break `nmkb`.
 
 See also `x_misc/Revolve/doc/models.md` and the per-model write-ups +
 `assembly.qmd` in `overstorey_staging/`.

@@ -94,7 +94,11 @@ community_trait_transform <- function(community) {
 ## `bounds` working in the transformed coordinates given by `tf`.
 maximize_scaled <- function(f, x, bounds, tol, tf) {
   lb <- tf$fwd(bounds)
-  fit <- dfoptim::nmkb(tf$fwd(x), function(z) f(tf$inv(z)),
+  ## nmkb needs a strictly-interior start; a resident sitting on a bound (common
+  ## early in assembly) would otherwise produce NaNs. Inset slightly.
+  span <- lb[, 2] - lb[, 1]
+  x0 <- pmin(pmax(tf$fwd(x), lb[, 1] + 1e-6 * span), lb[, 2] - 1e-6 * span)
+  fit <- dfoptim::nmkb(x0, function(z) f(tf$inv(z)),
                        lower = lb[, 1], upper = lb[, 2],
                        control = list(tol = tol, maximize = TRUE))
   fit$par <- tf$inv(fit$par)
