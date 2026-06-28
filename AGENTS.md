@@ -281,8 +281,31 @@ ship (named by author/year), each with test oracles:
 both ~0 at the resident.) Tests live in
 `tests/testthat/test-harness-{dd99,gk98,gm99,jj12}.R`; they assert each singular
 strategy is recovered by `community_solve_singularity_1D` and that the
-invasion-fitness curvature flips sign at the ESS/branching boundary. See also
-`x_misc/Revolve/doc/models.md` and the per-model write-ups in `overstorey_staging/`.
+invasion-fitness curvature flips sign at the ESS/branching boundary.
+
+### Mixtures, trait scale, and multi-trait models
+
+DD99/GK98/GM99 handle **mixtures**, so the full assembler runs on them, not just
+PIPs (`test-assembly.R`): DD99 packs a limiting-similarity community, GK98 (seeded
+— soft selection has no empty habitat to colonise) branches to a dimorphism, GM99
+assembles a seed-size polymorphism (slowest — its multi-resident fitness is a
+multi-dim Poisson sum).
+
+- **`community_start(trait_scale = "log"/"linear")`** (`community_trait_transform()`)
+  controls how trait space is spaced/searched during assembly. `"log"` (default)
+  suits strictly-positive traits (plant, GM99 seed size); `"linear"` suits traits
+  centred at 0 (DD99, GK98). Used by the fitness-landscape grid, the
+  nearest-resident distance in births/`should_move`, and `find_max_fitness_2d`.
+- **`harness_dd99_nd()`** is the multi-trait DD99 (cf. Ito & Dieckmann 2007;
+  product-Gaussian kernels). The explicit harness is dimension-aware
+  (`explicit_resident_traits()`: vector for 1-trait models, the trait matrix for
+  nD). DD99 assembles ~25 species across a 2D trait plane. NOTE: the built-in
+  assembler's 2D fitness search (`find_max_fitness_2d`) still emits warnings from
+  the vestigial 1D fitness-landscape step — see #9; the `overstorey_staging`
+  assembly demo uses a small public-API max-fitness loop for 2D.
+
+See also `x_misc/Revolve/doc/models.md` and the per-model write-ups +
+`assembly.qmd` in `overstorey_staging/`.
 
 ## Issue & project-board conventions
 
