@@ -20,7 +20,9 @@ community_new_types_stochastic <- function(sys, control) {
 }
 
 ## Mutation: Draw (on average) n_mutants from the population with a
-## mutational variance of vcv on the log scale.
+## mutational variance of vcv, applied on the community's trait scale
+## (log for strictly-positive traits, linear when trait_scale = "linear";
+## see community_trait_transform()).
 make_mutation_stochastic_naive <- function(n_mutants, vcv) {
   n_traits <- ncol(vcv)
   blank <- matrix(nrow=0, ncol=n_traits)
@@ -32,14 +34,17 @@ make_mutation_stochastic_naive <- function(n_mutants, vcv) {
     if (n_mutants_actual == 0) {
       return(blank)
     }
+    tf <- community_trait_transform(sys)
     traits <- sys$traits
     weights <- sys$birth_rate
     i <- sample(length(weights), n_mutants_actual, replace = TRUE, prob = weights)
-    unname(exp(log(traits[i, , drop = FALSE]) + mvtnorm::rmvnorm(n_mutants_actual, sigma = vcv)))
+    unname(tf$inv(tf$fwd(traits[i, , drop = FALSE]) +
+                    mvtnorm::rmvnorm(n_mutants_actual, sigma = vcv)))
   }
 }
 
-## Immigration: Same from the bounds, in log space.
+## Immigration: draw uniformly across the bounds, on the community's trait
+## scale (log or linear; see community_trait_transform()).
 make_immigration_stochastic_naive <- function(n_immigrants) {
   function(sys) {
     bounds <- sys$bounds
@@ -47,14 +52,15 @@ make_immigration_stochastic_naive <- function(n_immigrants) {
     if (is.null(bounds)) {
       ret <- matrix(nrow=0, ncol=n_traits)
     } else {
-      lower <- log(bounds[,1])
-      range <- log(bounds[,2]) - lower
+      tf <- community_trait_transform(sys)
+      lower <- tf$fwd(bounds[,1])
+      range <- tf$fwd(bounds[,2]) - lower
       n <- rpois(1, n_immigrants)
       if (n == 0) {
         ret <- matrix(nrow=0, ncol=n_traits)
       } else {
         u <- t(lhs::randomLHS(n, n_traits))
-        ret <- exp(t(lower + range * u))
+        ret <- tf$inv(t(lower + range * u))
       }
     }
     colnames(ret) <- sys$trait_names
@@ -70,14 +76,21 @@ make_immigration_stochastic_naive <- function(n_immigrants) {
 ##' @param x A community object, or appropriate matrix of bounds
 ##' @param p Fraction of trait range to mutate (vectors will be
 ##' recycled according R's usual rules).
+##' @details The trait range is measured on the community's trait scale: the
+##' log scale by default (so the variance is a proportion of the log range, as
+##' for strictly-positive traits), or the linear scale when the community was
+##' created with \code{trait_scale = "linear"}. A bare bounds matrix has no
+##' scale attached and is treated as log, preserving the historical behaviour.
 ##' @export
 mutational_vcv_proportion <- function(x, p=0.001) {
+  fwd <- log                                   # default scale for bare bounds
   if (inherits(x, "community")) {
+    fwd <- community_trait_transform(x)$fwd
     x <- x$bounds
   }
   bounds <- check_bounds(x)
   if (!all(is.finite(bounds))) {
     stop("All bounds must be finite")
   }
-  p * diag(nrow(bounds)) * as.numeric(diff(t(log(bounds))))
+  p * diag(nrow(bounds)) * as.numeric(diff(t(fwd(bounds))))
 }
