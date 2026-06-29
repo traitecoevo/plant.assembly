@@ -65,19 +65,19 @@ test_that("community_drop validates indices (no solve needed)", {
 })
 
 test_that("community_drop keeps the correct species (regression: numeric index)", {
-  # community_drop resets and re-solves the survivors, so model_support is
-  # required. Traits are stable under the re-solve (only birth rates change), so
-  # we assert on which traits survive.
-  comm <- community_start(bounds(lma = c(0.01, 2)),
-                          model_support = assembly_model_support()) |>
-    community_add(trait_matrix(c(0.05, 0.2), "lma"), birth_rate = c(50, 50))
+  # community_drop resets and re-solves the survivors, so it needs a model.
+  # Run it on the fast DD99 harness (issue #27) -- the drop/re-solve logic is
+  # model-agnostic, and DD99 traits are stable under the re-solve (only the
+  # equilibrium density changes), so we assert on which traits survive.
+  comm <- community_start(bounds(x = c(-2, 2)), harness = harness_dd99()) |>
+    community_add(trait_matrix(c(-0.5, 0.5), "x"), birth_rate = c(50, 50))
 
   d <- community_drop(comm, 2)            # drop the 2nd species
   expect_equal(length(d), 1L)
-  expect_equal(as.numeric(d$traits[, "lma"]), 0.05)
+  expect_equal(as.numeric(d$traits[, "x"]), -0.5)
 
   d2 <- community_drop(comm, c(FALSE, TRUE))  # logical mask, drop the 2nd
-  expect_equal(as.numeric(d2$traits[, "lma"]), 0.05)
+  expect_equal(as.numeric(d2$traits[, "x"]), -0.5)
 })
 
 # ---- regression: schedule defaults track max_patch_lifetime ----------------
@@ -91,38 +91,45 @@ test_that("plant_default_assembly_pars regenerates the node schedule default", {
   expect_lte(max(p$node_schedule_times_default), 30)
 })
 
-# ---- integration tests (run the SCM) ---------------------------------------
+# ---- pipeline on the fast DD99 harness (issue #27) -------------------------
+# The demography / selection-gradient pipeline is model-agnostic, so it is
+# exercised here against DD99 (instant, with analytic oracles) rather than the
+# SCM. The genuine plant-SCM equivalents (equilibrium birth rate, fundamental
+# niche, attractor) live in test-plant-smoke.R.
 
 test_that("community_demography on an empty community gives no resident fitness", {
-  comm <- community_start(bounds(lma = c(0.01, 2)),
-                          model_support = assembly_model_support())
-  comm <- community_demography(comm)
+  comm <- community_start(bounds(x = c(-2, 2)), harness = harness_dd99()) |>
+    community_demography()
   expect_length(comm$resident_fitness, 0L)
   expect_true(is.function(comm$fitness_function))
 })
 
-test_that("community_demography solves a single resident to equilibrium", {
-  comm <- community_start(bounds(lma = c(0.01, 2)),
-                          model_support = assembly_model_support()) |>
-    community_add(trait_matrix(0.0825, "lma"), birth_rate = 200) |>
+test_that("community_demography solves a single resident to its analytic equilibrium", {
+  comm <- community_start(bounds(x = c(-2, 2)),
+                          harness = harness_dd99(x0 = 0, sigma_K = 1, sigma_C = 0.4)) |>
+    community_add(trait_matrix(0.5, "x"), birth_rate = 200) |>
     community_demography()
 
   expect_true(attr(comm, "converged"))
   expect_length(comm$birth_rate, 1L)
-  # equilibrium birth rate (reference from current plant 2.0.0.9001; robust to
-  # the starting birth rate — converges to the same fixed point from 20/200/1000)
-  expect_equal(comm$birth_rate, 0.068455, tolerance = 1e-3)
-  # at equilibrium the resident's invasion fitness is ~0
-  expect_equal(comm$resident_fitness, 0, tolerance = 1e-4)
+  # DD99 single-resident equilibrium is the carrying capacity K(x)
+  Kx <- 500 * exp(-(0.5)^2 / (2 * 1^2))
+  expect_equal(as.numeric(comm$birth_rate), Kx, tolerance = 1e-8)
+  expect_equal(comm$resident_fitness, 0, tolerance = 1e-8)  # ~0 at equilibrium
 })
 
-test_that("community_selection_gradient returns a finite gradient at the resident", {
-  comm <- community_start(bounds(lma = c(0.01, 2)),
-                          model_support = assembly_model_support()) |>
-    community_add(trait_matrix(0.0825, "lma"), birth_rate = 200) |>
-    community_demography() |>
-    community_selection_gradient()
-
-  expect_length(comm$selection_gradient, 1L)
-  expect_true(is.finite(comm$selection_gradient))
+test_that("community_selection_gradient recovers the analytic DD99 gradient", {
+  # DD99 selection gradient is -(x - x0) / sigma_K^2; at x = 0.5 (x0 = 0,
+  # sigma_K = 1) that is exactly -0.5, and it vanishes at the singular point x0.
+  grad_at <- function(x) {
+    community_start(bounds(x = c(-2, 2)),
+                    harness = harness_dd99(x0 = 0, sigma_K = 1, sigma_C = 0.4)) |>
+      community_add(trait_matrix(x, "x"), birth_rate = 200) |>
+      community_demography() |>
+      community_selection_gradient()
+  }
+  g <- grad_at(0.5)
+  expect_length(g$selection_gradient, 1L)
+  expect_equal(g$selection_gradient, -0.5, tolerance = 1e-4)
+  expect_equal(grad_at(0)$selection_gradient, 0, tolerance = 1e-6)
 })
