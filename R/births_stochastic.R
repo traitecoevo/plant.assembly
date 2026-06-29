@@ -71,7 +71,7 @@ make_immigration_stochastic_naive <- function(n_immigrants) {
 ##' Generate a mutational variance covariance matrix where each trait
 ##' mutates by a fraction of its total range, and where there is no
 ##' covariance among traits.  This is a helper function for use with
-##' \code{\link{assembler_stochastic_naive}}
+##' the stochastic mutation kernel \code{make_mutation_stochastic_naive}.
 ##' @title Generate mutational covariance matrices
 ##' @param x A community object, or appropriate matrix of bounds
 ##' @param p Fraction of trait range to mutate (vectors will be

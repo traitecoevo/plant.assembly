@@ -5,14 +5,20 @@
 ##' trait_names, traits, birth_rate, fitness_control.
 ##'
 ##' @title Initialise a community object
-##' @param parameters A \code{parameters} object, as specified
-##' in \code{plant}..
 ##' @param bounds A set of bounds, as specified in \code{plant}.
 ##' @param birth_rate_initial A vector of birth rates.
-##' @param hyperpar A plant hyperparameter function to be used when calling \code{generate_strategy}
+##' @param demography_control List controlling the demography/equilibrium
+##' solver. See \code{\link{demographic_step_control}}.
 ##' @param fitness_control List of parameters controlling
 ##' how approximate fitness landscapes are generated. See function
 ##' \code{fitness_control} for an example.
+##' @param model_support Model support data passed to the harness (e.g. the
+##' \code{plant} parameters and control objects).
+##' @param harness A model harness wiring the community to a demographic
+##' backend (see \code{\link{harness_plant}}); defaults to the \code{plant} SCM.
+##' @param trait_scale How trait space is spaced/searched during assembly:
+##' \code{"log"} for strictly positive traits or \code{"linear"} for traits
+##' spanning zero.
 ##' @return An \code{community} object.
 ##' @author Rich FitzJohn, Daniel Falster
 ##' @export

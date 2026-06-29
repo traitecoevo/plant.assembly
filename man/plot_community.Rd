@@ -8,6 +8,8 @@ plot_community(tidy_community, ...)
 }
 \arguments{
 \item{tidy_community}{Community or history object from tidied assembly}
+
+\item{...}{additional arguments passed to \code{plot_community_1d}.}
 }
 \value{
 Returns one plot if community of, if history, plots length of history timeseries

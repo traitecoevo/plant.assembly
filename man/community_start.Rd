@@ -19,14 +19,22 @@ community_start(
 
 \item{birth_rate_initial}{A vector of birth rates.}
 
+\item{demography_control}{List controlling the demography/equilibrium
+solver. See \code{\link{demographic_step_control}}.}
+
 \item{fitness_control}{List of parameters controlling
 how approximate fitness landscapes are generated. See function
 \code{fitness_control} for an example.}
 
-\item{parameters}{A \code{parameters} object, as specified
-in \code{plant}..}
+\item{model_support}{Model support data passed to the harness (e.g. the
+\code{plant} parameters and control objects).}
 
-\item{hyperpar}{A plant hyperparameter function to be used when calling \code{generate_strategy}}
+\item{harness}{A model harness wiring the community to a demographic
+backend (see \code{\link{harness_plant}}); defaults to the \code{plant} SCM.}
+
+\item{trait_scale}{How trait space is spaced/searched during assembly:
+\code{"log"} for strictly positive traits or \code{"linear"} for traits
+spanning zero.}
 }
 \value{
 An \code{community} object.

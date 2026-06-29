@@ -5,9 +5,7 @@
 #' Find evolutionary attractor for single species and trait.
 #' This is point at which selection gradient equals zero.
 #' Currently solved using \code{uniroot}
-#' @param trait name of trait
-#' @param p Parameters object to use.  Importantly, the
-#' \code{strategy_default} element gets used here.
+#' @param community A \code{community} object to search within.
 #' @param bounds a vector containing the end-points of the
 #' interval to be searched for the root.
 #' @param ... set verbpse=TRUE for verbose output, birth_rate=value

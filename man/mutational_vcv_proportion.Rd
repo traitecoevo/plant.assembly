@@ -16,7 +16,7 @@ recycled according R's usual rules).}
 Generate a mutational variance covariance matrix where each trait
 mutates by a fraction of its total range, and where there is no
 covariance among traits.  This is a helper function for use with
-\code{\link{assembler_stochastic_naive}}
+the stochastic mutation kernel \code{make_mutation_stochastic_naive}.
 }
 \details{
 The trait range is measured on the community's trait scale: the

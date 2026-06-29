@@ -13,6 +13,8 @@ community_solve_singularity_1D(
 )
 }
 \arguments{
+\item{community}{A \code{community} object to search within.}
+
 \item{bounds}{a vector containing the end-points of the
 interval to be searched for the root.}
 
@@ -23,11 +25,6 @@ gives starting values when solving for demographic equilibrium}
 
 \item{edge_ok}{Is it (not) an error if we end up on the edge of the
 viable bounds?}
-
-\item{trait}{name of trait}
-
-\item{p}{Parameters object to use.  Importantly, the
-\code{strategy_default} element gets used here.}
 }
 \value{
 A species object, with trait, seed rain and cohort schedule

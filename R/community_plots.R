@@ -61,7 +61,7 @@ community_plot_fitness_landscape <- function(community, label = NA, xlim = commu
 #' Returns birth rates for residents in community
 #'
 #' @param tidy_community Community or history object from tidied assembly
-#' @param ... 
+#' @param ... additional arguments passed to \code{plot_community_1d}.
 #'
 #' @return Returns one plot if community of, if history, plots length of history timeseries
 #' @export
@@ -100,7 +100,7 @@ plot_community_1d <- function(tidy_community, step = NA, xlim = c(0.01, 1), ylim
 #' Plot pair-wise trait combinations of resident community 
 #'
 #' @param tidy_community Community or history object from tidied assembly with two traits
-#' @param ... 
+#' @param ... additional arguments passed to \code{plot_community_2d_internal}.
 #'
 #' @return Returns one plot if community of, if history, plots length of history timeseries
 #' @export

@@ -3,36 +3,40 @@ Title: Package for assembling communities with the plant model
 Version: 0.2
 Author: Daniel S. Falster and Richard G. FitzJohn
 Maintainer: Daniel S. Falster <daniel.falster@unsw.edu.au>
-Description: Assembles communities
+Description: Assembles ecological communities of competing strategies using the
+    plant model, by iterating demography to equilibrium, computing selection
+    gradients and invasion fitness, and solving for evolutionary attractors.
 License: BSD_2_clause + file LICENSE
-LazyData: true
-Depends: 
-    R (>= 4.5.0),
-    dplyr,
-    tidyr,
-    mlr3learners
+Depends:
+    R (>= 4.5.0)
 Imports:
     plant,
     Rcpp,
     lhs,
     mvtnorm,
     dfoptim,
-    progress,
     ggplot2,
     BB,
     nleqslv,
-    purrr
+    purrr,
+    dplyr,
+    tidyr,
+    tibble,
+    mlr3,
+    mlr3learners,
+    mlr3mbo,
+    bbotk,
+    paradox,
+    data.table,
+    loggr
 LinkingTo:
     Rcpp
 Remotes:
     traitecoevo/plant,
     smbache/loggr
 Suggests:
-    knitr,
-    rmarkdown,
     testthat (>= 3.0.0),
     parallel
-VignetteBuilder: knitr
 Encoding: UTF-8
 Config/testthat/edition: 3
 Config/testthat/parallel: true

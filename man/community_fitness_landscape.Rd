@@ -15,9 +15,8 @@ community_fitness_landscape(
 
 \item{method}{used to construct landscape}
 
-\item{bounds}{a bounds object}
-
-\item{n_evals}{number of points}
+\item{...}{additional arguments passed to the chosen landscape method
+(e.g. \code{bounds}, \code{n_evals}).}
 }
 \description{
 Construct a fitness landscape.
