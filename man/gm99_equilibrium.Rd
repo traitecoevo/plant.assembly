@@ -4,23 +4,25 @@
 \alias{gm99_equilibrium}
 \title{GM99 seed-size model: resident equilibrium densities (seeds/site)}
 \usage{
-gm99_equilibrium(x_res, pars, max_iter = 10000L, eps = 1e-12)
+gm99_equilibrium(x_res, pars, max_iter = 200L, eps = 1e-10)
 }
 \arguments{
 \item{x_res}{numeric vector of resident seed sizes}
 
 \item{pars}{list with R, alpha, beta}
 
-\item{max_iter}{maximum iterations (multi-resident case)}
+\item{max_iter}{maximum Newton iterations (multi-resident case)}
 
-\item{eps}{convergence tolerance (multi-resident case)}
+\item{eps}{convergence tolerance on max |log W_i|}
 }
 \value{
 numeric vector of equilibrium densities
 }
 \description{
 Single resident: solve (R/x) s(x) (1 - exp(-N))/N = 1 by bisection (N* = 0 if
-the strategy is non-viable). Many residents: iterate the population recursion
-N_i <- N_i W_i to its fixed point.
+the strategy is non-viable). Many residents: Newton's method on log W_i = 0
+in log-N space, with a numerical Jacobian. Newton converges quadratically so
+only ~10-30 steps are needed regardless of resident count, vs. thousands for
+the previous fixed-point iteration.
 }
 \keyword{internal}

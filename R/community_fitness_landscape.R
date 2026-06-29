@@ -3,8 +3,8 @@
 ##' @title Fitness Landscape
 ##' @param community A community object
 ##' @param method used to construct landscape
-##' @param bounds a bounds object
-##' @param n_evals number of points
+##' @param ... additional arguments passed to the chosen landscape method
+##' (e.g. \code{bounds}, \code{n_evals}).
 ##' @author Daniel Falster
 ##' @rdname community_fitness_landscape
 ##' @export
@@ -53,8 +53,8 @@ community_fitness_landscape_grid <- function(community, bounds = community$bound
   community
 }
 
-##' Construct a fitness landscape using Bayesian optimisation.
-## Uses the mlr3mbo package
+# Construct a fitness landscape using Bayesian optimisation.
+# Uses the mlr3mbo package. Internal helper (not exported, no Rd).
 
 community_fitness_landscape_bayesopt <- function(community, bounds = community$bounds, n_evals = community$fitness_control$n_evals, n_init = community$fitness_control$n_init) {
  
@@ -137,7 +137,7 @@ fitness_surrogate_start <- function(archive = NULL) {
 community_fitness_surrogate_create <- function(community, 
   archive = community$fitness_surrogate_archive) {
 
-  require(mlr3learners) # need this to make "regr.km" learner accessible
+  requireNamespace("mlr3learners", quietly = TRUE) # registers the "regr.km" learner
   
   community$fitness_surrogate_object <- fitness_surrogate_start(archive)
 
