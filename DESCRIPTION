@@ -33,7 +33,7 @@ Imports:
 LinkingTo:
     Rcpp
 Remotes:
-    traitecoevo/plant@replace-loggr-with-logger
+    traitecoevo/plant@replace-loggr-with-logger-v2
 Suggests:
     testthat (>= 3.0.0),
     parallel
