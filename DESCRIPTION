@@ -24,6 +24,9 @@ Imports:
     purrr
 LinkingTo:
     Rcpp
+Remotes:
+    traitecoevo/plant,
+    smbache/loggr
 Suggests:
     knitr,
     rmarkdown,
