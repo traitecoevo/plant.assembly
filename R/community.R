@@ -124,7 +124,6 @@ community_drop <- function(community, which) {
 community_reset <- function(community) {
   community$resident_fitness <- NULL
   community$fitness_points <- NULL
-  community$fitness_slopes <- NULL
   community$fitness_function <- NULL
   
   community$model_support$node_schedule_times <- NULL
