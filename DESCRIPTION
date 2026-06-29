@@ -28,12 +28,12 @@ Imports:
     bbotk,
     paradox,
     data.table,
-    loggr
+    logger,
+    crayon
 LinkingTo:
     Rcpp
 Remotes:
-    traitecoevo/plant,
-    smbache/loggr
+    traitecoevo/plant
 Suggests:
     testthat (>= 3.0.0),
     parallel

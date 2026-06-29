@@ -1,9 +1,11 @@
-plant_log_info <- function(...) {
-  loggr::log_info(..., package="plant", pid=Sys.getpid())
+plant_log_info <- function(message, routine=NULL, ...) {
+  if (!is.null(routine)) message <- paste0(crayon::yellow(routine), "> ", message)
+  logger::log_info(message, namespace="plant", .topenv=parent.frame())
 }
 
-plant_log_debug <- function(...) {
-  loggr::log_debug(..., package="plant", pid=Sys.getpid())
+plant_log_debug <- function(message, routine=NULL, ...) {
+  if (!is.null(routine)) message <- paste0(crayon::yellow(routine), "> ", message)
+  logger::log_debug(message, namespace="plant", .topenv=parent.frame())
 }
 
 plant_log_max_fitness <- function(...) {
