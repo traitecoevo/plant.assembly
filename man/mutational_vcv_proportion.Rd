@@ -18,3 +18,10 @@ mutates by a fraction of its total range, and where there is no
 covariance among traits.  This is a helper function for use with
 \code{\link{assembler_stochastic_naive}}
 }
+\details{
+The trait range is measured on the community's trait scale: the
+log scale by default (so the variance is a proportion of the log range, as
+for strictly-positive traits), or the linear scale when the community was
+created with \code{trait_scale = "linear"}. A bare bounds matrix has no
+scale attached and is treated as log, preserving the historical behaviour.
+}
