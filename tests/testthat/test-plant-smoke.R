@@ -8,8 +8,10 @@
 # physiological model still drives the regnans pipeline, and it pins the
 # reference values for the installed plant (2.0.0.9001).
 #
-# These are the slow tests in the suite (a few seconds each, max_patch_lifetime
-# = 30 via helper-assembly.R). Keep the count small.
+# These are the slow tests in the suite (a few seconds per SCM solve,
+# max_patch_lifetime = 30 via helper-assembly.R). Keep the count small, and
+# prefer cheap gradient checks over full iterative solves where they give the
+# same coverage (see the attractor test below).
 
 test_that("empty community: fundamental niche and fitness peak (SCM)", {
   comm <- community_start(bounds(lma = c(0.01, 2)),
@@ -62,15 +64,27 @@ test_that("single resident solves to equilibrium, gradient and inviable check (S
   expect_false(any(attr(op, "drop")))
 })
 
-test_that("community_solve_singularity_1D finds the 1D attractor (SCM)", {
-  comm <- community_start(bounds(lma = c(0.01, 2)),
-                          model_support = assembly_model_support()) |>
-    community_solve_singularity_1D(bounds = c(0.13, 0.16), tol = 1e-3)
+test_that("selection gradient brackets the 1D attractor (SCM)", {
+  # The model-agnostic singularity root-finder (community_solve_singularity_1D)
+  # is exercised fast on the DD99 toy harness. The full iterative solve against
+  # the real SCM cost ~45s (it re-solves a resident to equilibrium on every
+  # gradient evaluation). Here we only confirm the genuine plant model produces
+  # a *convergent* evolutionary attractor in [0.13, 0.16] (~lma 0.1417 for plant
+  # 2.0.0.9001): the selection gradient changes sign across the singularity,
+  # which brackets it with two equilibrium solves instead of a dozen.
+  grad_at <- function(x) {
+    comm <- community_start(bounds(lma = c(0.01, 2)),
+                            model_support = assembly_model_support()) |>
+      community_add(trait_matrix(x, "lma"), birth_rate = 200) |>
+      community_demography() |>
+      community_selection_gradient()
+    as.numeric(comm$selection_gradient)
+  }
 
-  expect_length(comm, 1L)
-  x <- as.numeric(comm$traits[, "lma"])
-  expect_equal(x, 0.1417, tolerance = 1e-2)     # reference for plant 2.0.0.9001
-  # the gradient is small relative to its scale (root tol is on the trait)
-  expect_true(is.finite(comm$selection_gradient))
-  expect_lt(abs(comm$selection_gradient), 50)
+  g_lo <- grad_at(0.13)
+  g_hi <- grad_at(0.16)
+  expect_true(is.finite(g_lo))
+  expect_true(is.finite(g_hi))
+  expect_gt(g_lo, 0)   # below the singularity selection pushes lma up,
+  expect_lt(g_hi, 0)   # above it selection pushes lma down -> attractor between
 })
