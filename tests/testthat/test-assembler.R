@@ -51,20 +51,41 @@ test_that("mutational_vcv_proportion accepts a community and rejects infinite bo
                "must be finite")
 })
 
-# ---- assembler loop (integration, runs the SCM) ----------------------------
+test_that("mutational_vcv_proportion uses the community's trait scale", {
+  # A bare bounds matrix has no scale attached -> log range (historical default).
+  expect_equal(mutational_vcv_proportion(bounds(lma = c(0.01, 2)), p = 0.01)[1, 1],
+               0.01 * (log(2) - log(0.01)))
+  # A log-scale community matches the bare-bounds default.
+  log_comm <- community_start(bounds(lma = c(0.01, 2)), trait_scale = "log")
+  expect_equal(mutational_vcv_proportion(log_comm, p = 0.01)[1, 1],
+               0.01 * (log(2) - log(0.01)))
+  # A linear-scale community uses the linear range instead (issue: stochastic
+  # births should not be hardcoded to log).
+  lin_comm <- community_start(bounds(x = c(-3, 3)), trait_scale = "linear")
+  expect_equal(mutational_vcv_proportion(lin_comm, p = 0.01)[1, 1], 0.01 * 6)
+})
+
+# ---- assembler loop (integration) ------------------------------------------
+# Driven on the fast DD99 harness (issue #27) rather than the SCM, on a linear
+# trait scale (DD99's optimum sits at x0 = 0). The stochastic-births path now
+# mutates on whichever trait scale the community uses, so it runs on these
+# negative-spanning bounds too (previously it was hardcoded to log).
+
+dd99_assembler_community <- function() {
+  community_start(
+    bounds(x = c(-3, 3)),
+    harness = harness_dd99(x0 = 0, sigma_K = 1, sigma_C = 0.4),
+    trait_scale = "linear",
+    fitness_control = list(method = "grid", n_evals = 40))
+}
 
 test_that("assembler_run drives maximum-fitness assembly", {
-  community0 <- community_start(
-    bounds = bounds(lma = c(0.01, 2)),
-    fitness_control = list(method = "grid", n_evals = 12),
-    demography_control = demographic_step_control(list(equilibrium_nsteps = 10)),
-    model_support = assembly_model_support())
   control <- assembler_control(list(run_type = "to_equilibrium",
                                     birth_type = "maximum",
                                     birth_move_tol = 1,
                                     compute_viable_fitness = FALSE))
 
-  obj <- assembler_start(community0, control = control)
+  obj <- assembler_start(dd99_assembler_community(), control = control)
   expect_s3_class(obj, "assembler")
   expect_length(obj, 1L)                # history holds the initial community
 
@@ -73,42 +94,36 @@ test_that("assembler_run drives maximum-fitness assembly", {
   expect_gte(length(obj$community), 1L)
 
   # all residents lie within the trait bounds
-  x <- obj$community$traits[, "lma"]
-  expect_true(all(x >= 0.01 & x <= 2))
+  x <- obj$community$traits[, "x"]
+  expect_true(all(x >= -3 & x <= 3))
   expect_true(all(obj$community$birth_rate > 0))
 })
 
-test_that("assembler_run drives stochastic assembly", {
+test_that("assembler_run drives stochastic assembly on a linear trait scale", {
   set.seed(42)
-  community0 <- community_start(bounds(lma = c(0.01, 1)),
-                                model_support = assembly_model_support())
   control <- assembler_control(list(run_type = "single_step",
-                                    birth_type = "stochastic", vcv = diag(1)))
+                                    birth_type = "stochastic",
+                                    vcv = diag(1) * 0.1))
 
-  obj <- assembler_start(community0, control = control)
+  obj <- assembler_start(dd99_assembler_community(), control = control)
   obj <- assembler_run(obj, nsteps = 5)
   expect_s3_class(obj, "assembler")
   expect_length(obj, 6L)                # initial + 5 steps
 
   if (length(obj$community) > 0L) {
-    x <- obj$community$traits[, "lma"]
-    expect_true(all(x >= 0.01 & x <= 1))
+    x <- obj$community$traits[, "x"]
+    expect_true(all(x >= -3 & x <= 3))
   }
 })
 
-# ---- tidy_assembly (integration) -------------------------------------------
+# ---- tidy_assembly ---------------------------------------------------------
 
 test_that("tidy_assembly tidies an assembly run into one row per resident-step", {
-  community0 <- community_start(
-    bounds = bounds(lma = c(0.01, 2)),
-    fitness_control = list(method = "grid", n_evals = 12),
-    demography_control = demographic_step_control(list(equilibrium_nsteps = 10)),
-    model_support = assembly_model_support())
   control <- assembler_control(list(run_type = "to_equilibrium",
                                     birth_type = "maximum",
                                     birth_move_tol = 1,
                                     compute_viable_fitness = FALSE))
-  obj <- assembler_start(community0, control = control) |>
+  obj <- assembler_start(dd99_assembler_community(), control = control) |>
     assembler_run(nsteps = 2)
 
   ta <- tidy_assembly(obj)
